@@ -1,0 +1,12 @@
+{
+  "name": "nuwax-chat-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node app.js",
+    "test": "node --test app.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
