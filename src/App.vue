@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { authConfigured, restoreAuth, signIn, signOut } from './auth'
-import { requestChat, resetChatSession } from './chat-api'
+import { authConfigured, restoreAuth, signIn, signOut, signUp } from './auth'
+import { requestChat } from './chat-api'
 import AppSidebar from './components/AppSidebar.vue'
 import AuthDialog from './components/AuthDialog.vue'
 import ChatWorkspace from './components/ChatWorkspace.vue'
@@ -127,11 +127,25 @@ const login = async (username: string, password: string) => {
   }
 }
 
+const register = async (username: string, password: string) => {
+  authLoading.value = true
+  authError.value = ''
+  try {
+    authUser.value = await signUp(username, password)
+    authOpen.value = false
+    if (continueAfterLogin.value) enterNewConversation()
+  } catch (error) {
+    authError.value = error instanceof Error ? error.message : '注册失败，请稍后重试。'
+  } finally {
+    authLoading.value = false
+    continueAfterLogin.value = false
+  }
+}
+
 const logout = async () => {
   try {
     if (authConfigured && authUser.value) await signOut()
   } finally {
-    resetChatSession()
     clearTimeout(conversationSyncTimer)
     authUser.value = null
     psychConsent.value = 'unknown'
@@ -320,6 +334,7 @@ const sendMessage = async (preset?: string) => {
     :error="authError"
     @close="authOpen = false"
     @login="login"
+    @register="register"
   />
   <ConsentDialog :open="consentOpen" @choose="chooseConsent" />
   <SafetyDialog :open="safetyOpen" @close="safetyOpen = false" />

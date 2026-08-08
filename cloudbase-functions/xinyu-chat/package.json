@@ -2,6 +2,10 @@
   "name": "nuwax-chat-proxy",
   "version": "1.0.0",
   "private": true,
+  "dependencies": {
+    "@cloudbase/js-sdk": "^3.7.1",
+    "ws": "^8.18.0"
+  },
   "scripts": {
     "start": "node app.js",
     "test": "node --test app.test.mjs"

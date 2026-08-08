@@ -1812,6 +1812,16 @@ a:focus-visible {
   opacity: .62;
 }
 
+.auth-switch {
+  justify-self: center;
+  color: var(--accent-strong);
+  font-size: 11px;
+}
+
+.auth-switch:disabled {
+  opacity: .62;
+}
+
 .auth-help {
   margin: 0;
   color: var(--text-soft);

@@ -4,7 +4,9 @@ const envId = import.meta.env.VITE_CLOUDBASE_ENV_ID?.trim()
 const region = import.meta.env.VITE_CLOUDBASE_REGION?.trim() || 'ap-shanghai'
 
 interface CloudBaseAuth {
+  getAccessToken: () => Promise<{ accessToken: string; env: string }>
   getSession: () => Promise<unknown>
+  signUp: (credentials: { username: string; password: string }) => Promise<unknown>
   signInWithPassword: (credentials: { username: string; password: string }) => Promise<unknown>
   signOut: () => Promise<unknown>
 }
@@ -52,7 +54,7 @@ const toAuthUser = (user: RecordValue): AuthUser => {
 const requireAuth = async () => {
   if (!envId) throw new Error('CloudBase 尚未配置，请先填写部署环境变量。')
   authPromise ??= import('@cloudbase/js-sdk').then(({ default: cloudbase }) =>
-    cloudbase.init({ env: envId, region }).auth as unknown as CloudBaseAuth,
+    cloudbase.init({ env: envId, region }).auth() as unknown as CloudBaseAuth,
   )
   return authPromise
 }
@@ -77,16 +79,21 @@ export const signIn = async (username: string, password: string): Promise<AuthUs
   return toAuthUser(current.user)
 }
 
+export const signUp = async (username: string, password: string): Promise<AuthUser> => {
+  const result = await (await requireAuth()).signUp({ username, password })
+  const error = resultError(result)
+  if (error) throw new Error(error)
+  const current = sessionData(result)
+  if (!current) throw new Error('注册成功，请使用新账号登录。')
+  return toAuthUser(current.user)
+}
+
 export const signOut = async () => {
   await (await requireAuth()).signOut()
 }
 
 export const getAccessToken = async () => {
-  const result = await (await requireAuth()).getSession()
-  const error = resultError(result)
-  if (error) throw new Error(error)
-  const current = sessionData(result)
-  const token = current && readString(current.session.access_token || current.session.accessToken)
-  if (!token) throw new Error('登录已过期，请重新登录。')
-  return token
+  const { accessToken } = await (await requireAuth()).getAccessToken()
+  if (!accessToken) throw new Error('登录已过期，请重新登录。')
+  return accessToken
 }

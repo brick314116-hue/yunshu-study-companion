@@ -12,13 +12,16 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   login: [username: string, password: string]
+  register: [username: string, password: string]
 }>()
 
 const dialog = ref<HTMLDialogElement | null>(null)
 const usernameInput = ref<HTMLInputElement | null>(null)
 const username = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 const validationError = ref('')
+const registering = ref(false)
 
 watch(
   () => props.open,
@@ -26,6 +29,7 @@ watch(
     if (open && !dialog.value?.open) {
       validationError.value = ''
       password.value = ''
+      confirmPassword.value = ''
       dialog.value?.showModal()
       await nextTick()
       usernameInput.value?.focus()
@@ -45,8 +49,13 @@ const submit = () => {
     validationError.value = '请输入用户名和密码。'
     return
   }
+  if (registering.value && password.value !== confirmPassword.value) {
+    validationError.value = '两次输入的密码不一致。'
+    return
+  }
   validationError.value = ''
-  emit('login', account, password.value)
+  if (registering.value) emit('register', account, password.value)
+  else emit('login', account, password.value)
 }
 </script>
 
@@ -67,8 +76,8 @@ const submit = () => {
         </button>
       </header>
 
-      <h2 id="auth-title">登录云舒学伴</h2>
-      <p class="dialog-lead">登录只用于隔离你的会话与短期记录，不会把账号信息传给智能体。</p>
+      <h2 id="auth-title">{{ registering ? '注册云舒学伴' : '登录云舒学伴' }}</h2>
+      <p class="dialog-lead">账号只用于隔离你的会话与短期记录，不会传给智能体。</p>
 
       <div v-if="configured" class="auth-fields">
         <label>
@@ -104,14 +113,38 @@ const submit = () => {
             />
           </span>
         </label>
+        <label v-if="registering">
+          <span>确认密码</span>
+          <span class="auth-input">
+            <KeyRound :size="18" :stroke-width="1.7" aria-hidden="true" />
+            <input
+              v-model="confirmPassword"
+              type="password"
+              name="confirm-password"
+              autocomplete="new-password"
+              maxlength="128"
+              placeholder="请再次输入密码"
+              :disabled="loading"
+              required
+            />
+          </span>
+        </label>
         <p v-if="validationError || error" class="auth-error" role="alert">
           {{ validationError || error }}
         </p>
         <button class="auth-submit" type="submit" :disabled="loading">
           <LogIn :size="18" :stroke-width="1.8" />
-          <span>{{ loading ? '正在登录...' : '登录' }}</span>
+          <span>{{ loading ? '正在提交...' : registering ? '注册' : '登录' }}</span>
         </button>
-        <p class="auth-help">账号由项目管理员创建；这里不会要求你填写真实姓名、学校或联系方式。</p>
+        <button
+          class="auth-switch"
+          type="button"
+          :disabled="loading"
+          @click="registering = !registering; validationError = ''"
+        >
+          {{ registering ? '已有账号，去登录' : '没有账号，去注册' }}
+        </button>
+        <p class="auth-help">这里不会要求你填写真实姓名、学校或联系方式。</p>
       </div>
 
       <div v-else class="auth-config-notice" role="status">

@@ -4,12 +4,6 @@ const configuredEndpoint = import.meta.env.VITE_CHAT_API_URL?.trim()
 const endpoint = configuredEndpoint ||
   'https://xueou-d7gwem7g2452a7ea3-1462770697.ap-shanghai.app.tcloudbase.com/nuwax/api/chat'
 
-let sessionToken = ''
-
-export const resetChatSession = () => {
-  sessionToken = ''
-}
-
 type RecordValue = Record<string, unknown>
 
 const isRecord = (value: unknown): value is RecordValue =>
@@ -50,7 +44,6 @@ const responseError = async (response: Response) => {
 
 export const requestChat = async (message: string, newConversation: boolean) => {
   if (!endpoint) throw new Error('对话接口尚未配置。')
-  if (newConversation) sessionToken = ''
   const accessToken = await getAccessToken()
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -62,9 +55,12 @@ export const requestChat = async (message: string, newConversation: boolean) => 
       message,
       agent: 'main',
       newConversation,
-      sessionToken: sessionToken || undefined,
     }),
   })
+
+  if (response.redirected || response.headers.get('content-type')?.includes('text/html')) {
+    throw new Error('登录状态已失效，请退出后重新登录。')
+  }
 
   if (!response.ok) throw new Error(await responseError(response))
 
@@ -76,6 +72,5 @@ export const requestChat = async (message: string, newConversation: boolean) => 
   }
   const reply = replyFromJson(body)
   if (!reply) throw new Error('智能体没有返回可显示的内容，请重新发送。')
-  if (isRecord(body) && typeof body.sessionToken === 'string') sessionToken = body.sessionToken
   return reply
 }
