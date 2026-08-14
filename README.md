@@ -36,7 +36,13 @@ VITE_CHAT_API_URL=https://xueou-d7gwem7g2452a7ea3-1462770697.ap-shanghai.app.tcl
 | 变量 | 作用 |
 | --- | --- |
 | `CLOUDBASE_ENV_ID` / `CLOUDBASE_REGION` | 环境标识 |
+| `CLOUDBASE_DATABASE_INSTANCE` | 文档数据库实例 ID；本项目为 `tnt-nsoau01qw` |
+| `CLOUDBASE_DATABASE_NAME` | 数据库名；使用实例默认数据库时留空 |
 | `NUWAX_BASE_URL` / `NUWAX_API_KEY` / `NUWAX_AGENT_ID` | 上游智能体接口地址、密钥、Agent ID |
+| `NUWAX_SANDBOX_ID` | 可选；从女娲网页端会话使用的沙箱 ID，需固定沙箱时填写 |
+| `NUWAX_SKILL_IDS` | 可选；逗号分隔的 Skill ID，网页端手动选择 Skill 时填写 |
+| `NUWAX_AGENT_MODE` | 可选；默认 `yolo`，与女娲网页端对话模式保持一致 |
+| `NUWAX_REQUEST_TIMEOUT_MS` | 可选；默认 `180000`，范围 30000-240000 |
 | `USER_ID_SECRET` / `SESSION_SECRET` | 用于 HMAC 派生 subject_id / session 文档 id |
 | `ALLOWED_ORIGIN` | 允许的 CORS 来源，值为前端 webapps 域名 |
 
@@ -44,10 +50,16 @@ VITE_CHAT_API_URL=https://xueou-d7gwem7g2452a7ea3-1462770697.ap-shanghai.app.tcl
 
 ## 已知坑（都是真踩过的）
 
+- **用户资料复用聊天网关。** `user_profiles` 的读写请求使用同一个 `/nuwax/api/chat?resource=profile` 地址，由云函数从 Bearer token 取得真实 `uid`；不要另建 `/profile` 前端直连路由，也不要信任浏览器传入的 `userId`。
 - **云函数不要自己加 CORS 头。** HTTP 网关已经加了 CORS 响应头；函数再写一份 `Access-Control-Allow-Origin`，浏览器会收到**双份**，直接判定非法 → `Failed to fetch` / CORS 错误。函数内 `sendJson(res, status, body)` 不带 origin 参数，OPTIONS 只返回 204 且不写 CORS 头。
 - **网关 `EnablePathTransmission=false`。** 网关会把匹配到的前缀 `/nuwax/api/chat` **剥掉**，函数实际收到的路径是 `/`，不是 `/nuwax/api/chat`。函数路由必须同时匹配 `/`、`/api/chat`、`/nuwax/api/chat`（`isChatPath` 那段）。
 - **函数从 Bearer token 解析 uid。** 前端只传 `Authorization: Bearer <token>`，**不传** `x-cloudbase-context`。`authenticatedUserId` 优先读网关注入的 context，读不到则解析 JWT payload 的 `uid / sub / user_id / openid / unionid / id` 字段。
 - **`app.auth` 是函数要调用。** `@cloudbase/js-sdk` v3 里 `cloudbase.init(...).auth` 是函数，必须写 `.auth()`，不能取属性 `.auth`，否则报 `auth.then is not a function`。
+- **云函数数据库必须绑定实例。** 通过 `CLOUDBASE_DATABASE_INSTANCE=tnt-nsoau01qw` 明确写入控制台当前实例。`agent_sessions` 保持 `ADMINONLY`（安全规则 `read/write=false`）是正常配置，不需要开放客户端权限。
+- **女娲 API 与网页端不是同一条会话路径。** 网页端会把 `sandboxId`、`skillIds`、`agentMode` 带给 `/api/v1/chat/{conversationId}`；云函数现在可通过同名 `NUWAX_*` 环境变量传入。未配置固定沙箱时，女娲会按默认沙箱启动，若出现 ACP 初始化超时，应先检查沙箱服务和该 ID，而不是修改 `project_id`。
+- **55 秒 504 是代理自己的超时。** 女娲后端 `/computer/chat` 的允许等待时间可到 180 秒，云函数默认等待 180 秒；`project_id=1674213` 是女娲根据会话生成的内部项目 ID，不是本项目配置项。
+- **上线后先验新包。** 给 HTTP 函数访问 `/health`（带正式 Origin）应看到 `version=2026-08-14-upstream-timeout-sandbox`、`databaseInstance=tnt-nsoau01qw`、`upstreamTimeoutMs=180000`。若不是这三个值，说明仍在运行旧版本或旧实例。
+- **仍出现 ACP 初始化超时时的检查顺序。** 先重新登录取得新 Token，再在女娲网页端开发者工具中查看成功对话的 `/api/v1/chat/{conversationId}` 请求；若 payload 有数字 `sandboxId`，把它填入函数环境变量 `NUWAX_SANDBOX_ID`。若无该字段，检查女娲平台的默认沙箱服务状态。`agent_sessions` 和 `user_profiles` 都由函数 Admin SDK 写入，两个表同时为空时只检查函数包、`CLOUDBASE_ENV_ID` 和 `CLOUDBASE_DATABASE_INSTANCE`，不要开放 `agent_sessions` 权限。
 
 ## 本地构建 + 部署流程
 

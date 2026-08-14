@@ -4,10 +4,15 @@ const http = require('node:http')
 const PORT = 9000
 const MAX_BODY_BYTES = 8 * 1024
 const MAX_MESSAGE_LENGTH = 500
-const REQUEST_TIMEOUT_MS = 55 * 1000
+const configuredTimeoutMs = Number(process.env.NUWAX_REQUEST_TIMEOUT_MS)
+const REQUEST_TIMEOUT_MS = Number.isFinite(configuredTimeoutMs)
+  ? Math.min(Math.max(configuredTimeoutMs, 30 * 1000), 240 * 1000)
+  : 180 * 1000
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000
 const RATE_LIMIT_MAX = 30
 const AGENT_KEY = 'main'
+const BUILD_VERSION = '2026-08-14-upstream-timeout-sandbox'
+const DEFAULT_DATABASE_INSTANCE = 'tnt-nsoau01qw'
 const requestCounts = new Map()
 let databaseFactory
 
@@ -92,11 +97,17 @@ function getConfig() {
   const apiKey = process.env.NUWAX_API_KEY
   const agentId = Number(process.env.NUWAX_MAIN_AGENT_ID || process.env.NUWAX_AGENT_ID)
   const userIdSecret = process.env.USER_ID_SECRET
-  const envId = process.env.CLOUDBASE_ENV_ID || process.env.TCB_ENV
+  const sandboxId = Number(process.env.NUWAX_SANDBOX_ID)
+  const skillIds = String(process.env.NUWAX_SKILL_IDS || '')
+    .split(',')
+    .map((value) => Number(value.trim()))
+    .filter((value) => Number.isSafeInteger(value) && value > 0)
+  const agentMode = String(process.env.NUWAX_AGENT_MODE || 'yolo').trim().slice(0, 32)
+  const database = getDatabaseConfig()
   const origins = allowedOrigins()
 
   if (!baseUrl || !apiKey || !Number.isSafeInteger(agentId) || agentId <= 0 ||
-      !userIdSecret || userIdSecret.length < 32 || !envId || !origins.length || origins.includes('*')) {
+      !userIdSecret || userIdSecret.length < 32 || !origins.length || origins.includes('*')) {
     throw Object.assign(new Error('service_not_configured'), { status: 503 })
   }
 
@@ -104,8 +115,21 @@ function getConfig() {
     baseUrl,
     authorization: apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`,
     agentId,
-    envId,
+    sandboxId: Number.isSafeInteger(sandboxId) && sandboxId > 0 ? sandboxId : undefined,
+    skillIds,
+    agentMode,
+    ...database,
     userIdSecret,
+  }
+}
+
+function getDatabaseConfig() {
+  const envId = process.env.CLOUDBASE_ENV_ID || process.env.TCB_ENV
+  if (!envId) throw Object.assign(new Error('service_not_configured'), { status: 503 })
+  return {
+    envId,
+    instance: process.env.CLOUDBASE_DATABASE_INSTANCE || DEFAULT_DATABASE_INSTANCE,
+    database: process.env.CLOUDBASE_DATABASE_NAME || undefined,
   }
 }
 
@@ -124,7 +148,25 @@ function requestId(req) {
 }
 
 function safeErrorCode(error) {
-  return String(error?.code || error?.name || error?.status || 'unknown').slice(0, 80)
+  const data = error?.response?.data
+  return String(error?.code || data?.code || error?.name || error?.status || 'unknown').slice(0, 80)
+}
+
+function errorDiagnostic(error) {
+  const data = error?.response?.data
+  return {
+    code: safeErrorCode(error),
+    message: String(data?.message || error?.message || '')
+      .replace(/https?:\/\/\S+/g, '[url]')
+      .replace(/[\r\n]+/g, ' ')
+      .slice(0, 300),
+    sdkRequestId: String(data?.requestId || error?.requestId || error?.request_id || '').slice(0, 128),
+  }
+}
+
+function logError(scope, id, error) {
+  const diagnostic = errorDiagnostic(error)
+  console.error(`[xinyu-chat ${id}] ${scope} code=${diagnostic.code} message=${diagnostic.message} sdkRequestId=${diagnostic.sdkRequestId}`)
 }
 
 function decodeContext(value) {
@@ -147,6 +189,9 @@ function uidFromJwt(token) {
   if (parts.length !== 3) return null
   const payload = decodeContext(parts[1])
   if (!payload || typeof payload !== 'object') return null
+  const now = Math.floor(Date.now() / 1000)
+  if (payload.exp !== undefined && (!Number.isFinite(Number(payload.exp)) || Number(payload.exp) <= now)) return null
+  if (payload.nbf !== undefined && (!Number.isFinite(Number(payload.nbf)) || Number(payload.nbf) > now)) return null
   const candidates = [
     payload.uid,
     payload.sub,
@@ -196,16 +241,70 @@ function sessionDocumentId(uid, secret) {
 function cloudbaseDatabase(config) {
   if (databaseFactory) return databaseFactory(config)
   const cloudbase = require('@cloudbase/js-sdk')
-  return cloudbase.init({ env: config.envId, region: process.env.CLOUDBASE_REGION || 'ap-shanghai' }).database()
+  const app = cloudbase.init({ env: config.envId, region: process.env.CLOUDBASE_REGION || 'ap-shanghai' })
+  return app.database({ instance: config.instance, database: config.database })
+}
+
+function sanitizeDisplayName(value) {
+  return typeof value === 'string'
+    ? value.replace(/\s+/g, ' ').trim().slice(0, 32).replace(/[^\p{L}\p{N} _·•\-]/gu, '')
+    : ''
 }
 
 async function readProfile(db, uid) {
   const result = await db.collection('user_profiles').where({ userId: uid }).limit(1).get()
   const profile = result?.data?.[0] || {}
   return {
-    displayName: typeof profile.displayName === 'string' ? profile.displayName.trim().slice(0, 32) : '',
+    documentId: typeof profile._id === 'string' ? profile._id : '',
+    displayName: sanitizeDisplayName(profile.displayName),
+    consentChoice: profile.consentChoice === 'accepted' || profile.consentChoice === 'declined' ? profile.consentChoice : '',
     consentVersion: typeof profile.consentVersion === 'string' ? profile.consentVersion : '',
+    consentAt: profile.consentAt || null,
+    guardianConsentStatus: typeof profile.guardianConsentStatus === 'string' ? profile.guardianConsentStatus : 'not_required',
+    createdAt: profile.createdAt || null,
   }
+}
+
+async function handleProfile(req, res) {
+  const uid = authenticatedUserId(req)
+  const db = cloudbaseDatabase(getDatabaseConfig())
+  const current = await readProfile(db, uid)
+  if (req.method === 'GET') {
+    sendJson(res, 200, {
+      displayName: current.displayName,
+      consentChoice: current.consentChoice,
+      consentVersion: current.consentVersion,
+      consentAt: current.consentAt,
+      guardianConsentStatus: current.guardianConsentStatus,
+    })
+    return
+  }
+
+  const body = await readJson(req)
+  const now = new Date()
+  const next = {
+    userId: uid,
+    displayName: body.displayName === undefined ? current.displayName : sanitizeDisplayName(body.displayName),
+    consentChoice: current.consentChoice,
+    consentVersion: current.consentVersion,
+    consentAt: current.consentAt,
+    guardianConsentStatus: current.guardianConsentStatus,
+    createdAt: current.createdAt || now,
+    updatedAt: now,
+  }
+  if (body.consentChoice !== undefined) {
+    if ((body.consentChoice !== 'accepted' && body.consentChoice !== 'declined') || typeof body.consentVersion !== 'string') {
+      sendJson(res, 400, { error: '使用边界选择无效。' })
+      return
+    }
+    next.consentChoice = body.consentChoice
+    next.consentVersion = body.consentVersion.slice(0, 64)
+    next.consentAt = now
+  }
+  const document = db.collection('user_profiles').doc(current.documentId || uid)
+  if (current.documentId) await document.update(next)
+  else await document.set(next)
+  sendJson(res, 200, next)
 }
 
 async function readSession(db, uid, config) {
@@ -260,7 +359,17 @@ function parseAgentStream(raw) {
     if (!data || data === '[DONE]') continue
     let event
     try { event = JSON.parse(data) } catch { continue }
-    if (event?.eventType === 'ERROR') throw new Error('Nuwax upstream error')
+    if (event?.eventType === 'ERROR') {
+      const detail = String(event.data?.message || event.data?.error || event.message || JSON.stringify(event.data || ''))
+      throw Object.assign(new Error(
+        /ACP InitializeRequest timeout/i.test(detail) ? 'agent_initialize_timeout' : 'nuwax_upstream_error',
+      ), {
+        status: 502,
+        publicMessage: /ACP InitializeRequest timeout/i.test(detail)
+          ? '智能体服务启动超时，请稍后重试。'
+          : '智能体服务暂时异常，请稍后重试。',
+      })
+    }
     if (event?.eventType === 'FINAL_RESULT') {
       finalText = String(event.data?.outputText || '').trim() || finalText
       continue
@@ -270,7 +379,14 @@ function parseAgentStream(raw) {
     const text = String(item?.text || '').trim()
     if (text) messages.push(text)
   }
-  return finalText || messages.join('')
+  const reply = finalText || messages.join('')
+  if (/Failed to process request:\s*Agent process failed|ACP InitializeRequest timeout/i.test(reply)) {
+    throw Object.assign(new Error('agent_initialize_timeout'), {
+      status: 502,
+      publicMessage: '智能体服务启动超时，请稍后重试。',
+    })
+  }
+  return reply
 }
 
 async function handleChat(req, res) {
@@ -311,25 +427,28 @@ async function handleChat(req, res) {
       headers: {
         Authorization: config.authorization,
         'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
       },
       body: JSON.stringify({
         conversationId: session.conversationId,
         message,
         attachments: [],
         debug: false,
-        selectedComponents: [],
         variableParams: {
           subject_id: subject,
           display_name: profile.displayName,
           consent_version: profile.consentVersion,
         },
         filterSensitive: true,
+        agentMode: config.agentMode,
+        ...(config.sandboxId ? { sandboxId: config.sandboxId } : {}),
+        ...(config.skillIds.length ? { skillIds: config.skillIds } : {}),
       }),
       signal: controller.signal,
     })
   } catch (error) {
     clearTimeout(timeout)
-    console.error(`[xinyu-chat ${requestId(req)}] upstream ${safeErrorCode(error)}`)
+    logError('upstream', requestId(req), error)
     sendJson(res, error?.name === 'AbortError' ? 504 : 502, {
       error: error?.name === 'AbortError' ? '智能体响应超时，请稍后重试。' : '暂时无法连接智能体。',
     })
@@ -338,11 +457,25 @@ async function handleChat(req, res) {
 
   if (!upstream.ok || !upstream.body) {
     clearTimeout(timeout)
+    logError('upstream-http', requestId(req), Object.assign(new Error(`status=${upstream.status}`), {
+      code: `HTTP_${upstream.status}`,
+    }))
     sendJson(res, 502, { error: '智能体暂时无法回复。' })
     return
   }
-  const reply = parseAgentStream(await upstream.text())
+  let raw
+  try {
+    raw = await upstream.text()
+  } catch (error) {
+    clearTimeout(timeout)
+    logError('upstream-stream', requestId(req), error)
+    sendJson(res, error?.name === 'AbortError' ? 504 : 502, {
+      error: error?.name === 'AbortError' ? '智能体响应超时，请稍后重试。' : '智能体响应读取失败，请稍后重试。',
+    })
+    return
+  }
   clearTimeout(timeout)
+  const reply = parseAgentStream(raw)
   if (!reply) {
     sendJson(res, 502, { error: '智能体没有返回可显示的内容。' })
     return
@@ -352,7 +485,8 @@ async function handleChat(req, res) {
 }
 
 const server = http.createServer(async (req, res) => {
-  const rawPathname = new URL(req.url, 'http://localhost').pathname
+  const requestUrl = new URL(req.url, 'http://localhost')
+  const rawPathname = requestUrl.pathname
   // The HTTP gateway strips the matched prefix when EnablePathTransmission=false,
   // so a request to /nuwax/api/chat reaches the function as /. We still normalize
   // /nuwax/api/chat in case the flag is ever switched to true.
@@ -372,8 +506,33 @@ const server = http.createServer(async (req, res) => {
     return
   }
   const isChatPath = pathname === '/' || pathname === '/api/chat' || pathname === '/nuwax/api/chat'
+  const isProfileRequest = isChatPath && requestUrl.searchParams.get('resource') === 'profile'
+  if ((req.method === 'GET' || req.method === 'POST') && isProfileRequest) {
+    try {
+      await handleProfile(req, res)
+    } catch (error) {
+      const id = requestId(req)
+      logError('profile', id, error)
+      if (!res.headersSent) {
+        sendJson(res, error?.status || 500, {
+          error: error?.status === 401 ? '登录状态无效，请重新登录。' : '用户资料处理失败。',
+          requestId: id,
+        })
+      }
+    }
+    return
+  }
   if (req.method === 'GET' && (pathname === '/' || pathname === '/health')) {
-    sendJson(res, 200, { status: 'ok' })
+    const database = getDatabaseConfig()
+    sendJson(res, 200, {
+      status: 'ok',
+      version: BUILD_VERSION,
+      envId: database.envId,
+      databaseInstance: database.instance,
+      databaseName: database.database || 'default',
+      upstreamTimeoutMs: REQUEST_TIMEOUT_MS,
+      sandboxConfigured: Boolean(Number(process.env.NUWAX_SANDBOX_ID) > 0),
+    })
     return
   }
   if (req.method === 'POST' && isChatPath) {
@@ -381,11 +540,11 @@ const server = http.createServer(async (req, res) => {
       await handleChat(req, res)
     } catch (error) {
       const id = requestId(req)
-      console.error(`[xinyu-chat ${id}] request ${safeErrorCode(error)}`)
+      logError('request', id, error)
       if (!res.headersSent) {
         sendJson(res, error?.status || 500, {
-          error: error?.status === 401 ? '登录状态无效，请重新登录。' :
-            error?.status === 503 ? '服务尚未配置完成。' : '请求处理失败。',
+          error: error?.publicMessage || (error?.status === 401 ? '登录状态无效，请重新登录。' :
+            error?.status === 503 ? '服务尚未配置完成。' : '请求处理失败。'),
           requestId: id,
         })
       }

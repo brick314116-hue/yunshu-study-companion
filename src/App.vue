@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { authConfigured, restoreAuth, signIn, signOut, signUp } from './auth'
+import { authConfigured, restoreAuth, signOut } from './auth'
+import { loadUserProfile, saveDisplayName, sanitizeDisplayName, saveConsent, restoreConsent } from './user-profile'
 import { requestChat } from './chat-api'
 import AppSidebar from './components/AppSidebar.vue'
 import AuthDialog from './components/AuthDialog.vue'
@@ -8,6 +9,8 @@ import ChatWorkspace from './components/ChatWorkspace.vue'
 import ConsentDialog from './components/ConsentDialog.vue'
 import ContextPanel from './components/ContextPanel.vue'
 import HomePage from './components/HomePage.vue'
+import NicknameDialog from './components/NicknameDialog.vue'
+import RegisterDialog from './components/RegisterDialog.vue'
 import SafetyDialog from './components/SafetyDialog.vue'
 import { clearLegacyConversationHistory, titleFromMessage } from './conversation-store'
 import { getModule } from './modules'
@@ -25,10 +28,8 @@ const conversations = ref<Conversation[]>([])
 const activeConversationId = ref<string | null>(null)
 const authUser = ref<AuthUser | null>(null)
 const authReady = ref(false)
-const authOpen = ref(false)
-const authLoading = ref(false)
-const authError = ref('')
-const continueAfterLogin = ref(false)
+const loginRedirecting = ref(false)
+const loginNotice = ref('')
 const sending = ref(false)
 const serverActiveConversationId = ref<string | null>(null)
 
@@ -68,8 +69,10 @@ onMounted(async () => {
   clearLegacyConversationHistory()
   try {
     authUser.value = await restoreAuth()
+    if (authUser.value) await refreshProfile(authUser.value.id)
   } catch (error) {
-    authError.value = error instanceof Error ? error.message : '无法恢复登录状态，请稍后重试。'
+    // 未登录（无会话）是正常状态，静默处理，不打搅首次访客。
+    console.warn('恢复登录状态失败：', error)
   } finally {
     authReady.value = true
   }
@@ -77,6 +80,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   clearTimeout(conversationSyncTimer)
+  clearTimeout(loginNoticeTimer)
   syncActiveConversation()
 })
 
@@ -87,10 +91,93 @@ const resetConversation = () => {
   draft.value = ''
 }
 
-const openLogin = (thenStart = false) => {
-  continueAfterLogin.value = thenStart
-  authError.value = ''
-  authOpen.value = true
+let loginNoticeTimer: ReturnType<typeof setTimeout> | undefined
+
+const showLoginNotice = (message: string) => {
+  loginNotice.value = message
+  clearTimeout(loginNoticeTimer)
+  loginNoticeTimer = setTimeout(() => {
+    loginNotice.value = ''
+  }, 4200)
+}
+
+// 打开应用内登录弹窗（注册 / 登录 / 其他 CloudBase 方式）。
+const authDialogOpen = ref(false)
+const nicknameDialogOpen = ref(false)
+const registerDialogOpen = ref(false)
+
+const openLogin = () => {
+  if (!authConfigured) {
+    showLoginNotice('CloudBase 认证尚未配置，请检查部署环境变量。')
+    return
+  }
+  authDialogOpen.value = true
+}
+
+const onAuthSuccess = async () => {
+  try {
+    // 登录/注册成功后 SDK 已自动设置 credentials，但可能需要短暂时间持久化。
+    // restoreAuth 内部已包含重试逻辑（最多 2 次，每次间隔 400ms）。
+    const user = await restoreAuth()
+    if (user) {
+      authUser.value = user
+      await refreshProfile(user.id)
+    } else {
+      console.warn('[auth] 登录成功但 restoreAuth 未返回用户，可能 credentials 尚未就绪')
+    }
+  } catch (error) {
+    console.warn('恢复登录状态失败：', error)
+  }
+}
+
+const onRegisterSuccess = async () => {
+  // 注册成功后 CloudBase 已自动登录，直接恢复会话
+  await onAuthSuccess()
+}
+
+// 登录后从 user_profiles 读取用户主动设置的昵称和使用边界确认状态，覆盖默认值。
+const refreshProfile = async (uid: string) => {
+  try {
+    const profile = await loadUserProfile(uid)
+    if (profile?.displayName && authUser.value) {
+      authUser.value = { ...authUser.value, displayName: profile.displayName }
+    }
+    // 恢复使用边界状态：已确认过就不再重复弹窗
+    const restored = restoreConsent(profile)
+    if (restored !== 'unknown') {
+      psychConsent.value = restored
+    }
+  } catch (error) {
+    console.warn('读取用户资料失败：', error)
+  }
+}
+
+const openNickname = () => {
+  if (authUser.value) nicknameDialogOpen.value = true
+}
+
+const saveNickname = async (name: string) => {
+  if (!authUser.value) return
+  const clean = sanitizeDisplayName(name)
+  try {
+    await saveDisplayName(authUser.value.id, clean)
+    authUser.value = { ...authUser.value, displayName: clean || authUser.value.displayName }
+    showLoginNotice('称呼已保存。')
+  } catch (error) {
+    showLoginNotice(error instanceof Error ? error.message : '保存失败，请稍后重试。')
+  }
+}
+
+// Token 失效：本地清除登录态并重新要求登录。
+const handleSessionExpired = async () => {
+  try {
+    if (authConfigured && authUser.value) await signOut()
+  } catch {
+    // 已过期时登出可能失败，忽略。
+  }
+  authUser.value = null
+  showLoginNotice('登录状态已失效，请重新登录。')
+  openLogin()
 }
 
 const enterNewConversation = () => {
@@ -106,40 +193,10 @@ const enterNewConversation = () => {
 
 const startConversation = () => {
   if (!authUser.value) {
-    openLogin(true)
+    void openLogin()
     return
   }
   enterNewConversation()
-}
-
-const login = async (username: string, password: string) => {
-  authLoading.value = true
-  authError.value = ''
-  try {
-    authUser.value = await signIn(username, password)
-    authOpen.value = false
-    if (continueAfterLogin.value) enterNewConversation()
-  } catch (error) {
-    authError.value = error instanceof Error ? error.message : '登录失败，请稍后重试。'
-  } finally {
-    authLoading.value = false
-    continueAfterLogin.value = false
-  }
-}
-
-const register = async (username: string, password: string) => {
-  authLoading.value = true
-  authError.value = ''
-  try {
-    authUser.value = await signUp(username, password)
-    authOpen.value = false
-    if (continueAfterLogin.value) enterNewConversation()
-  } catch (error) {
-    authError.value = error instanceof Error ? error.message : '注册失败，请稍后重试。'
-  } finally {
-    authLoading.value = false
-    continueAfterLogin.value = false
-  }
 }
 
 const logout = async () => {
@@ -150,7 +207,6 @@ const logout = async () => {
     authUser.value = null
     psychConsent.value = 'unknown'
     consentOpen.value = false
-    authOpen.value = false
     conversations.value = []
     activeConversationId.value = null
     serverActiveConversationId.value = null
@@ -162,9 +218,17 @@ const logout = async () => {
   }
 }
 
-const chooseConsent = (consent: Exclude<PsychConsent, 'unknown'>) => {
+const chooseConsent = async (consent: Exclude<PsychConsent, 'unknown'>) => {
   psychConsent.value = consent
   consentOpen.value = false
+  // 持久化到 user_profiles（让刷新后不再重复弹窗）
+  if (authUser.value) {
+    try {
+      await saveConsent(authUser.value.id, consent)
+    } catch (error) {
+      console.warn('保存使用边界确认失败（不影响使用）：', error)
+    }
+  }
   const requested = pendingModuleId.value
   activeModuleId.value = consent === 'declined' && (requested === 'thought' || requested === 'emotion')
     ? 'study'
@@ -174,7 +238,7 @@ const chooseConsent = (consent: Exclude<PsychConsent, 'unknown'>) => {
 
 const selectModule = (id: ModuleId) => {
   if (!authUser.value) {
-    openLogin(true)
+    void openLogin()
     return
   }
   if (psychConsent.value === 'unknown') {
@@ -191,7 +255,7 @@ const selectModule = (id: ModuleId) => {
 
 const newChat = () => {
   if (!authUser.value) {
-    openLogin(true)
+    void openLogin()
     return
   }
   enterNewConversation()
@@ -218,7 +282,7 @@ const deleteConversation = (id: string) => {
 
 const sendMessage = async (preset?: string) => {
   if (!authUser.value) {
-    openLogin(true)
+    void openLogin()
     return
   }
   if (sending.value) return
@@ -269,9 +333,11 @@ const sendMessage = async (preset?: string) => {
     if (index >= 0) messages.value[index] = { ...messages.value[index], text: reply, status: 'done' }
     serverActiveConversationId.value = localConversationId
   } catch (error) {
-    const text = error instanceof Error
-      ? error.message
-      : '暂时没有连接上云小舒，请稍后重试。'
+    const errMsg = error instanceof Error ? error.message : ''
+    if (errMsg.includes('登录') || errMsg.includes('重新登录')) {
+      handleSessionExpired()
+    }
+    const text = errMsg || '暂时没有连接上云小舒，请稍后重试。'
     const index = messages.value.findIndex((message) => message.id === assistantMessageId)
     if (index >= 0) messages.value[index] = { ...messages.value[index], text, status: 'error' }
   } finally {
@@ -303,8 +369,10 @@ const sendMessage = async (preset?: string) => {
       v-if="activePage === 'home'"
       :user-name="userName || null"
       :auth-ready="authReady"
+      :login-redirecting="loginRedirecting"
       @start="startConversation"
-      @login="openLogin(false)"
+      @login="openLogin"
+      @account="openNickname"
       @logout="logout"
       @safety="safetyOpen = true"
     />
@@ -327,15 +395,20 @@ const sendMessage = async (preset?: string) => {
     </template>
   </div>
 
-  <AuthDialog
-    :open="authOpen"
-    :configured="authConfigured"
-    :loading="authLoading"
-    :error="authError"
-    @close="authOpen = false"
-    @login="login"
-    @register="register"
-  />
   <ConsentDialog :open="consentOpen" @choose="chooseConsent" />
   <SafetyDialog :open="safetyOpen" @close="safetyOpen = false" />
+  <AuthDialog :open="authDialogOpen" @success="onAuthSuccess" @register="registerDialogOpen = true; authDialogOpen = false" @close="authDialogOpen = false" />
+  <RegisterDialog
+    :open="registerDialogOpen"
+    @success="onRegisterSuccess"
+    @back="authDialogOpen = true; registerDialogOpen = false"
+    @close="registerDialogOpen = false"
+  />
+  <NicknameDialog
+    :open="nicknameDialogOpen"
+    :current="authUser?.displayName || ''"
+    @save="saveNickname"
+    @close="nicknameDialogOpen = false"
+  />
+  <p v-if="loginNotice" class="login-notice" role="alert">{{ loginNotice }}</p>
 </template>

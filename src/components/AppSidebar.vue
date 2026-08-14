@@ -24,6 +24,7 @@ const emit = defineEmits<{
   selectConversation: [id: string]
   deleteConversation: [id: string]
   safety: []
+  account: []
   logout: []
 }>()
 
@@ -101,11 +102,13 @@ const icons = {
 
     <div class="sidebar-footer">
       <div class="sidebar-account">
-        <span aria-hidden="true"><UserRound :size="18" :stroke-width="1.7" /></span>
-        <div>
-          <strong>{{ userName }}</strong>
-          <small>CloudBase 账号</small>
-        </div>
+        <button type="button" class="sidebar-account-id" title="设置你的称呼" @click="emit('account')">
+          <span aria-hidden="true"><UserRound :size="18" :stroke-width="1.7" /></span>
+          <div>
+            <strong>{{ userName }}</strong>
+            <small>点击设置称呼</small>
+          </div>
+        </button>
         <button type="button" title="退出登录" aria-label="退出登录" @click="emit('logout')">
           <LogOut :size="17" :stroke-width="1.8" />
         </button>

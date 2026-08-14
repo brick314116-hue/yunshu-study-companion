@@ -1,7 +1,8 @@
 import { getAccessToken } from './auth'
 
 const configuredEndpoint = import.meta.env.VITE_CHAT_API_URL?.trim()
-const endpoint = configuredEndpoint ||
+const endpoint =
+  configuredEndpoint ||
   'https://xueou-d7gwem7g2452a7ea3-1462770697.ap-shanghai.app.tcloudbase.com/nuwax/api/chat'
 
 type RecordValue = Record<string, unknown>
@@ -9,7 +10,7 @@ type RecordValue = Record<string, unknown>
 const isRecord = (value: unknown): value is RecordValue =>
   typeof value === 'object' && value !== null
 
-const readString = (value: unknown) => typeof value === 'string' ? value.trim() : ''
+const readString = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
 
 const replyFromJson = (value: unknown): string => {
   if (!isRecord(value)) return ''
@@ -29,7 +30,7 @@ const replyFromJson = (value: unknown): string => {
 const responseError = async (response: Response) => {
   let message = ''
   try {
-    const body = await response.clone().json() as unknown
+    const body = (await response.clone().json()) as unknown
     if (isRecord(body)) message = readString(body.error || body.message)
   } catch {
     // The status-specific message below is safer than returning an HTML error page.
@@ -44,7 +45,9 @@ const responseError = async (response: Response) => {
 
 export const requestChat = async (message: string, newConversation: boolean) => {
   if (!endpoint) throw new Error('对话接口尚未配置。')
+
   const accessToken = await getAccessToken()
+
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {

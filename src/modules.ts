@@ -7,7 +7,7 @@ export const modules: ModuleDefinition[] = [
     shortLabel: '对话',
     title: '今天想从哪里开始？',
     description: '可以从一项学习任务、一次认知练习，或此刻的感受开始。',
-    accent: '#5f7184',
+    accent: '#3f8fd2',
     starters: [
       '我有个学习任务不想开始，帮我拆成几个小步骤',
       '我今天心情不太好，想先聊一聊',
@@ -37,7 +37,7 @@ export const modules: ModuleDefinition[] = [
     shortLabel: '学习',
     title: '把任务变得可开始',
     description: '从目标、步骤和时间安排中选一个。',
-    accent: '#5f7184',
+    accent: '#3f8fd2',
     starters: [
       '帮我拆解今天的作业',
       '带我做一次错题复盘',
@@ -67,7 +67,7 @@ export const modules: ModuleDefinition[] = [
     shortLabel: '认知',
     title: '一步一步建构更完整的理解',
     description: '用ABC结构整理事件、想法、情绪、证据与替代解释。',
-    accent: '#5f7184',
+    accent: '#3f8fd2',
     starters: [
       '我总觉得这次考差就说明我不行',
       '带我做一次ABC认知练习',
@@ -97,7 +97,7 @@ export const modules: ModuleDefinition[] = [
     shortLabel: '调节',
     title: '先照顾此刻的自己',
     description: '从情绪命名、基础稳定化和学习任务联动中选择一步。',
-    accent: '#5f7184',
+    accent: '#3f8fd2',
     starters: [
       '我现在压力有点大',
       '教我一个现在就能做的放松方法',
@@ -132,7 +132,7 @@ export const modules: ModuleDefinition[] = [
     shortLabel: '记录',
     title: '管理你确认保存的短期记录',
     description: '结构化摘要默认不保存；确认后最多保留7天，也可以主动删除。',
-    accent: '#5f7184',
+    accent: '#3f8fd2',
     starters: [
       '我想记录一下今天的情绪',
       '查看我近7天仍未过期的记录',

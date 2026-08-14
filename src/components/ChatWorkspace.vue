@@ -145,8 +145,7 @@ const handleKeydown = (event: KeyboardEvent) => {
               text="正在思考..."
             />
             <p v-else>{{ message.text }}</p>
-            <span v-if="message.status === 'streaming'" class="typing-caret" aria-label="正在回复" />
-            <small v-else-if="message.status === 'stopped'">已停止生成</small>
+            <small v-if="message.status === 'stopped'">已停止生成</small>
             <small v-else-if="message.status === 'error'">回复失败，请稍后重试</small>
           </div>
         </article>

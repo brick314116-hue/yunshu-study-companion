@@ -22,12 +22,14 @@ import ScrollStack from './ScrollStack.vue'
 defineProps<{
   userName: string | null
   authReady: boolean
+  loginRedirecting?: boolean
 }>()
 
 const emit = defineEmits<{
   start: []
   safety: []
   login: []
+  account: []
   logout: []
 }>()
 
@@ -100,20 +102,35 @@ const conversationFlow = [
           <ShieldCheck :size="18" :stroke-width="1.7" />
           <span>安全求助</span>
         </button>
+        <div v-if="userName" class="home-account">
+          <button
+            type="button"
+            class="home-account-button"
+            title="设置你的称呼"
+            @click="emit('account')"
+          >
+            <UserRound :size="17" :stroke-width="1.7" />
+            <span>{{ userName }}</span>
+          </button>
+          <button
+            type="button"
+            class="home-account-logout"
+            title="退出登录"
+            aria-label="退出登录"
+            @click="emit('logout')"
+          >
+            <LogOut :size="15" :stroke-width="1.8" aria-hidden="true" />
+          </button>
+        </div>
         <button
-          v-if="userName"
+          v-else
           type="button"
-          class="home-account-button"
-          title="退出登录"
-          @click="emit('logout')"
+          class="home-login-button"
+          :disabled="!authReady || loginRedirecting"
+          @click="emit('login')"
         >
-          <UserRound :size="17" :stroke-width="1.7" />
-          <span>{{ userName }}</span>
-          <LogOut :size="15" :stroke-width="1.8" aria-hidden="true" />
-        </button>
-        <button v-else type="button" class="home-login-button" :disabled="!authReady" @click="emit('login')">
           <LogIn :size="17" :stroke-width="1.8" />
-          <span>{{ authReady ? '登录' : '正在检查...' }}</span>
+          <span>{{ !authReady ? '正在检查...' : loginRedirecting ? '正在前往登录...' : '登录' }}</span>
         </button>
       </div>
     </header>
@@ -123,7 +140,19 @@ const conversationFlow = [
         <h1 id="home-title">云舒学伴</h1>
         <p class="home-slogan">云舒少年忧，学伴逐光游</p>
         <p class="home-summary">面向初中生的学习与心理支持助手。从任务启动、认知建构到情绪调节，陪你把眼前的问题说清楚、拆小，再由你选择下一步。</p>
-        <BorderGlow>
+        <BorderGlow
+          class-name="start-glow"
+          :edge-sensitivity="30"
+          glow-color="200 80 70"
+          background-color="#ffffff"
+          :border-radius="14"
+          :glow-radius="40"
+          :glow-intensity="1.0"
+          :cone-spread="25"
+          :animated="false"
+          :colors="['#74b9ef', '#a29bfe', '#fd79a8']"
+          :fill-opacity="0.5"
+        >
           <button type="button" class="start-chat-button" @click="emit('start')">
             <MessageCircleMore :size="22" :stroke-width="1.8" />
             <span>{{ userName ? '开始对话' : '登录后开始对话' }}</span>
@@ -149,10 +178,7 @@ const conversationFlow = [
         </header>
 
         <ScrollStack class="capability-list">
-          <article
-            class="brand-intro-card"
-            :style="{ '--stack-index': 0, '--stack-top': '92px' }"
-          >
+          <article :style="{ '--stack-index': 0, '--stack-top': '92px' }">
             <header class="capability-card-header">
               <span class="capability-icon">
                 <Cloud :size="22" :stroke-width="1.6" aria-hidden="true" />
@@ -160,7 +186,25 @@ const conversationFlow = [
               <span>认识云小舒</span>
             </header>
             <h3>云舒学伴（云小舒）</h3>
-            <p>依托云朵温柔意象，搭建学业辅导与轻量化情绪陪伴双体系，依托AI技术提高学生学业水平，缓解青春期情绪压力，助力青少年健康成长。</p>
+            <p>以云朵的温柔意象和 AI 技术，搭建学业辅导与轻量化情绪陪伴的双体系——帮你提升学业表现，缓解青春期的情绪压力，陪你健康成长。</p>
+            <ul>
+              <li>
+                <Check :size="15" :stroke-width="2" aria-hidden="true" />
+                <span>学业辅导与轻量化情绪陪伴双体系</span>
+              </li>
+              <li>
+                <Check :size="15" :stroke-width="2" aria-hidden="true" />
+                <span>AI 技术支撑，提升学业表现</span>
+              </li>
+              <li>
+                <Check :size="15" :stroke-width="2" aria-hidden="true" />
+                <span>缓解情绪压力，陪伴健康成长</span>
+              </li>
+            </ul>
+            <div class="capability-prompt">
+              <MessageCircleMore :size="17" :stroke-width="1.7" aria-hidden="true" />
+              <span><small>你可以这样开口</small>云小舒，介绍一下你自己，说说你能帮我做什么。</span>
+            </div>
           </article>
           <article
             v-for="(item, index) in capabilities"
