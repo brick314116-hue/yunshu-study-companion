@@ -276,15 +276,14 @@ const wrapperStyle = computed(() => ({
 
 .stepper-dot.active {
   color: #fff;
-  background: var(--accent);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px rgb(74 156 221 / 16%);
+  background: var(--ink);
+  border-color: var(--ink);
 }
 
 .stepper-dot.complete {
   color: #fff;
-  background: var(--accent-strong);
-  border-color: var(--accent-strong);
+  background: var(--ink);
+  border-color: var(--ink);
 }
 
 .stepper-dot-core {
@@ -321,7 +320,7 @@ const wrapperStyle = computed(() => ({
   position: absolute;
   inset: 0 auto 0 0;
   width: 0;
-  background: var(--accent-strong);
+  background: var(--ink);
   transition: width 0.4s ease;
 }
 
@@ -400,29 +399,27 @@ const wrapperStyle = computed(() => ({
 .stepper-btn-back {
   padding: 11px 18px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-muted);
-  background: transparent;
-  border: 1px solid var(--line-strong);
-  border-radius: 11px;
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 10px;
   cursor: pointer;
-  transition:
-    color 0.18s ease,
-    border-color 0.18s ease,
-    background-color 0.18s ease;
+  transition: all 0.18s ease;
 }
 
 .stepper-btn-back:hover:not(:disabled) {
-  color: var(--accent-strong);
-  background: var(--accent-faint);
-  border-color: var(--accent);
+  color: var(--text);
+  background: var(--surface-soft);
+  border-color: var(--text-soft);
 }
 
 .stepper-btn-back:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
+/* 主按钮：墨色，无渐变无辉光 */
 .stepper-btn-next {
   display: inline-flex;
   flex: 1;
@@ -432,25 +429,27 @@ const wrapperStyle = computed(() => ({
   min-width: 132px;
   padding: 12px 22px;
   font-size: 14.5px;
-  font-weight: 600;
+  font-weight: 500;
   color: #fff;
-  background: linear-gradient(135deg, #74b9ef, #4a9cdd);
+  background: var(--ink);
   border: 0;
-  border-radius: 11px;
+  border-radius: 10px;
   cursor: pointer;
-  transition:
-    opacity 0.18s ease,
-    transform 0.12s ease,
-    box-shadow 0.18s ease;
+  transition: all 0.18s ease;
 }
 
 .stepper-btn-next:hover:not(:disabled) {
-  box-shadow: 0 6px 18px rgb(74 156 221 / 28%);
+  background: var(--ink-hover);
   transform: translateY(-1px);
 }
 
+.stepper-btn-next:active:not(:disabled) {
+  transform: translateY(0);
+  background: var(--ink-active);
+}
+
 .stepper-btn-next:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 

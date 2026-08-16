@@ -53,8 +53,12 @@ const setup = () => {
   const timeScale = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     ? 0
     : Math.max(0, props.timeScale)
-  const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1))
-  const renderer = new Renderer({ dpr, alpha: props.transparent, antialias: true })
+  // 移动端（粗指针）性能预算：着色器是逐像素光线步进，步数×像素数决定每帧开销。
+  // 手机 GPU 上把步进 100→40、DPR 限 1、关 MSAA，总量约降一个数量级。
+  const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches
+  const maxSteps = isCoarsePointer ? 40 : 100
+  const dpr = Math.min(isCoarsePointer ? 1 : 2, Math.max(1, window.devicePixelRatio || 1))
+  const renderer = new Renderer({ dpr, alpha: props.transparent, antialias: !isCoarsePointer })
   const gl = renderer.gl
 
   gl.disable(gl.DEPTH_TEST)
@@ -100,6 +104,7 @@ const setup = () => {
     uniform float uMinAxis;
     uniform float uPxScale;
     uniform float uTimeScale;
+    uniform int uMaxSteps;
 
     vec4 tanh4(vec4 x) {
       vec4 e2x = exp(2.0 * x);
@@ -143,6 +148,7 @@ const setup = () => {
       }
 
       for (int i = 0; i < 100; i++) {
+        if (i >= uMaxSteps) break;
         p = vec3(f, z);
         p.xz = p.xz * wob;
         p = uRot * p;
@@ -191,6 +197,7 @@ const setup = () => {
       uMinAxis: { value: Math.min(baseHalf, height) },
       uPxScale: { value: 1 / ((gl.drawingBufferHeight || 1) * 0.1 * scale) },
       uTimeScale: { value: timeScale },
+      uMaxSteps: { value: maxSteps },
     },
   })
   const mesh = new Mesh(gl, { geometry, program })

@@ -21,8 +21,8 @@ const emit = defineEmits<{
               <Sparkles :size="19" :stroke-width="1.7" />
             </span>
             <div>
-              <strong>{{ module.title }}</strong>
-              <p>{{ module.description }}</p>
+              <strong>{{ module.label }}</strong>
+              <p>从这里开始一个练习</p>
             </div>
           </header>
 

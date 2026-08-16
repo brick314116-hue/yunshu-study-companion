@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { authConfigured, restoreAuth, signOut } from './auth'
 import { loadUserProfile, saveDisplayName, sanitizeDisplayName, saveConsent, restoreConsent } from './user-profile'
 import { requestChat } from './chat-api'
-import AppSidebar from './components/AppSidebar.vue'
+import AppTopbar from './components/AppTopbar.vue'
 import AuthDialog from './components/AuthDialog.vue'
 import ChatWorkspace from './components/ChatWorkspace.vue'
 import ConsentDialog from './components/ConsentDialog.vue'
@@ -14,11 +14,10 @@ import RegisterDialog from './components/RegisterDialog.vue'
 import SafetyDialog from './components/SafetyDialog.vue'
 import { clearLegacyConversationHistory, titleFromMessage } from './conversation-store'
 import { getModule } from './modules'
-import type { AuthUser, ChatMessage, Conversation, ModuleId, PsychConsent } from './types'
+import type { AppTab, AuthUser, ChatMessage, Conversation, PsychConsent } from './types'
 
-const activePage = ref<'home' | 'chat'>('home')
-const activeModuleId = ref<ModuleId>('chat')
-const pendingModuleId = ref<ModuleId>('chat')
+const activeTab = ref<AppTab>('home')
+const pendingTab = ref<AppTab>('study')
 const messages = ref<ChatMessage[]>([])
 const draft = ref('')
 const consentOpen = ref(false)
@@ -28,12 +27,11 @@ const conversations = ref<Conversation[]>([])
 const activeConversationId = ref<string | null>(null)
 const authUser = ref<AuthUser | null>(null)
 const authReady = ref(false)
-const loginRedirecting = ref(false)
 const loginNotice = ref('')
 const sending = ref(false)
 const serverActiveConversationId = ref<string | null>(null)
 
-const activeModule = computed(() => getModule(activeModuleId.value))
+const activeModule = computed(() => getModule(activeTab.value === 'home' ? 'study' : activeTab.value))
 const userName = computed(() => authUser.value?.displayName ?? '')
 const now = () =>
   new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit' }).format(new Date())
@@ -47,7 +45,7 @@ const syncActiveConversation = () => {
 
   const updated: Conversation = {
     ...current,
-    moduleId: activeModuleId.value,
+    moduleId: activeTab.value === 'home' ? current.moduleId : activeTab.value,
     messages: cloneMessages(messages.value),
     updatedAt: new Date().toISOString(),
   }
@@ -180,18 +178,38 @@ const handleSessionExpired = async () => {
   openLogin()
 }
 
+// 顶部导航切换：进入模块页前需要登录与使用边界确认。
+const selectTab = (tab: AppTab) => {
+  if (tab !== 'home') {
+    if (!authUser.value) {
+      void openLogin()
+      return
+    }
+    if (psychConsent.value === 'unknown') {
+      pendingTab.value = tab
+      consentOpen.value = true
+      return
+    }
+    if (psychConsent.value === 'declined' && (tab === 'thought' || tab === 'emotion')) return
+  }
+  syncActiveConversation()
+  activeTab.value = tab
+}
+
 const enterNewConversation = () => {
   resetConversation()
-  pendingModuleId.value = psychConsent.value === 'declined' ? 'study' : 'chat'
+  const fallback: AppTab = psychConsent.value === 'declined'
+    ? 'study'
+    : activeTab.value === 'home' ? 'study' : activeTab.value
   if (psychConsent.value === 'unknown') {
+    pendingTab.value = fallback
     consentOpen.value = true
     return
   }
-  activeModuleId.value = pendingModuleId.value
-  activePage.value = 'chat'
+  activeTab.value = fallback
 }
 
-const startConversation = () => {
+const newChat = () => {
   if (!authUser.value) {
     void openLogin()
     return
@@ -212,9 +230,7 @@ const logout = async () => {
     serverActiveConversationId.value = null
     messages.value = []
     draft.value = ''
-    activeModuleId.value = 'chat'
-    pendingModuleId.value = 'chat'
-    activePage.value = 'home'
+    activeTab.value = 'home'
   }
 }
 
@@ -229,36 +245,10 @@ const chooseConsent = async (consent: Exclude<PsychConsent, 'unknown'>) => {
       console.warn('保存使用边界确认失败（不影响使用）：', error)
     }
   }
-  const requested = pendingModuleId.value
-  activeModuleId.value = consent === 'declined' && (requested === 'thought' || requested === 'emotion')
+  const requested = pendingTab.value
+  activeTab.value = consent === 'declined' && (requested === 'thought' || requested === 'emotion')
     ? 'study'
     : requested
-  activePage.value = 'chat'
-}
-
-const selectModule = (id: ModuleId) => {
-  if (!authUser.value) {
-    void openLogin()
-    return
-  }
-  if (psychConsent.value === 'unknown') {
-    pendingModuleId.value = id
-    consentOpen.value = true
-    return
-  }
-  if (psychConsent.value === 'declined' && (id === 'thought' || id === 'emotion')) return
-
-  activePage.value = 'chat'
-  activeModuleId.value = id
-  syncActiveConversation()
-}
-
-const newChat = () => {
-  if (!authUser.value) {
-    void openLogin()
-    return
-  }
-  enterNewConversation()
 }
 
 const selectConversation = (id: string) => {
@@ -269,9 +259,7 @@ const selectConversation = (id: string) => {
   activeConversationId.value = conversation.id
   messages.value = cloneMessages(conversation.messages)
   draft.value = ''
-  activeModuleId.value = conversation.moduleId
-  pendingModuleId.value = conversation.moduleId
-  activePage.value = 'chat'
+  activeTab.value = conversation.moduleId
 }
 
 const deleteConversation = (id: string) => {
@@ -304,7 +292,7 @@ const sendMessage = async (preset?: string) => {
     conversations.value = [{
       id,
       title: titleFromMessage(text),
-      moduleId: activeModuleId.value,
+      moduleId: activeTab.value === 'home' ? 'study' : activeTab.value,
       messages: cloneMessages(messages.value),
       updatedAt: new Date().toISOString(),
     }, ...conversations.value]
@@ -348,36 +336,27 @@ const sendMessage = async (preset?: string) => {
 </script>
 
 <template>
-  <div class="app-shell" :class="{ 'home-mode': activePage === 'home' }">
-    <AppSidebar
-      v-if="activePage === 'chat' && authUser"
-      :active-module="activeModuleId"
+  <div class="app-shell">
+    <AppTopbar
+      :active-tab="activeTab"
       :conversations="conversations"
       :active-conversation-id="activeConversationId"
       :psych-consent="psychConsent"
       :user-name="userName"
-      @home="activePage = 'home'"
-      @select="selectModule"
+      :auth-ready="authReady"
+      @select="selectTab"
       @new-chat="newChat"
       @select-conversation="selectConversation"
       @delete-conversation="deleteConversation"
       @safety="safetyOpen = true"
-      @logout="logout"
-    />
-
-    <HomePage
-      v-if="activePage === 'home'"
-      :user-name="userName || null"
-      :auth-ready="authReady"
-      :login-redirecting="loginRedirecting"
-      @start="startConversation"
-      @login="openLogin"
       @account="openNickname"
       @logout="logout"
-      @safety="safetyOpen = true"
+      @login="openLogin"
     />
 
-    <template v-else-if="authUser">
+    <HomePage v-if="activeTab === 'home'" :user-name="userName || null" @start="newChat" @enter="selectTab" />
+
+    <div v-else-if="authUser" class="chat-columns">
       <ChatWorkspace
         v-model="draft"
         :module="activeModule"
@@ -386,13 +365,15 @@ const sendMessage = async (preset?: string) => {
         :sending="sending"
         @send="sendMessage()"
         @starter="sendMessage"
-        @new-chat="newChat"
-        @logout="logout"
-        @safety="safetyOpen = true"
       />
 
       <ContextPanel :module="activeModule" @prompt="sendMessage" />
-    </template>
+    </div>
+
+    <footer class="app-footer">
+      <p>可以按自己的节奏慢慢说，一次只梳理当下最在意的一小部分，云小舒永远在这里。</p>
+      <span v-if="activeTab !== 'home'" class="app-watermark" aria-hidden="true">云舒少年忧，学伴逐光游</span>
+    </footer>
   </div>
 
   <ConsentDialog :open="consentOpen" @choose="chooseConsent" />

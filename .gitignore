@@ -13,3 +13,5 @@ dist/
 *.zip
 .DS_Store
 Thumbs.db
+.zcode/
+deploy-package/

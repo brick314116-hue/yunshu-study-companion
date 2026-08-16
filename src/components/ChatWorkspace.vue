@@ -1,14 +1,10 @@
 <script setup lang="ts">
 import {
   ArrowUp,
-  BookOpenCheck,
-  Heart,
+  Check,
   LoaderCircle,
-  LogOut,
   MessageCircleMore,
-  Plus,
-  ShieldCheck,
-  Stars,
+  MessageSquareText,
 } from '@lucide/vue'
 import { nextTick, ref, watch } from 'vue'
 import type { ChatMessage, ModuleDefinition } from '../types'
@@ -27,9 +23,6 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
   send: []
   starter: [prompt: string]
-  newChat: []
-  safety: []
-  logout: []
 }>()
 
 const messageList = ref<HTMLElement | null>(null)
@@ -57,45 +50,6 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 <template>
   <main class="chat-workspace">
-    <header class="chat-header">
-      <div class="chat-header-title">
-        <div>
-          <strong>{{ module.label }}</strong>
-          <span>学习支持、认知建构与轻量情绪调节</span>
-        </div>
-      </div>
-      <div class="mobile-header-actions">
-        <button
-          class="mobile-new-chat-button"
-          type="button"
-          title="新对话"
-          aria-label="新对话"
-          @click="emit('newChat')"
-        >
-          <Plus :size="19" :stroke-width="1.8" />
-        </button>
-        <button
-          class="mobile-safety-button"
-          type="button"
-          title="安全求助"
-          aria-label="打开安全求助"
-          @click="emit('safety')"
-        >
-          <ShieldCheck :size="19" :stroke-width="1.8" />
-          <span>求助</span>
-        </button>
-        <button
-          class="mobile-account-button"
-          type="button"
-          :title="`退出 ${userName}`"
-          aria-label="退出登录"
-          @click="emit('logout')"
-        >
-          <LogOut :size="18" :stroke-width="1.8" />
-        </button>
-      </div>
-    </header>
-
     <section
       ref="messageList"
       class="message-list"
@@ -105,21 +59,23 @@ const handleKeydown = (event: KeyboardEvent) => {
       :aria-busy="sending"
     >
       <div v-if="messages.length === 0" class="welcome-state">
-        <div class="welcome-visual" :style="{ '--module-accent': module.accent }">
-          <BookOpenCheck :size="32" :stroke-width="1.5" />
-          <Heart class="welcome-heart" :size="17" :stroke-width="1.8" />
-          <Stars class="welcome-stars" :size="18" :stroke-width="1.6" />
-        </div>
-        <SplitText :text="module.title" />
-        <p>{{ module.description }}</p>
-        <div class="starter-grid">
+        <SplitText :text="module.title" class="welcome-title" />
+        <p class="welcome-description">{{ module.description }}</p>
+        <ul class="welcome-features">
+          <li v-for="feature in module.features" :key="feature">
+            <Check :size="14" :stroke-width="2" aria-hidden="true" />
+            <span>{{ feature }}</span>
+          </li>
+        </ul>
+        <div class="welcome-example-wrap">
+          <small>示例输入</small>
           <button
-            v-for="starter in module.starters"
-            :key="starter"
+            class="welcome-example"
             type="button"
-            @click="emit('starter', starter)"
+            @click="emit('starter', module.exampleInput)"
           >
-            <span>{{ starter }}</span>
+            <MessageSquareText :size="16" :stroke-width="1.8" aria-hidden="true" />
+            <span>{{ module.exampleInput }}</span>
             <ArrowUp :size="16" :stroke-width="1.8" aria-hidden="true" />
           </button>
         </div>
@@ -159,7 +115,7 @@ const handleKeydown = (event: KeyboardEvent) => {
           rows="1"
           maxlength="1000"
           :disabled="sending"
-          :placeholder="`和云小舒聊聊${module.id === 'chat' ? '' : module.label}`"
+          :placeholder="`和云小舒聊聊${module.label}`"
           aria-label="输入消息"
           @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
           @keydown="handleKeydown"
@@ -179,7 +135,6 @@ const handleKeydown = (event: KeyboardEvent) => {
           </button>
         </div>
       </div>
-      <p>重要决定请与可信任的成年人共同确认；结构化记录仅在你确认后保存。</p>
     </footer>
   </main>
 </template>

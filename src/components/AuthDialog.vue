@@ -289,49 +289,21 @@ watch(mode, () => { error.value = '' })
   width: 44px;
   height: 44px;
   place-items: center;
-  color: var(--accent-strong);
-  background: var(--accent-soft);
+  color: var(--text);
+  background: var(--surface-muted);
   border-radius: 10px;
 }
 .auth-config-note {
   margin-top: 14px;
   padding: 12px 14px;
   font-size: 13px;
-  line-height: 1.7;
-  color: #8b4b55;
+  line-height: 1.6;
+  color: var(--danger);
   background: var(--danger-soft);
-  border: 1px solid #f0d6da;
+  border: 1px solid #F2D9DF;
   border-radius: 10px;
 }
 .auth-form { margin-top: 6px; }
-
-/* ─── Tab 切换 ─── */
-.auth-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  padding: 4px;
-  margin-bottom: 16px;
-  background: var(--accent-faint);
-  border-radius: 12px;
-}
-.auth-tabs button {
-  padding: 8px 0;
-  font-size: 13px;
-  color: var(--text-muted);
-  background: transparent;
-  border: 0;
-  border-radius: 9px;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  white-space: nowrap;
-}
-.auth-tabs button.active {
-  color: var(--accent-strong);
-  font-weight: 600;
-  background: #ffffff;
-  box-shadow: 0 4px 14px rgb(53 116 168 / 10%);
-}
 
 /* ─── 表单字段 ─── */
 .auth-field {
@@ -350,17 +322,20 @@ watch(mode, () => { error.value = '' })
   width: 100%;
   box-sizing: border-box;
   padding: 12px 14px;
-  font-size: 15px;
+  font-size: 14.5px;
   color: var(--text);
-  background: #fbfdff;
-  border: 1px solid #d9e8f5;
-  border-radius: 11px;
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 10px;
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.auth-field input::placeholder {
+  color: var(--text-soft);
 }
 .auth-field input:focus {
   outline: none;
-  border-color: var(--accent-strong);
-  box-shadow: 0 0 0 3px rgb(74 156 221 / 16%);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(61 125 214 / 12%);
 }
 .auth-field input:disabled {
   opacity: 0.55;
@@ -370,7 +345,7 @@ watch(mode, () => { error.value = '' })
   margin: 2px 0 10px;
   font-size: 12px;
   line-height: 1.5;
-  color: #c45a5a;
+  color: var(--danger);
 }
 
 /* ─── 验证码行 ─── */
@@ -384,44 +359,49 @@ watch(mode, () => { error.value = '' })
   min-width: 0;
   box-sizing: border-box;
   padding: 12px 14px;
-  font-size: 15px;
+  font-size: 14.5px;
   color: var(--text);
-  background: #fbfdff;
-  border: 1px solid #d9e8f5;
-  border-radius: 11px;
-  transition: border-color 0.18s ease;
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.code-input-row input::placeholder {
+  color: var(--text-soft);
 }
 .code-input-row input:focus {
   outline: none;
-  border-color: var(--accent-strong);
-  box-shadow: 0 0 0 3px rgb(74 156 221 / 16%);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(61 125 214 / 12%);
 }
+/* 发送验证码：文字按钮形态，不与输入框抢夺视觉 */
 .code-send-btn {
   flex-shrink: 0;
-  padding: 0 14px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 0 12px;
+  font-size: 13.5px;
+  font-weight: 500;
   white-space: nowrap;
-  color: #fff;
-  background: linear-gradient(135deg, #74b9ef, #4a9cdd);
-  border: 0;
-  border-radius: 11px;
+  color: var(--accent);
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 10px;
   cursor: pointer;
-  transition: opacity 0.18s ease, transform 0.12s ease;
+  transition: all 0.18s ease;
 }
 .code-send-btn:hover:not(:disabled) {
-  opacity: 0.88;
-  transform: translateY(-0.5px);
+  color: var(--accent-strong);
+  border-color: var(--text-soft);
+  background: var(--surface-soft);
 }
 .code-send-btn:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 .code-hint {
   margin: 2px 0 8px;
   font-size: 11.5px;
   line-height: 1.5;
-  color: var(--text-muted);
+  color: var(--text-soft);
 }
 
 /* ─── 错误 / 按钮 / 底部 ─── */
@@ -429,7 +409,7 @@ watch(mode, () => { error.value = '' })
   margin: 4px 0 12px;
   font-size: 13px;
   line-height: 1.6;
-  color: #b5495b;
+  color: var(--danger);
 }
 .dialog-actions.single .primary {
   display: inline-flex;
@@ -438,7 +418,7 @@ watch(mode, () => { error.value = '' })
   gap: 8px;
   width: 100%;
   padding: 13px 0;
-  font-size: 15.5px;
+  font-size: 15px;
 }
 .btn-spinner {
   width: 17px;
@@ -458,25 +438,27 @@ watch(mode, () => { error.value = '' })
   gap: 8px;
   margin-top: 14px;
 }
+/* 文字按钮 */
 .auth-link {
   font-size: 13.5px;
-  font-weight: 600;
-  color: var(--accent-strong);
+  font-weight: 400;
+  color: var(--accent);
   background: transparent;
   border: 0;
   cursor: pointer;
   padding: 4px 0;
+  transition: color 0.18s ease;
 }
-.auth-link:hover { text-decoration: underline; }
+.auth-link:hover { color: var(--accent-strong); text-decoration: underline; }
 .auth-alt {
-  font-size: 12px;
-  color: var(--accent-strong);
+  font-size: 12.5px;
+  color: var(--accent);
   background: transparent;
   border: 0;
-  border-top: 1px solid #eef4fa;
+  border-top: 1px solid var(--line);
   cursor: pointer;
   padding: 10px 0 0;
   width: 100%;
 }
-.auth-alt:hover { text-decoration: underline; opacity: 0.78; }
+.auth-alt:hover { color: var(--accent-strong); text-decoration: underline; }
 </style>

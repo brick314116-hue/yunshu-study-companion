@@ -72,8 +72,8 @@ const save = () => {
   width: 44px;
   height: 44px;
   place-items: center;
-  color: var(--accent-strong);
-  background: var(--accent-soft);
+  color: var(--text);
+  background: var(--surface-muted);
   border-radius: 10px;
 }
 .nick-field {
@@ -90,22 +90,25 @@ const save = () => {
   width: 100%;
   box-sizing: border-box;
   padding: 12px 14px;
-  font-size: 15px;
+  font-size: 14.5px;
   color: var(--text);
-  background: #fbfdff;
-  border: 1px solid #d9e8f5;
-  border-radius: 11px;
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 10px;
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.nick-field input::placeholder {
+  color: var(--text-soft);
 }
 .nick-field input:focus {
   outline: none;
-  border-color: var(--accent-strong);
-  box-shadow: 0 0 0 3px rgb(74 156 221 / 18%);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(61 125 214 / 12%);
 }
 .nick-hint {
   margin: 0 0 14px;
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text-soft);
 }
 .dialog-actions.single .primary {
   display: inline-flex;

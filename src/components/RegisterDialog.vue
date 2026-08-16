@@ -228,12 +228,8 @@ const close = () => {
     @close="!submitted && emit('close')"
   >
     <div class="dialog-surface">
-      <div
-        class="auth-mark"
-        aria-hidden="true"
-        style="background: linear-gradient(135deg, #e9f4fd, #d4ecf9)"
-      >
-        <UserRound :size="24" :stroke-width="1.7" style="color: #3a8bcf" />
+      <div class="auth-mark" aria-hidden="true">
+        <UserRound :size="24" :stroke-width="1.7" />
       </div>
       <h2 id="reg-title">{{ title }}</h2>
       <p class="dialog-lead">{{ lead }}</p>
@@ -357,18 +353,18 @@ const close = () => {
   width: 44px;
   height: 44px;
   place-items: center;
-  color: var(--accent-strong);
-  background: var(--accent-soft);
+  color: var(--text);
+  background: var(--surface-muted);
   border-radius: 10px;
 }
 .auth-config-note {
   margin-top: 14px;
   padding: 12px 14px;
   font-size: 13px;
-  line-height: 1.7;
-  color: #8b4b55;
+  line-height: 1.6;
+  color: var(--danger);
   background: var(--danger-soft);
-  border: 1px solid #f0d6da;
+  border: 1px solid #F2D9DF;
   border-radius: 10px;
 }
 .auth-form {
@@ -392,19 +388,20 @@ const close = () => {
   width: 100%;
   box-sizing: border-box;
   padding: 12px 14px;
-  font-size: 15px;
+  font-size: 14.5px;
   color: var(--text);
-  background: #fbfdff;
-  border: 1px solid #d9e8f5;
-  border-radius: 11px;
-  transition:
-    border-color 0.18s ease,
-    box-shadow 0.18s ease;
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.auth-field input::placeholder {
+  color: var(--text-soft);
 }
 .auth-field input:focus {
   outline: none;
-  border-color: var(--accent-strong);
-  box-shadow: 0 0 0 3px rgb(74 156 221 / 16%);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(61 125 214 / 12%);
 }
 .auth-field input:disabled {
   opacity: 0.55;
@@ -414,16 +411,16 @@ const close = () => {
   margin: 2px 0 10px;
   font-size: 12px;
   line-height: 1.5;
-  color: #c45a5a;
+  color: var(--danger);
 }
 .field-hint {
   margin: 2px 0 12px;
   font-size: 12px;
   line-height: 1.5;
-  color: var(--text-muted);
+  color: var(--text-soft);
 }
 .field-hint.ok {
-  color: #2f9e6b;
+  color: var(--success);
 }
 
 /* ─── 验证码行 ─── */
@@ -437,46 +434,48 @@ const close = () => {
   min-width: 0;
   box-sizing: border-box;
   padding: 12px 14px;
-  font-size: 15px;
+  font-size: 14.5px;
   color: var(--text);
-  background: #fbfdff;
-  border: 1px solid #d9e8f5;
-  border-radius: 11px;
-  transition: border-color 0.18s ease;
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.code-input-row input::placeholder {
+  color: var(--text-soft);
 }
 .code-input-row input:focus {
   outline: none;
-  border-color: var(--accent-strong);
-  box-shadow: 0 0 0 3px rgb(74 156 221 / 16%);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(61 125 214 / 12%);
 }
 .code-send-btn {
   flex-shrink: 0;
-  padding: 0 14px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 0 12px;
+  font-size: 13.5px;
+  font-weight: 500;
   white-space: nowrap;
-  color: #fff;
-  background: linear-gradient(135deg, #74b9ef, #4a9cdd);
-  border: 0;
-  border-radius: 11px;
+  color: var(--accent);
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 10px;
   cursor: pointer;
-  transition:
-    opacity 0.18s ease,
-    transform 0.12s ease;
+  transition: all 0.18s ease;
 }
 .code-send-btn:hover:not(:disabled) {
-  opacity: 0.88;
-  transform: translateY(-0.5px);
+  color: var(--accent-strong);
+  border-color: var(--text-soft);
+  background: var(--surface-soft);
 }
 .code-send-btn:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 .code-hint {
   margin: 2px 0 8px;
   font-size: 11.5px;
   line-height: 1.5;
-  color: var(--text-muted);
+  color: var(--text-soft);
 }
 
 /* ─── 错误 / 底部 ─── */
@@ -484,7 +483,7 @@ const close = () => {
   margin: 12px 0 0;
   font-size: 13px;
   line-height: 1.6;
-  color: #b5495b;
+  color: var(--danger);
 }
 .auth-footer {
   display: flex;
@@ -496,15 +495,15 @@ const close = () => {
 .auth-alt {
   width: 100%;
   padding: 10px 0 0;
-  font-size: 12px;
-  color: var(--accent-strong);
+  font-size: 12.5px;
+  color: var(--accent);
   background: transparent;
   border: 0;
-  border-top: 1px solid #eef4fa;
+  border-top: 1px solid var(--line);
   cursor: pointer;
 }
 .auth-alt:hover {
+  color: var(--accent-strong);
   text-decoration: underline;
-  opacity: 0.78;
 }
 </style>

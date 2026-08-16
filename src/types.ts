@@ -1,4 +1,6 @@
-export type ModuleId = 'chat' | 'study' | 'thought' | 'emotion' | 'growth'
+export type ModuleId = 'study' | 'thought' | 'emotion'
+
+export type AppTab = 'home' | ModuleId
 
 export type PsychConsent = 'unknown' | 'accepted' | 'declined'
 
@@ -32,6 +34,8 @@ export interface ModuleDefinition {
   title: string
   description: string
   accent: string
+  features: string[]
+  exampleInput: string
   starters: string[]
   tools: Array<{
     title: string
