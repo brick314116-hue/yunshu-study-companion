@@ -589,7 +589,37 @@ function parseAgentStream(raw) {
       publicMessage: '智能体服务启动超时，请稍后重试。',
     })
   }
-  return extractAction(reply)
+  // 回合里出现过工具调用时，/chat 的 SSE 流常在首个 tool_use 处截断，需回查会话消息拿完整答案。
+  const usedTools = /<tool|markdown-custom-process/.test(raw)
+  return { ...extractAction(reply), usedTools }
+}
+
+// 工具调用回合的完整答案在女娲侧服务端继续执行，/chat 流拿不到。
+// 回查会话消息接口，取最后一条已结束（ENDTURN）的助手消息作为权威回复。
+async function fetchFinalReply(config, conversationId) {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    if (attempt) await new Promise((resolve) => setTimeout(resolve, 2500))
+    try {
+      const res = await fetch(`${config.baseUrl}/api/v1/chat/${conversationId}/messages?limit=30`, {
+        headers: { Authorization: config.authorization },
+      })
+      if (!res.ok) continue
+      const body = await res.json().catch(() => null)
+      const list = Array.isArray(body?.data) ? body.data : []
+      for (let i = list.length - 1; i >= 0; i--) {
+        const m = list[i]
+        const role = String(m?.role || m?.messageType || '').toUpperCase()
+        if (role !== 'ASSISTANT') continue
+        const finished = m?.finished === true || String(m?.finishReason || '').toUpperCase() === 'ENDTURN'
+        if (!finished) continue
+        const text = stripToolCallNoise(String(m?.text || ''))
+        if (text) return text
+      }
+    } catch {
+      /* 重试 */
+    }
+  }
+  return ''
 }
 
 async function handleChat(req, res) {
@@ -692,7 +722,12 @@ async function handleChat(req, res) {
   }
   clearTimeout(timeout)
   const parsed = parseAgentStream(raw)
-  if (!parsed.reply) {
+  let reply = parsed.reply
+  if (parsed.usedTools) {
+    const full = await fetchFinalReply(config, session.conversationId)
+    if (full) reply = full
+  }
+  if (!reply) {
     sendJson(res, 502, { error: '智能体没有返回可显示的内容。' })
     return
   }
@@ -703,7 +738,7 @@ async function handleChat(req, res) {
   } catch (error) {
     logError('session-touch', id, error)
   }
-  const payload = { reply: parsed.reply }
+  const payload = { reply }
   if (parsed.action) payload.action = parsed.action
   sendJson(res, 200, payload)
 }
