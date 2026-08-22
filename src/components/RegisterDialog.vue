@@ -36,6 +36,9 @@ const countdown = ref(0)
 let countdownTimer: ReturnType<typeof setInterval> | undefined
 const CODE_COOLDOWN = 60
 
+// getVerification 返回的 verification_id，注册时必须回传才能校验验证码
+const verificationId = ref('')
+
 const startCountdown = () => {
   countdown.value = CODE_COOLDOWN
   clearInterval(countdownTimer)
@@ -55,7 +58,7 @@ const sendCode = async () => {
   loading.value = true
   error.value = ''
   try {
-    await sendSmsCode(phone.value.trim())
+    verificationId.value = await sendSmsCode(phone.value.trim())
     startCountdown()
   } catch (e) {
     error.value = e instanceof Error ? e.message : '验证码发送失败'
@@ -136,7 +139,7 @@ const title = computed(() => (step.value === 1 ? '验证手机号' : '创建你�
 const lead = computed(() =>
   step.value === 1
     ? '我们需要先验证你的手机号，确保每个账号真实有效。'
-    : '设置一个用户名和密码完成注册。用户名将作为你在云舒学伴中的称呼。',
+    : '设置一个用户名和密码完成注册。用户名将作为你在云舒学伴中的称呼，请勿使用真实姓名。',
 )
 
 const register = async () => {
@@ -158,7 +161,7 @@ const register = async () => {
       }
 
       // 手机号 + 验证码注册（带密码），CloudBase 会自动登录并生成账号。
-      await signUpWithPhone(phone.value.trim(), code.value.trim(), regPassword.value)
+      await signUpWithPhone(phone.value.trim(), code.value.trim(), regPassword.value, verificationId.value)
       registrationStage.value = 'registered'
     }
 
@@ -201,6 +204,7 @@ watch(
       registrationStage.value = 'new'
       phone.value = ''
       code.value = ''
+      verificationId.value = ''
       regUsername.value = ''
       regPassword.value = ''
       regPasswordConfirm.value = ''
@@ -301,7 +305,7 @@ const close = () => {
                 v-model="regUsername"
                 type="text"
                 autocomplete="username"
-                placeholder="2-32 个字符，中英文数字均可"
+                placeholder="字母/数字，可含 - _，不可为纯数字"
                 :disabled="loading"
               />
             </label>

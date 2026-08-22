@@ -8,15 +8,22 @@ import AuthDialog from './components/AuthDialog.vue'
 import ChatWorkspace from './components/ChatWorkspace.vue'
 import ConsentDialog from './components/ConsentDialog.vue'
 import ContextPanel from './components/ContextPanel.vue'
-import HomePage from './components/HomePage.vue'
+import IntroPage from './components/IntroPage.vue'
+import LandingPage from './components/LandingPage.vue'
+import MoodCheckinDialog from './components/MoodCheckinDialog.vue'
 import NicknameDialog from './components/NicknameDialog.vue'
 import RegisterDialog from './components/RegisterDialog.vue'
 import SafetyDialog from './components/SafetyDialog.vue'
 import { clearLegacyConversationHistory, titleFromMessage } from './conversation-store'
 import { getModule } from './modules'
-import type { AppTab, AuthUser, ChatMessage, Conversation, PsychConsent } from './types'
+import type { AppTab, AuthUser, ChatMessage, Conversation, ModuleId, PsychConsent } from './types'
 
-const activeTab = ref<AppTab>('home')
+// 落地页（landing）与认识页（intro）不对应任何模块，进入时免登录免同意确认。
+// 其余 Tab（ModuleId）需要登录和使用边界确认，且 declined 后只放行 study。
+const isNonModuleTab = (tab: AppTab): tab is 'landing' | 'intro' => tab === 'landing' || tab === 'intro'
+const asModuleId = (tab: AppTab): ModuleId => (isNonModuleTab(tab) ? 'study' : tab)
+
+const activeTab = ref<AppTab>('landing')
 const pendingTab = ref<AppTab>('study')
 const messages = ref<ChatMessage[]>([])
 const draft = ref('')
@@ -29,9 +36,8 @@ const authUser = ref<AuthUser | null>(null)
 const authReady = ref(false)
 const loginNotice = ref('')
 const sending = ref(false)
-const serverActiveConversationId = ref<string | null>(null)
 
-const activeModule = computed(() => getModule(activeTab.value === 'home' ? 'study' : activeTab.value))
+const activeModule = computed(() => getModule(asModuleId(activeTab.value)))
 const userName = computed(() => authUser.value?.displayName ?? '')
 const now = () =>
   new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit' }).format(new Date())
@@ -45,7 +51,7 @@ const syncActiveConversation = () => {
 
   const updated: Conversation = {
     ...current,
-    moduleId: activeTab.value === 'home' ? current.moduleId : activeTab.value,
+    moduleId: isNonModuleTab(activeTab.value) ? current.moduleId : activeTab.value,
     messages: cloneMessages(messages.value),
     updatedAt: new Date().toISOString(),
   }
@@ -103,6 +109,22 @@ const showLoginNotice = (message: string) => {
 const authDialogOpen = ref(false)
 const nicknameDialogOpen = ref(false)
 const registerDialogOpen = ref(false)
+const moodCheckinOpen = ref(false)
+
+// 表单类工具入口：能进入情绪模块本身已要求登录 + consent=accepted，
+// 这里再兜底一次登录态，避免会话过期后点击报一堆错。
+const runToolAction = (action: 'mood-checkin') => {
+  if (action !== 'mood-checkin') return
+  if (!authUser.value) {
+    void openLogin()
+    return
+  }
+  moodCheckinOpen.value = true
+}
+
+const onMoodCheckinSubmitted = () => {
+  showLoginNotice('情绪打卡已保存，7 天后自动删除。')
+}
 
 const openLogin = () => {
   if (!authConfigured) {
@@ -178,9 +200,9 @@ const handleSessionExpired = async () => {
   openLogin()
 }
 
-// 顶部导航切换：进入模块页前需要登录与使用边界确认。
+// 顶部导航切换：进入模块页前需要登录与使用边界确认；落地页/认识页免校验。
 const selectTab = (tab: AppTab) => {
-  if (tab !== 'home') {
+  if (!isNonModuleTab(tab)) {
     if (!authUser.value) {
       void openLogin()
       return
@@ -190,23 +212,34 @@ const selectTab = (tab: AppTab) => {
       consentOpen.value = true
       return
     }
-    if (psychConsent.value === 'declined' && (tab === 'thought' || tab === 'emotion')) return
+    // 不同意情绪与认知功能时，只保留学业模块（记录管理含情绪数据，一并收起）。
+    if (psychConsent.value === 'declined' && tab !== 'study') return
   }
   syncActiveConversation()
   activeTab.value = tab
+  applyModulePrefill(tab)
+}
+
+// 模块预填：记录查询等对话式入口，在空输入框里预置提示词，用户可直接发送或修改。
+const applyModulePrefill = (tab: AppTab) => {
+  if (isNonModuleTab(tab)) return
+  if (messages.value.length > 0 || draft.value.trim()) return
+  const prefill = getModule(tab).prefill
+  if (prefill) draft.value = prefill
 }
 
 const enterNewConversation = () => {
   resetConversation()
   const fallback: AppTab = psychConsent.value === 'declined'
     ? 'study'
-    : activeTab.value === 'home' ? 'study' : activeTab.value
+    : isNonModuleTab(activeTab.value) ? 'study' : activeTab.value
   if (psychConsent.value === 'unknown') {
     pendingTab.value = fallback
     consentOpen.value = true
     return
   }
   activeTab.value = fallback
+  applyModulePrefill(fallback)
 }
 
 const newChat = () => {
@@ -227,26 +260,29 @@ const logout = async () => {
     consentOpen.value = false
     conversations.value = []
     activeConversationId.value = null
-    serverActiveConversationId.value = null
     messages.value = []
     draft.value = ''
-    activeTab.value = 'home'
+    activeTab.value = 'landing'
   }
 }
 
+// 先持久化、成功后再放行：保存失败时保持 unknown，下次进入会重新弹窗，
+// 避免前端已开放而服务端无记录的撕裂。
 const chooseConsent = async (consent: Exclude<PsychConsent, 'unknown'>) => {
-  psychConsent.value = consent
   consentOpen.value = false
-  // 持久化到 user_profiles（让刷新后不再重复弹窗）
   if (authUser.value) {
     try {
       await saveConsent(authUser.value.id, consent)
     } catch (error) {
-      console.warn('保存使用边界确认失败（不影响使用）：', error)
+      psychConsent.value = 'unknown'
+      console.warn('保存使用边界确认失败：', error)
+      showLoginNotice('保存使用边界选择失败，请检查网络后重试；稍后会再次询问。')
+      return
     }
   }
+  psychConsent.value = consent
   const requested = pendingTab.value
-  activeTab.value = consent === 'declined' && (requested === 'thought' || requested === 'emotion')
+  activeTab.value = consent === 'declined' && requested !== 'study' && !isNonModuleTab(requested)
     ? 'study'
     : requested
 }
@@ -277,8 +313,6 @@ const sendMessage = async (preset?: string) => {
   const text = (preset ?? draft.value).trim()
   if (!text) return
 
-  const newConversation = !activeConversationId.value
-
   messages.value.push({
     id: crypto.randomUUID(),
     role: 'user',
@@ -292,7 +326,7 @@ const sendMessage = async (preset?: string) => {
     conversations.value = [{
       id,
       title: titleFromMessage(text),
-      moduleId: activeTab.value === 'home' ? 'study' : activeTab.value,
+      moduleId: asModuleId(activeTab.value),
       messages: cloneMessages(messages.value),
       updatedAt: new Date().toISOString(),
     }, ...conversations.value]
@@ -301,7 +335,11 @@ const sendMessage = async (preset?: string) => {
   }
   draft.value = ''
 
+  // 一个本地会话对应一个女娲会话：首条消息时在服务端建会话，之后按
+  // conversationKey 续聊；切换回历史对话时上下文互不覆盖。
   const localConversationId = activeConversationId.value
+  const conversation = conversations.value.find((item) => item.id === localConversationId)
+  const newConversation = !conversation?.serverSynced
   const assistantMessageId = crypto.randomUUID()
   messages.value.push({
     id: assistantMessageId,
@@ -313,13 +351,16 @@ const sendMessage = async (preset?: string) => {
   sending.value = true
 
   try {
-    const reply = await requestChat(
-      text,
-      newConversation || serverActiveConversationId.value !== localConversationId,
-    )
+    const result = await requestChat(text, newConversation, localConversationId)
+    const reply = typeof result === 'string' ? result : result.reply
     const index = messages.value.findIndex((message) => message.id === assistantMessageId)
     if (index >= 0) messages.value[index] = { ...messages.value[index], text: reply, status: 'done' }
-    serverActiveConversationId.value = localConversationId
+    const synced = conversations.value.find((item) => item.id === localConversationId)
+    if (synced) synced.serverSynced = true
+    // 智能体识别到表单触发意图 → 弹本地表单
+    if (typeof result !== 'string' && result.action === 'mood-checkin' && psychConsent.value === 'accepted') {
+      moodCheckinOpen.value = true
+    }
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : ''
     if (errMsg.includes('登录') || errMsg.includes('重新登录')) {
@@ -354,7 +395,9 @@ const sendMessage = async (preset?: string) => {
       @login="openLogin"
     />
 
-    <HomePage v-if="activeTab === 'home'" :user-name="userName || null" @start="newChat" @enter="selectTab" />
+    <LandingPage v-if="activeTab === 'landing'" :user-name="userName || null" @start="newChat" />
+
+    <IntroPage v-else-if="activeTab === 'intro'" :user-name="userName || null" @start="newChat" @enter="selectTab" />
 
     <div v-else-if="authUser" class="chat-columns">
       <ChatWorkspace
@@ -367,12 +410,12 @@ const sendMessage = async (preset?: string) => {
         @starter="sendMessage"
       />
 
-      <ContextPanel :module="activeModule" @prompt="sendMessage" />
+      <ContextPanel :module="activeModule" @prompt="sendMessage" @action="runToolAction" />
     </div>
 
-    <footer class="app-footer">
+    <footer v-if="!isNonModuleTab(activeTab)" class="app-footer">
       <p>可以按自己的节奏慢慢说，一次只梳理当下最在意的一小部分，云小舒永远在这里。</p>
-      <span v-if="activeTab !== 'home'" class="app-watermark" aria-hidden="true">云舒少年忧，学伴逐光游</span>
+      <span class="app-watermark" aria-hidden="true">云舒少年忧，学伴逐光游</span>
     </footer>
   </div>
 
@@ -390,6 +433,11 @@ const sendMessage = async (preset?: string) => {
     :current="authUser?.displayName || ''"
     @save="saveNickname"
     @close="nicknameDialogOpen = false"
+  />
+  <MoodCheckinDialog
+    :open="moodCheckinOpen"
+    @submitted="onMoodCheckinSubmitted"
+    @close="moodCheckinOpen = false"
   />
   <p v-if="loginNotice" class="login-notice" role="alert">{{ loginNotice }}</p>
 </template>

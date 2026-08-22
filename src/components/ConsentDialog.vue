@@ -60,7 +60,7 @@ onMounted(() => {
             <div>
               <Database :size="18" :stroke-width="1.7" />
               <span
-                ><strong>原始对话默认不保存</strong
+                ><strong>本网站不保存对话记录</strong
                 ><small>历史只在本次打开期间显示；刷新或退出后即清空。</small></span
               >
             </div>

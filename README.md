@@ -19,7 +19,8 @@
 2. **静态托管上传路径是 `/xueyu`**
    webapps 应用的 `AppPath=/xueyu`，构建后把 `dist/` 整个上传到托管目录 `/xueyu`（不是托管根 `/`，根目录是系统文件）。
 3. **云函数必须带 `node_modules` 一起部署**
-   函数依赖 `@cloudbase/js-sdk`、`ws`。用 CloudBase 工具 `updateFunctionCode` 时，`functionRootPath` 指向包含 `xinyu-chat/` 子目录的**父目录**，函数名填 `nuwax-chat-proxy`。
+   函数依赖 `@cloudbase/js-sdk`、`@cloudbase/signature-nodejs`、`ws`。用 CloudBase 工具 `updateFunctionCode` 时，`functionRootPath` 指向包含 `xinyu-chat/` 子目录的**父目录**，函数名填 `nuwax-chat-proxy`。
+   `@cloudbase/signature-nodejs` 是 js-sdk 在 Node 端做请求签名的必需依赖（已在 package.json 声明）：云函数环境自带腾讯云临时密钥，js-sdk 检测到密钥后走签名请求路径，缺这个包会在运行时报「缺少依赖 @cloudbase/signature-nodejs」，可能表现为数据库写入静默失败。
 4. **改完源码必须重新部署**
    只改本地文件不部署，线上仍是旧逻辑。
 
@@ -43,7 +44,7 @@ VITE_CHAT_API_URL=https://xueou-d7gwem7g2452a7ea3-1462770697.ap-shanghai.app.tcl
 | `NUWAX_SKILL_IDS` | 可选；逗号分隔的 Skill ID，网页端手动选择 Skill 时填写 |
 | `NUWAX_AGENT_MODE` | 可选；默认 `yolo`，与女娲网页端对话模式保持一致 |
 | `NUWAX_REQUEST_TIMEOUT_MS` | 可选；默认 `180000`，范围 30000-240000 |
-| `USER_ID_SECRET` / `SESSION_SECRET` | 用于 HMAC 派生 subject_id / session 文档 id |
+| `USER_ID_SECRET` | 用于 HMAC 派生 subject_id / 会话文档 id（64 位 hex） |
 | `ALLOWED_ORIGIN` | 允许的 CORS 来源，值为前端 webapps 域名 |
 
 > 加 `DEPLOYTS` 之类的时间戳变量可以强制所有实例冷启动，避免旧实例残留（可选）。
@@ -86,3 +87,25 @@ npm run build                 # = vue-tsc -b && vite build，产出 dist/
 - 用已注册账号登录后发消息，应正常回复。
 - 控制台不应再出现 404 / 401 / CORS / `auth.then is not a function`。
 - 若仍 404：多半是旧 JS 缓存，清缓存强刷；若仍 401：检查网关鉴权开关与函数 `authenticatedUserId` 逻辑。
+
+## 数据表不更新排查（「能对话但 user_profiles / agent_sessions 是空表」）
+
+**先跑自诊断**：浏览器登录后直接访问
+`https://xueou-d7gwem7g2452a7ea3-1462770697.ap-shanghai.app.tcloudbase.com/nuwax/api/chat?resource=db-check`
+（或已登录状态的页面里 `fetch(VITE_CHAT_API_URL + '?resource=db-check', {headers:{Authorization:'Bearer '+token}})`）。
+返回的 JSON 会逐步报告 `profiles-read / sessions-probe-write / sessions-probe-read / sessions-probe-delete` 四步的成败与错误码，同时给出函数实际连接的 `envId / databaseInstance / databaseName`——**先核对这三项和你控制台里看的是否同一个实例**。
+
+按失败步骤对号入座：
+
+| 失败步骤 | 含义 | 处理 |
+| --- | --- | --- |
+| `envId/instance` 与控制台不一致 | 写入落在另一个环境/实例 | 修正函数环境变量 `CLOUDBASE_ENV_ID`、`CLOUDBASE_DATABASE_INSTANCE` |
+| `sessions-probe-write` 失败，错误含 permission / 权限 / signature | 函数内 js-sdk 身份被安全规则拦下，或缺签名依赖 | 确认部署包里含 `@cloudbase/signature-nodejs`（见部署铁律 3）；仍失败则临时把 `agent_sessions` 权限放开为「所有用户可读写」验证链路，再收紧并由函数 Admin 写入 |
+| 全部 ok 但控制台仍看不到数据 | 看错了实例/集合 | 用 db-check 返回的 instance 去控制台对应实例找 |
+
+**函数日志关键字**：云函数日志里按 `DB-` 过滤可看到每次 `SESSION-CREATE / SESSION-SAVE-OK / PROFILE-WRITE-OK`；`SESSION-SAVE-OK` 缺失而对话正常，说明会话映射写入失败被容错放行（此时每次发言都会新建女娲会话、上下文丢失），按上表处理根因。
+
+## 会话与会话变量（前端 ↔ 云函数 ↔ 女娲）
+
+- 前端每个本地会话有唯一 `conversationKey`（本地会话 id），云函数按 `HMAC(uid, key)` 在 `agent_sessions` 里一一对应地存女娲 `conversationId`；切换历史对话不会再互相覆盖上下文。
+- 云函数每次对话都会把 `subject_id`（uid 的 HMAC 匿名身份）、`display_name`、`consent_version`、`psych_consent`（accepted/declined/unknown）作为会话变量下发给女娲。**女娲侧的情绪/认知/记录增删改查工作流必须检查 `psych_consent=accepted` 且使用 `subject_id` 过滤数据表**，declined/unknown 时拒绝并引导学业功能。

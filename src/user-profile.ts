@@ -103,5 +103,8 @@ export async function saveDisplayName(_uid: string, displayName: string): Promis
 export function restoreConsent(profile: UserProfile | null): PsychConsent {
   if (!profile?.consentAt) return 'unknown'
   if (profile.consentVersion !== CONSENT_VERSION) return 'unknown'
-  return profile.consentChoice || 'accepted'
+  // choice 缺失说明历史数据不完整，宁可重弹一次确认，也不能默认当作已同意。
+  return profile.consentChoice === 'accepted' || profile.consentChoice === 'declined'
+    ? profile.consentChoice
+    : 'unknown'
 }

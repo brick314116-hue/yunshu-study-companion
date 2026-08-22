@@ -1,6 +1,6 @@
-export type ModuleId = 'study' | 'thought' | 'emotion'
+export type ModuleId = 'study' | 'thought' | 'emotion' | 'records'
 
-export type AppTab = 'home' | ModuleId
+export type AppTab = 'landing' | 'intro' | ModuleId
 
 export type PsychConsent = 'unknown' | 'accepted' | 'declined'
 
@@ -25,6 +25,8 @@ export interface Conversation {
   moduleId: ModuleId
   messages: ChatMessage[]
   updatedAt: string
+  /** 已在服务端建立对应的女娲会话（首次发送成功后置 true）。 */
+  serverSynced?: boolean
 }
 
 export interface ModuleDefinition {
@@ -37,9 +39,13 @@ export interface ModuleDefinition {
   features: string[]
   exampleInput: string
   starters: string[]
+  /** 进入模块时若输入框为空则预填的提示词（用于记录查询等对话式入口）。 */
+  prefill?: string
   tools: Array<{
     title: string
     description: string
     prompt: string
+    /** 表单类工具：点击后打开本地表单而非发送聊天消息。 */
+    action?: 'mood-checkin'
   }>
 }

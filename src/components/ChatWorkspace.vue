@@ -113,7 +113,7 @@ const handleKeydown = (event: KeyboardEvent) => {
         <textarea
           :value="modelValue"
           rows="1"
-          maxlength="1000"
+          maxlength="500"
           :disabled="sending"
           :placeholder="`和云小舒聊聊${module.label}`"
           aria-label="输入消息"
@@ -121,6 +121,11 @@ const handleKeydown = (event: KeyboardEvent) => {
           @keydown="handleKeydown"
         />
         <div class="composer-actions">
+          <span
+            v-if="modelValue.length >= 400"
+            class="composer-count"
+            :class="{ full: modelValue.length >= 500 }"
+          >{{ modelValue.length }}/500</span>
           <span class="composer-mode">{{ module.shortLabel }}</span>
           <button
             class="send-button"

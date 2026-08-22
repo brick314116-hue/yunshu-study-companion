@@ -43,7 +43,18 @@ const responseError = async (response: Response) => {
   return message || '暂时没有连接上云小舒，请稍后重试。'
 }
 
-export const requestChat = async (message: string, newConversation: boolean) => {
+export type ChatAction = 'mood-checkin'
+
+export interface ChatResponse {
+  reply: string
+  action?: ChatAction
+}
+
+export const requestChat = async (
+  message: string,
+  newConversation: boolean,
+  conversationKey?: string,
+): Promise<ChatResponse> => {
   if (!endpoint) throw new Error('对话接口尚未配置。')
 
   const accessToken = await getAccessToken()
@@ -58,6 +69,8 @@ export const requestChat = async (message: string, newConversation: boolean) => 
       message,
       agent: 'main',
       newConversation,
+      // 本地会话 id：服务端以此把每个本地会话映射到独立女娲会话。
+      ...(conversationKey ? { conversationKey } : {}),
     }),
   })
 
@@ -75,5 +88,6 @@ export const requestChat = async (message: string, newConversation: boolean) => 
   }
   const reply = replyFromJson(body)
   if (!reply) throw new Error('智能体没有返回可显示的内容，请重新发送。')
-  return reply
+  const action = isRecord(body) && readString(body.action) === 'mood-checkin' ? 'mood-checkin' : undefined
+  return action ? { reply, action } : { reply }
 }

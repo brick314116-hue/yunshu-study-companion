@@ -229,7 +229,8 @@ export const signInWithPhoneCode = async (
   try {
     if (typeof auth.signInWithSms === 'function') {
       const result = await auth.signInWithSms({
-        verificationInfo: { verification_id: verificationId || '' },
+        // is_user: true 表示该手机号按「已注册用户登录」处理（注册流程另走 signUp）。
+        verificationInfo: { verification_id: verificationId || '', is_user: true },
         verificationCode: raw,
         phoneNum: phone,
       })
@@ -340,11 +341,13 @@ export const sendSmsCode = async (phoneNumber: string): Promise<string> => {
 // ─── 注册 ──────────────────────────────────────────────────
 
 // 手机号 + 验证码注册（可选设置密码）。注册成功后自动登录。
-// 本环境用 signUp({ phone_number, verification_code, password })（supabase-like 新接口）。
+// 本环境用 signUp({ phone_number, verification_code, verification_id, password })
+// （supabase-like 新接口）；verification_id 来自 getVerification，必须回传才能校验验证码。
 export const signUpWithPhone = async (
   phoneNumber: string,
   phoneCode: string,
   password?: string,
+  verificationId?: string,
 ): Promise<void> => {
   const auth = await getRawAuth()
   const phone = phoneNumber.trim()
@@ -352,6 +355,7 @@ export const signUpWithPhone = async (
   try {
     if (typeof auth.signUp === 'function') {
       const body: RecordValue = { phone_number: phone, verification_code: raw }
+      if (verificationId) body.verification_id = verificationId
       if (password) body.password = password
       const result = await auth.signUp(body)
       const error = resultError(result)
@@ -465,7 +469,6 @@ export const getAccessToken = async (): Promise<string> => {
         const token =
           readString(result.accessToken) || readString(result.access_token) || readString(result.token)
         if (token) {
-          console.log('[auth] getAccessToken via getAccessToken():', token.slice(0, 12) + '...')
           return token
         }
       }
@@ -483,7 +486,6 @@ export const getAccessToken = async (): Promise<string> => {
         const sess = isRecord(data.session) ? data.session : data
         const token = readString(sess.access_token) || readString(sess.accessToken)
         if (token) {
-          console.log('[auth] getAccessToken via getSession():', token.slice(0, 12) + '...')
           return token
         }
       }
@@ -504,7 +506,6 @@ export const getAccessToken = async (): Promise<string> => {
           readString(state.token) ||
           readString(state.credential)
         if (token) {
-          console.log('[auth] getAccessToken via getLoginState():', token.slice(0, 12) + '...')
           return token
         }
       }

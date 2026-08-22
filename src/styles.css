@@ -1266,6 +1266,18 @@ a:focus-visible {
   font-weight: 500;
 }
 
+/* 字数计数：接近服务端 500 字上限时出现，满了变警示色 */
+.composer-count {
+  font-size: 11px;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.composer-count.full {
+  color: var(--danger, #c0453e);
+  font-weight: 600;
+}
+
 /* 发送：对话区唯一主按钮（墨色） */
 .send-button {
   display: grid;
@@ -1869,13 +1881,64 @@ a:focus-visible {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* 移动端：右侧工具面板改为聊天区顶部的横向工具条，保证工具/练习入口可用 */
   .context-panel {
+    order: -1;
+    overflow: visible;
+    background: var(--surface-soft);
+    border-left: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .context-content {
+    min-height: 0;
+    padding: 10px 12px;
+  }
+
+  .context-module > header,
+  .context-note,
+  .tool-list .section-label {
     display: none;
+  }
+
+  .tool-list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px 0 6px;
+    scrollbar-width: none;
+  }
+
+  .tool-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tool-list button {
+    flex: 0 0 auto;
+    min-height: 0;
+    padding: 9px 14px;
+    align-items: center;
+    justify-content: center;
+    background: #FFFFFF;
+    border: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .tool-list button small,
+  .tool-list button svg {
+    display: none;
+  }
+
+  .tool-list button strong {
+    font-size: 13px;
   }
 }
 
-@media (max-width: 960px) {
-  /* 手机端顶栏改为两行：第一行品牌+操作按钮，第二行整行标签页，避免单行挤压重叠 */
+@media (max-width: 1600px) {
+  /* 顶栏改为两行：第一行品牌+操作按钮，第二行整行标签页，避免单行挤压重叠
+     （6 标签 + 4 操作按钮单行实测需约 1550px，1440-1600 区间仍会撞车，故降级点设 1600px） */
   .app-topbar {
     height: auto;
     padding: 8px 12px 0;
@@ -1915,6 +1978,12 @@ a:focus-visible {
     grid-column: 1 / -1;
     width: 100%;
     margin-top: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .topbar-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .topbar-tab {
@@ -2035,6 +2104,24 @@ a:focus-visible {
   }
 }
 
+@media (max-width: 700px) {
+  /* 移动端：标签不再等分挤压，改为自然宽度横向滚动，保证六个标签都完整可读 */
+  .topbar-tab {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    padding: 10px 10px;
+  }
+
+  .topbar-actions {
+    gap: 4px;
+  }
+
+  .topbar-action-button {
+    width: 32px;
+    height: 32px;
+  }
+}
+
 @media (max-width: 600px) {
   .topbar-tab {
     gap: 5px;
@@ -2047,6 +2134,29 @@ a:focus-visible {
 
   .topbar-actions {
     gap: 3px;
+  }
+
+  /* 聊天区移动端：收窄留白、放宽气泡、输入区贴底并预留安全区 */
+  .message-thread {
+    padding: 20px 14px 28px;
+    gap: 18px;
+  }
+
+  .message-content {
+    max-width: 88%;
+  }
+
+  .welcome-state {
+    padding: 28px 16px 40px;
+  }
+
+  .composer-area {
+    padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+  }
+
+  /* 16px 防止 iOS 聚焦输入框时自动放大页面 */
+  .composer-box textarea {
+    font-size: 16px;
   }
 
   /* 窄屏隐藏底部栏右侧水印，避免与居中固定语挤在一行 */

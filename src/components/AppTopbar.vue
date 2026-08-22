@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   Brain,
+  ClipboardList,
   Cloud,
   HeartHandshake,
   History,
@@ -37,14 +38,16 @@ const props = defineProps<{
   authReady: boolean
 }>()
 
+// 不同意情绪与认知功能时只保留学业模块；「我的记录」含情绪数据，一并隐藏。
 const visibleModules = computed(() => props.psychConsent === 'declined'
-  ? modules.filter((item) => item.id !== 'thought' && item.id !== 'emotion')
+  ? modules.filter((item) => item.id === 'study')
   : modules)
 
 const moduleIcons: Record<ModuleId, Component> = {
   study: NotebookPen,
   thought: Brain,
   emotion: HeartHandshake,
+  records: ClipboardList,
 }
 
 const historyOpen = ref(false)
@@ -84,7 +87,7 @@ const onSelectConversation = (id: string) => {
 
 <template>
   <header class="app-topbar">
-    <button class="topbar-brand" type="button" aria-label="返回首页" @click="emit('select', 'home')">
+    <button class="topbar-brand" type="button" aria-label="返回首页" @click="emit('select', 'landing')">
       <div class="brand-mark" aria-hidden="true">
         <Cloud :size="20" :stroke-width="1.8" />
       </div>
@@ -98,9 +101,19 @@ const onSelectConversation = (id: string) => {
       <button
         type="button"
         class="topbar-tab"
-        :class="{ active: activeTab === 'home' }"
-        :aria-current="activeTab === 'home' ? 'page' : undefined"
-        @click="emit('select', 'home')"
+        :class="{ active: activeTab === 'landing' }"
+        :aria-current="activeTab === 'landing' ? 'page' : undefined"
+        @click="emit('select', 'landing')"
+      >
+        <Cloud :size="17" :stroke-width="1.8" aria-hidden="true" />
+        <span>首页</span>
+      </button>
+      <button
+        type="button"
+        class="topbar-tab"
+        :class="{ active: activeTab === 'intro' }"
+        :aria-current="activeTab === 'intro' ? 'page' : undefined"
+        @click="emit('select', 'intro')"
       >
         <Cloud :size="17" :stroke-width="1.8" aria-hidden="true" />
         <span>认识云小舒</span>

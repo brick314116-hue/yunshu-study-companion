@@ -8,7 +8,13 @@ defineProps<{
 
 const emit = defineEmits<{
   prompt: [value: string]
+  action: [value: 'mood-checkin']
 }>()
+
+const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
+  if (tool.action) emit('action', tool.action)
+  else emit('prompt', tool.prompt)
+}
 </script>
 
 <template>
@@ -32,7 +38,7 @@ const emit = defineEmits<{
               v-for="tool in module.tools"
               :key="tool.title"
               type="button"
-              @click="emit('prompt', tool.prompt)"
+              @click="onToolClick(tool)"
             >
               <span>
                 <strong>{{ tool.title }}</strong>
@@ -46,7 +52,7 @@ const emit = defineEmits<{
 
       <div class="context-note">
         <strong>使用边界</strong>
-        <p>不进行心理诊断、测评或风险分级；原始对话默认不保存，结构化摘要须经你确认且最多保留7天。</p>
+        <p>不进行心理诊断、测评或风险分级；本网站不保存对话记录，结构化摘要须经你确认且最多保留7天。</p>
       </div>
     </div>
   </aside>

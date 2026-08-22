@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@cloudbase/js-sdk": "^3.7.1",
+    "@cloudbase/signature-nodejs": "^1.0.0",
     "ws": "^8.18.0"
   },
   "scripts": {

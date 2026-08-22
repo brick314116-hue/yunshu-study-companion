@@ -11,8 +11,10 @@ const REQUEST_TIMEOUT_MS = Number.isFinite(configuredTimeoutMs)
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000
 const RATE_LIMIT_MAX = 30
 const AGENT_KEY = 'main'
-const BUILD_VERSION = '2026-08-14-upstream-timeout-sandbox'
+const BUILD_VERSION = '2026-08-19-profile-probe'
 const DEFAULT_DATABASE_INSTANCE = 'tnt-nsoau01qw'
+const DEFAULT_CHECKIN_WORKFLOW_ID = 5257662
+const CHECKIN_TIMEOUT_MS = 30 * 1000
 const requestCounts = new Map()
 let databaseFactory
 
@@ -37,20 +39,17 @@ function requestOrigin(req) {
   return allowedOrigins().includes(origin) ? origin : null
 }
 
-function isRateLimited(req) {
-  const forwarded = req.headers['x-forwarded-for']
-  const ip = (Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(',')[0])
-    ?.trim() || req.socket.remoteAddress || 'unknown'
+function isRateLimited(key) {
   const now = Date.now()
   if (requestCounts.size > 10000) {
-    for (const [key, value] of requestCounts) {
-      if (value.resetAt <= now) requestCounts.delete(key)
+    for (const [k, value] of requestCounts) {
+      if (value.resetAt <= now) requestCounts.delete(k)
     }
     if (requestCounts.size > 10000) requestCounts.clear()
   }
-  const current = requestCounts.get(ip)
+  const current = requestCounts.get(key)
   if (!current || current.resetAt <= now) {
-    requestCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
+    requestCounts.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
     return false
   }
   current.count += 1
@@ -169,6 +168,11 @@ function logError(scope, id, error) {
   console.error(`[xinyu-chat ${id}] ${scope} code=${diagnostic.code} message=${diagnostic.message} sdkRequestId=${diagnostic.sdkRequestId}`)
 }
 
+// 数据库操作留痕：排查「能对话但表不更新」时，在函数日志里按 DB- 关键字过滤。
+function logDb(id, action, detail) {
+  console.log(`[xinyu-chat ${id}] DB-${action} ${detail}`)
+}
+
 function decodeContext(value) {
   if (typeof value !== 'string' || !value.trim()) return null
   const raw = value.trim()
@@ -234,8 +238,8 @@ function subjectId(uid, secret) {
   return createHmac('sha256', secret).update(uid).digest('hex')
 }
 
-function sessionDocumentId(uid, secret) {
-  return createHmac('sha256', secret).update(`${uid}:${AGENT_KEY}`).digest('hex')
+function sessionDocumentId(uid, secret, agentKey = AGENT_KEY) {
+  return createHmac('sha256', secret).update(`${uid}:${agentKey}`).digest('hex')
 }
 
 function cloudbaseDatabase(config) {
@@ -266,6 +270,7 @@ async function readProfile(db, uid) {
 }
 
 async function handleProfile(req, res) {
+  const id = requestId(req)
   const uid = authenticatedUserId(req)
   const db = cloudbaseDatabase(getDatabaseConfig())
   const current = await readProfile(db, uid)
@@ -304,25 +309,194 @@ async function handleProfile(req, res) {
   const document = db.collection('user_profiles').doc(current.documentId || uid)
   if (current.documentId) await document.update(next)
   else await document.set(next)
+  logDb(id, 'PROFILE-WRITE-OK', `doc=${current.documentId || uid} op=${current.documentId ? 'update' : 'set'} consent=${next.consentChoice || '-'}`)
   sendJson(res, 200, next)
 }
 
-async function readSession(db, uid, config) {
-  const result = await db.collection('agent_sessions').doc(sessionDocumentId(uid, config.userIdSecret)).get()
+// 自诊断端点（需登录态）：逐步验证 user_profiles 读、agent_sessions 探针写-读-删。
+// 浏览器登录后访问 /nuwax/api/chat?resource=db-check 即可定位「表不更新」卡在哪一步。
+async function handleDbCheck(req, res) {
+  const id = requestId(req)
+  const uid = authenticatedUserId(req)
+  const config = getConfig()
+  const db = cloudbaseDatabase(config)
+  const steps = {}
+  const step = async (name, fn) => {
+    try {
+      steps[name] = await fn()
+      logDb(id, `CHECK-${name}-OK`, JSON.stringify(steps[name]).slice(0, 160))
+    } catch (error) {
+      const diagnostic = errorDiagnostic(error)
+      steps[name] = { ok: false, code: diagnostic.code, message: diagnostic.message }
+      logDb(id, `CHECK-${name}-FAIL`, `${diagnostic.code} ${diagnostic.message}`)
+    }
+  }
+
+  await step('profiles-read', async () => {
+    const result = await db.collection('user_profiles').where({ userId: uid }).limit(1).get()
+    return { ok: true, found: (result?.data?.length ?? 0) > 0 }
+  })
+  // user_profiles 写探针：验证该集合的 admin 写入链路（独立诊断文档，写完即删，不碰真实资料）。
+  const profileProbeId = `__diag__${uid}`
+  await step('profiles-probe-write', async () => {
+    await db.collection('user_profiles').doc(profileProbeId).set({ probe: true, at: new Date() })
+    return { ok: true }
+  })
+  await step('profiles-probe-read', async () => {
+    const result = await db.collection('user_profiles').doc(profileProbeId).get()
+    return { ok: true, found: Boolean(result?.data) }
+  })
+  await step('profiles-probe-delete', async () => {
+    await db.collection('user_profiles').doc(profileProbeId).remove()
+    return { ok: true }
+  })
+  const probeDocId = sessionDocumentId(uid, config.userIdSecret, '__diag__')
+  await step('sessions-probe-write', async () => {
+    await db.collection('agent_sessions').doc(probeDocId).set({ probe: true, at: new Date() })
+    return { ok: true }
+  })
+  await step('sessions-probe-read', async () => {
+    const result = await db.collection('agent_sessions').doc(probeDocId).get()
+    return { ok: true, found: Boolean(result?.data) }
+  })
+  await step('sessions-probe-delete', async () => {
+    await db.collection('agent_sessions').doc(probeDocId).remove()
+    return { ok: true }
+  })
+
+  sendJson(res, 200, {
+    status: Object.values(steps).every((item) => item?.ok) ? 'ok' : 'degraded',
+    version: BUILD_VERSION,
+    envId: config.envId,
+    databaseInstance: config.instance,
+    databaseName: config.database || 'default',
+    steps,
+  })
+}
+
+async function readSession(db, uid, config, agentKey = AGENT_KEY) {
+  const docId = sessionDocumentId(uid, config.userIdSecret, agentKey)
+  const result = await db.collection('agent_sessions').doc(docId).get()
   const session = result?.data?.[0] || result?.data
   return Number.isSafeInteger(Number(session?.conversationId)) && Number(session.conversationId) > 0
     ? { conversationId: Number(session.conversationId) }
     : null
 }
 
-async function saveSession(db, uid, config, conversationId) {
-  await db.collection('agent_sessions').doc(sessionDocumentId(uid, config.userIdSecret)).set({
+async function saveSession(db, uid, config, conversationId, agentKey = AGENT_KEY) {
+  const docId = sessionDocumentId(uid, config.userIdSecret, agentKey)
+  await db.collection('agent_sessions').doc(docId).set({
     userId: uid,
-    agentKey: AGENT_KEY,
+    agentKey,
     conversationId,
     createdAt: new Date(),
     updatedAt: new Date(),
   })
+  return docId
+}
+
+// 女娲会话变量：匿名身份 + 称呼 + 同意版本 + 同意结果。
+// psych_consent 由服务端从 user_profiles 读取后下发，declined 时女娲侧工作流
+// （情绪/认知/记录增删改查）应据此拒绝并引导学业功能，前端隐藏入口只是第一道防线。
+function conversationVariables(profile, subject) {
+  return {
+    subject_id: subject,
+    display_name: profile.displayName,
+    consent_version: profile.consentVersion,
+    psych_consent: profile.consentChoice || 'unknown',
+  }
+}
+
+// 表单情绪打卡：前端表单 → 本函数（鉴权 + consent 门禁 + 输入校验）→ 女娲工作流执行 API
+// → 写 mood_checkin 表。psych_consent 在服务端强校验，前端隐藏入口只是第一道防线。
+async function handleMoodCheckin(req, res) {
+  const id = requestId(req)
+  const uid = authenticatedUserId(req)
+  if (isRateLimited(uid)) {
+    sendJson(res, 429, { error: '请求过于频繁，请稍后再试。' })
+    return
+  }
+
+  const config = getConfig()
+  const workflowId = Number(process.env.NUWAX_CHECKIN_WORKFLOW_ID) || DEFAULT_CHECKIN_WORKFLOW_ID
+  const workflowKey = process.env.NUWAX_WORKFLOW_API_KEY || process.env.NUWAX_API_KEY
+  if (!workflowKey) {
+    sendJson(res, 503, { error: '打卡服务尚未配置。' })
+    return
+  }
+
+  const db = cloudbaseDatabase(config)
+  const profile = await readProfile(db, uid)
+  if (profile.consentChoice !== 'accepted') {
+    sendJson(res, 403, { error: '情绪打卡需要先同意使用边界说明。' })
+    return
+  }
+
+  const body = await readJson(req)
+  const emotionName = typeof body.emotionName === 'string' ? body.emotionName.trim().slice(0, 32) : ''
+  const intensityRaw = Number(body.intensity)
+  const triggerSummary = typeof body.triggerSummary === 'string' ? body.triggerSummary.trim().slice(0, 80) : ''
+  if (!emotionName) {
+    sendJson(res, 400, { error: '请先选择一个情绪名称。' })
+    return
+  }
+  if (!Number.isInteger(intensityRaw) || intensityRaw < 1 || intensityRaw > 5) {
+    sendJson(res, 400, { error: '情绪强度需在 1-5 之间。' })
+    return
+  }
+
+  const subject = subjectId(uid, config.userIdSecret)
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), CHECKIN_TIMEOUT_MS)
+  res.once('close', () => controller.abort())
+  let upstream
+  try {
+    upstream = await fetch(`${config.baseUrl}/api/v1/workflow/${workflowId}/execute`, {
+      method: 'POST',
+      headers: {
+        Authorization: workflowKey.startsWith('Bearer ') ? workflowKey : `Bearer ${workflowKey}`,
+        'Content-Type': 'application/json',
+        'External-Username': subject,
+      },
+      body: JSON.stringify({
+        emotion_name: emotionName,
+        intensity: intensityRaw,
+        trigger_summary: triggerSummary,
+        psych_consent: 'accepted',
+        subject_id: subject,
+      }),
+      signal: controller.signal,
+    })
+  } catch (error) {
+    clearTimeout(timeout)
+    logError('checkin-upstream', id, error)
+    sendJson(res, error?.name === 'AbortError' ? 504 : 502, {
+      error: error?.name === 'AbortError' ? '打卡服务响应超时，请稍后重试。' : '暂时无法连接打卡服务。',
+    })
+    return
+  }
+  let result
+  try {
+    result = await upstream.json()
+  } catch {
+    clearTimeout(timeout)
+    logError('checkin-parse', id, Object.assign(new Error(`status=${upstream.status}`), { code: `HTTP_${upstream.status}` }))
+    sendJson(res, 502, { error: '打卡服务返回异常，请稍后重试。' })
+    return
+  }
+  clearTimeout(timeout)
+  const data = result?.data || {}
+  const saved = String(data.success) === 'true' || data.success === true
+  if (!upstream.ok || !result?.success || !saved) {
+    logError('checkin-workflow', id, Object.assign(
+      new Error(String(data.error_msg || result?.message || 'workflow_failed')),
+      { code: String(result?.code || `HTTP_${upstream.status}`) },
+    ))
+    sendJson(res, 502, { error: '打卡保存失败，请稍后重试。' })
+    return
+  }
+  logDb(id, 'CHECKIN-SAVE-OK', `subject=${subject.slice(0, 8)}… record=${data.record_id ?? '-'}`)
+  sendJson(res, 200, { success: true, recordId: data.record_id ?? null })
 }
 
 async function createConversation(config, profile, subject) {
@@ -334,11 +508,7 @@ async function createConversation(config, profile, subject) {
     },
     body: JSON.stringify({
       agentId: config.agentId,
-      variables: {
-        subject_id: subject,
-        display_name: profile.displayName,
-        consent_version: profile.consentVersion,
-      },
+      variables: conversationVariables(profile, subject),
       devMode: false,
     }),
   })
@@ -347,6 +517,39 @@ async function createConversation(config, profile, subject) {
     throw Object.assign(new Error('conversation_create_failed'), { status: 502 })
   }
   return Number(result.data)
+}
+
+// 智能体在回复末尾追加 [[action:xxx]] 时，云函数抽取为结构化 action 返回给前端。
+// 前端据此弹本地表单类工具（如情绪打卡），不依赖智能体直接保存数据，
+// 既能用对话意图识别做入口，又能用确定性的表单保证写入可靠、隔离合规。
+const ACTION_TAG_REGEX = /\[\[action:([a-z][a-z0-9-]*)\]\]\s*$/i
+const SUPPORTED_ACTIONS = new Set(['mood-checkin'])
+
+function extractAction(reply) {
+  if (!reply) return { reply: '', action: null }
+  const match = reply.match(ACTION_TAG_REGEX)
+  if (!match) return { reply, action: null }
+  const action = match[1].toLowerCase()
+  if (!SUPPORTED_ACTIONS.has(action)) return { reply, action: null }
+  return { reply: reply.slice(0, match.index).replace(/\s+$/, ''), action }
+}
+
+// 女娲智能体在对话中调用工作流/插件/数据表时，SSE 流会把工具调用过程作为
+// assistant MESSAGE 文本下发：<tool_use>…</tool_use>、<div><markdown-custom-process …></div>。
+// 这些是平台内部协议标签，前端不可见、也不应进对话气泡。这里统一剥离，避免"吐代码"。
+function stripToolCallNoise(text) {
+  if (!text) return ''
+  return text
+    .replace(/<tool_use>[\s\S]*?<\/tool_use>/g, '')     // 闭合的工具调用块
+    .replace(/<tool_use>[\s\S]*$/g, '')                  // 流式未闭合（到字符串末尾）
+    .replace(/<div><markdown-custom-process[\s\S]*?<\/div>/g, '')  // 工作流/数据表执行卡片
+    .replace(/<div><markdown-custom-process[^<]*<\/div>/g, '')
+    .replace(/<\/?markdown-custom-process[^>]*>/g, '')
+    .replace(/<\/?tool[\s\S]*$/g, '')                    // 半截残片（如被超时掐断的 <tool_）
+    .replace(/<\/?tool_use>/g, '')                       // 残片
+    .replace(/<\/?arguments>?/g, '')                    // 残片
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 function parseAgentStream(raw) {
@@ -376,26 +579,28 @@ function parseAgentStream(raw) {
     }
     const item = event?.eventType === 'MESSAGE' ? event.data || {} : null
     if (String(item?.role || '').toUpperCase() !== 'ASSISTANT' || String(item?.type || '').toUpperCase() === 'THINK') continue
-    const text = String(item?.text || '').trim()
+    const text = stripToolCallNoise(String(item?.text || ''))
     if (text) messages.push(text)
   }
-  const reply = finalText || messages.join('')
+  const reply = stripToolCallNoise(finalText || messages.join(' '))
   if (/Failed to process request:\s*Agent process failed|ACP InitializeRequest timeout/i.test(reply)) {
     throw Object.assign(new Error('agent_initialize_timeout'), {
       status: 502,
       publicMessage: '智能体服务启动超时，请稍后重试。',
     })
   }
-  return reply
+  return extractAction(reply)
 }
 
 async function handleChat(req, res) {
-  if (isRateLimited(req)) {
+  const id = requestId(req)
+  const uid = authenticatedUserId(req)
+  // 按 uid 限流：演示/教室场景多个用户常共用一个出口 IP，按 IP 限流会互相挤兑。
+  if (isRateLimited(uid)) {
     sendJson(res, 429, { error: '请求过于频繁，请稍后再试。' })
     return
   }
 
-  const uid = authenticatedUserId(req)
   const config = getConfig()
   const body = await readJson(req)
   const message = typeof body.message === 'string' ? body.message.trim() : ''
@@ -407,14 +612,29 @@ async function handleChat(req, res) {
     sendJson(res, 400, { error: '不支持的智能体。' })
     return
   }
+  // 前端本地会话 id 作为 conversationKey：一个本地会话对应一个女娲会话，
+  // 切换/回看历史对话时上下文不再互相覆盖。非法值一律回落到默认键。
+  const conversationKey = typeof body.conversationKey === 'string' && /^[\w-]{1,64}$/.test(body.conversationKey)
+    ? body.conversationKey
+    : AGENT_KEY
 
   const db = cloudbaseDatabase(config)
   const profile = await readProfile(db, uid)
   const subject = subjectId(uid, config.userIdSecret)
-  let session = body.newConversation === true ? null : await readSession(db, uid, config)
-  if (!session) {
+  let session = body.newConversation === true ? null : await readSession(db, uid, config, conversationKey)
+  if (session) {
+    logDb(id, 'SESSION-REUSE', `key=${conversationKey} conversationId=${session.conversationId}`)
+  } else {
     session = { conversationId: await createConversation(config, profile, subject) }
-    await saveSession(db, uid, config, session.conversationId)
+    logDb(id, 'SESSION-CREATE', `key=${conversationKey} conversationId=${session.conversationId}`)
+    try {
+      await saveSession(db, uid, config, session.conversationId, conversationKey)
+      logDb(id, 'SESSION-SAVE-OK', `key=${conversationKey}`)
+    } catch (error) {
+      // 会话映射写失败不阻断对话（否则用户完全无法使用），但日志必须能看到。
+      // 代价是下一次发言会新建女娲会话、丢失上下文；根因见 README「数据表不更新排查」。
+      logError('session-save', id, error)
+    }
   }
 
   const controller = new AbortController()
@@ -434,11 +654,7 @@ async function handleChat(req, res) {
         message,
         attachments: [],
         debug: false,
-        variableParams: {
-          subject_id: subject,
-          display_name: profile.displayName,
-          consent_version: profile.consentVersion,
-        },
+        variableParams: conversationVariables(profile, subject),
         filterSensitive: true,
         agentMode: config.agentMode,
         ...(config.sandboxId ? { sandboxId: config.sandboxId } : {}),
@@ -448,7 +664,7 @@ async function handleChat(req, res) {
     })
   } catch (error) {
     clearTimeout(timeout)
-    logError('upstream', requestId(req), error)
+    logError('upstream', id, error)
     sendJson(res, error?.name === 'AbortError' ? 504 : 502, {
       error: error?.name === 'AbortError' ? '智能体响应超时，请稍后重试。' : '暂时无法连接智能体。',
     })
@@ -457,7 +673,7 @@ async function handleChat(req, res) {
 
   if (!upstream.ok || !upstream.body) {
     clearTimeout(timeout)
-    logError('upstream-http', requestId(req), Object.assign(new Error(`status=${upstream.status}`), {
+    logError('upstream-http', id, Object.assign(new Error(`status=${upstream.status}`), {
       code: `HTTP_${upstream.status}`,
     }))
     sendJson(res, 502, { error: '智能体暂时无法回复。' })
@@ -468,20 +684,28 @@ async function handleChat(req, res) {
     raw = await upstream.text()
   } catch (error) {
     clearTimeout(timeout)
-    logError('upstream-stream', requestId(req), error)
+    logError('upstream-stream', id, error)
     sendJson(res, error?.name === 'AbortError' ? 504 : 502, {
       error: error?.name === 'AbortError' ? '智能体响应超时，请稍后重试。' : '智能体响应读取失败，请稍后重试。',
     })
     return
   }
   clearTimeout(timeout)
-  const reply = parseAgentStream(raw)
-  if (!reply) {
+  const parsed = parseAgentStream(raw)
+  if (!parsed.reply) {
     sendJson(res, 502, { error: '智能体没有返回可显示的内容。' })
     return
   }
-  await db.collection('agent_sessions').doc(sessionDocumentId(uid, config.userIdSecret)).update({ updatedAt: new Date() })
-  sendJson(res, 200, { reply })
+  try {
+    await db.collection('agent_sessions')
+      .doc(sessionDocumentId(uid, config.userIdSecret, conversationKey))
+      .update({ updatedAt: new Date() })
+  } catch (error) {
+    logError('session-touch', id, error)
+  }
+  const payload = { reply: parsed.reply }
+  if (parsed.action) payload.action = parsed.action
+  sendJson(res, 200, payload)
 }
 
 const server = http.createServer(async (req, res) => {
@@ -506,7 +730,43 @@ const server = http.createServer(async (req, res) => {
     return
   }
   const isChatPath = pathname === '/' || pathname === '/api/chat' || pathname === '/nuwax/api/chat'
-  const isProfileRequest = isChatPath && requestUrl.searchParams.get('resource') === 'profile'
+  const resource = requestUrl.searchParams.get('resource')
+  const isProfileRequest = isChatPath && resource === 'profile'
+  const isDbCheckRequest = isChatPath && resource === 'db-check'
+  const isMoodCheckinRequest = isChatPath && resource === 'mood-checkin'
+  if (req.method === 'POST' && isMoodCheckinRequest) {
+    try {
+      await handleMoodCheckin(req, res)
+    } catch (error) {
+      const id = requestId(req)
+      logError('mood-checkin', id, error)
+      if (!res.headersSent) {
+        sendJson(res, error?.status || 500, {
+          error: error?.status === 401 ? '登录状态无效，请重新登录。' :
+            error?.status === 403 ? '情绪打卡需要先同意使用边界说明。' :
+            error?.status === 429 ? '请求过于频繁，请稍后再试。' :
+            error?.status === 503 ? '打卡服务尚未配置完成。' : '打卡处理失败。',
+          requestId: id,
+        })
+      }
+    }
+    return
+  }
+  if (req.method === 'GET' && isDbCheckRequest) {
+    try {
+      await handleDbCheck(req, res)
+    } catch (error) {
+      const id = requestId(req)
+      logError('db-check', id, error)
+      if (!res.headersSent) {
+        sendJson(res, error?.status || 500, {
+          error: error?.status === 401 ? '登录状态无效，请重新登录。' : '自诊断执行失败。',
+          requestId: id,
+        })
+      }
+    }
+    return
+  }
   if ((req.method === 'GET' || req.method === 'POST') && isProfileRequest) {
     try {
       await handleProfile(req, res)
@@ -564,6 +824,8 @@ module.exports = {
   server,
   _test: {
     parseAgentStream,
+    stripToolCallNoise,
+    extractAction,
     setDatabaseFactory: (factory) => { databaseFactory = factory },
     resetRequestCounts: () => requestCounts.clear(),
     subjectId,

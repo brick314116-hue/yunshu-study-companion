@@ -50,7 +50,7 @@ const save = () => {
       </div>
       <h2 id="nick-title">设置你的称呼</h2>
       <p class="dialog-lead">
-        这个称呼只用于云舒学伴首页与对话界面，不会传给女娲，也不会展示给其他人。
+        这个称呼会在云舒学伴的界面里显示，并作为对话中云小舒叫你的方式；它以匿名方式传输，不会展示给其他人。请勿使用真实姓名。
       </p>
       <label class="nick-field">
         <span>昵称</span>

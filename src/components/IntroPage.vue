@@ -1,20 +1,19 @@
 <script setup lang="ts">
 import {
-  ArrowDown,
   ArrowRight,
-  Brain,
   Check,
   Cloud,
   Compass,
   HeartHandshake,
   MessageCircleMore,
   NotebookPen,
+  Brain,
+  ClipboardList,
   ShieldCheck,
 } from '@lucide/vue'
 import type { Component } from 'vue'
 import { modules } from '../modules'
 import type { ModuleId } from '../types'
-import Prism from './Prism.vue'
 import ScrollStack from './ScrollStack.vue'
 
 defineProps<{
@@ -37,6 +36,7 @@ const moduleIcons: Record<ModuleId, Component> = {
   study: NotebookPen,
   thought: Brain,
   emotion: HeartHandshake,
+  records: ClipboardList,
 }
 
 const introExample = '云小舒，介绍一下你自己，说说你能帮我做什么。'
@@ -50,38 +50,6 @@ const conversationFlow = [
 
 <template>
   <main class="home-page">
-    <div class="home-prism" aria-hidden="true">
-      <Prism
-        animation-type="3drotate"
-        :time-scale="0.18"
-        :height="3.3"
-        :base-width="5.2"
-        :scale="3.1"
-        :hue-shift="-0.25"
-        :color-frequency="0.72"
-        :noise="0"
-        :glow="0.94"
-        :bloom="0.86"
-      />
-    </div>
-
-    <section class="home-hero" aria-labelledby="home-title">
-      <div class="home-hero-copy">
-        <h1 id="home-title">云舒学伴</h1>
-        <p class="home-slogan">云舒少年忧，学伴逐光游</p>
-        <p class="home-summary">面向青少年学业发展与心理健康的一体化智能助手，结合初中学生身心发展特点，搭建学业辅导与轻量化情绪陪伴体系，致力于成为青少年值得信任的成长伙伴，让成长不再孤单。</p>
-        <button type="button" class="start-chat-button" @click="emit('start')">
-          <MessageCircleMore :size="20" :stroke-width="1.8" />
-          <span>{{ userName ? '开始对话' : '登录后开始对话' }}</span>
-          <ArrowRight :size="19" :stroke-width="1.8" />
-        </button>
-      </div>
-      <div class="home-scroll-cue" aria-hidden="true">
-        <span>继续了解</span>
-        <ArrowDown :size="16" :stroke-width="1.7" />
-      </div>
-    </section>
-
     <section class="home-story" aria-labelledby="story-title">
       <div class="home-story-inner">
         <header class="home-story-copy">
