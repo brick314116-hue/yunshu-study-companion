@@ -11,6 +11,7 @@ import ContextPanel from './components/ContextPanel.vue'
 import IntroPage from './components/IntroPage.vue'
 import LandingPage from './components/LandingPage.vue'
 import MoodCheckinDialog from './components/MoodCheckinDialog.vue'
+import OnboardingGuide from './components/OnboardingGuide.vue'
 import NicknameDialog from './components/NicknameDialog.vue'
 import RegisterDialog from './components/RegisterDialog.vue'
 import SafetyDialog from './components/SafetyDialog.vue'
@@ -124,6 +125,28 @@ const runToolAction = (action: 'mood-checkin') => {
 
 const onMoodCheckinSubmitted = () => {
   showLoginNotice('情绪打卡已保存，7 天后自动删除。')
+}
+
+// 新手引导：首次进入模块时出现，本地记住不重复弹；帮新用户完成第一次有效对话。
+const ONBOARD_KEY = 'yunshu_onboarded'
+const onboardingOpen = ref(false)
+
+watch(activeTab, (tab) => {
+  if (tab === 'landing' || tab === 'intro') return
+  if (!authUser.value || psychConsent.value !== 'accepted') return
+  if (localStorage.getItem(ONBOARD_KEY)) return
+  onboardingOpen.value = true
+})
+
+const finishOnboarding = () => {
+  localStorage.setItem(ONBOARD_KEY, '1')
+  onboardingOpen.value = false
+}
+
+const onOnboardingPick = (module: ModuleId, prompt: string) => {
+  finishOnboarding()
+  if (activeTab.value !== module) selectTab(module)
+  sendMessage(prompt)
 }
 
 const openLogin = () => {
@@ -438,6 +461,11 @@ const sendMessage = async (preset?: string) => {
     :open="moodCheckinOpen"
     @submitted="onMoodCheckinSubmitted"
     @close="moodCheckinOpen = false"
+  />
+  <OnboardingGuide
+    :open="onboardingOpen"
+    @close="finishOnboarding"
+    @pick="onOnboardingPick"
   />
   <p v-if="loginNotice" class="login-notice" role="alert">{{ loginNotice }}</p>
 </template>

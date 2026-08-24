@@ -595,31 +595,44 @@ function parseAgentStream(raw) {
 }
 
 // 工具调用回合的完整答案在女娲侧服务端继续执行，/chat 流拿不到。
-// 回查会话消息接口，取最后一条已结束（ENDTURN）的助手消息作为权威回复。
+// 回查会话消息接口，取最后一条"不含工具标签"的助手消息作为权威回复。
+const extractMessageList = (body) => {
+  const d = body?.data
+  if (Array.isArray(d)) return d
+  if (Array.isArray(d?.list)) return d.list
+  if (Array.isArray(d?.messages)) return d.messages
+  if (Array.isArray(body?.list)) return body.list
+  return []
+}
+
 async function fetchFinalReply(config, conversationId) {
-  for (let attempt = 0; attempt < 8; attempt++) {
-    if (attempt) await new Promise((resolve) => setTimeout(resolve, 2500))
+  let fallback = ''
+  for (let attempt = 0; attempt < 14; attempt++) {
+    if (attempt) await new Promise((resolve) => setTimeout(resolve, 3000))
     try {
-      const res = await fetch(`${config.baseUrl}/api/v1/chat/${conversationId}/messages?limit=30`, {
+      const res = await fetch(`${config.baseUrl}/api/v1/chat/${conversationId}/messages?limit=50`, {
         headers: { Authorization: config.authorization },
       })
       if (!res.ok) continue
       const body = await res.json().catch(() => null)
-      const list = Array.isArray(body?.data) ? body.data : []
+      const list = extractMessageList(body)
       for (let i = list.length - 1; i >= 0; i--) {
         const m = list[i]
         const role = String(m?.role || m?.messageType || '').toUpperCase()
         if (role !== 'ASSISTANT') continue
-        const finished = m?.finished === true || String(m?.finishReason || '').toUpperCase() === 'ENDTURN'
-        if (!finished) continue
-        const text = stripToolCallNoise(String(m?.text || ''))
-        if (text) return text
+        const text = stripToolCallNoise(String(m?.text ?? m?.content ?? ''))
+        if (!text) continue
+        const clean = !/<tool|markdown-custom-process/.test(text)
+        const finished = m?.finished === true || /ENDTURN/i.test(String(m?.finishReason || ''))
+        // 干净（无工具标签）且已结束，或轮询足够久后的干净消息，直接采用
+        if (clean && (finished || attempt >= 6)) return text
+        if (finished && !fallback) fallback = text
       }
     } catch {
       /* 重试 */
     }
   }
-  return ''
+  return fallback
 }
 
 async function handleChat(req, res) {
