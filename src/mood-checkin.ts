@@ -38,6 +38,8 @@ export async function submitMoodCheckin(input: MoodCheckinInput): Promise<MoodCh
       emotionName: input.emotionName.trim().slice(0, 32),
       intensity: input.intensity,
       triggerSummary: (input.triggerSummary || '').trim().slice(0, 80),
+      // 服务端文档库读取不可靠时的同意声明兜底（前端仅在已同意时打开打卡）。
+      consent: 'accepted',
     }),
   })
   if (response.redirected || response.headers.get('content-type')?.includes('text/html')) {

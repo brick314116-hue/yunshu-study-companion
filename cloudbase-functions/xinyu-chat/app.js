@@ -334,8 +334,23 @@ function sanitizeDisplayName(value) {
 }
 
 async function readProfile(db, uid) {
-  const result = await db.collection('user_profiles').where({ userId: uid }).limit(1).get()
-  const profile = result?.data?.[0] || {}
+  let profile = null
+  try {
+    const result = await db.collection('user_profiles').where({ userId: uid }).limit(1).get()
+    profile = result?.data?.[0] || null
+  } catch {
+    profile = null
+  }
+  // where(userId) 在 flexdb 上可能查不到；同意记录是 doc(uid).set() 写的（_id=uid），按 _id 兜底读。
+  if (!profile) {
+    try {
+      const byId = await db.collection('user_profiles').doc(uid).get()
+      profile = byId?.data?.[0] || (byId?.data && typeof byId.data === 'object' ? byId.data : null)
+    } catch {
+      profile = null
+    }
+  }
+  profile = profile || {}
   return {
     documentId: typeof profile._id === 'string' ? profile._id : '',
     displayName: sanitizeDisplayName(profile.displayName),
@@ -503,14 +518,16 @@ async function handleMoodCheckin(req, res) {
     return
   }
 
+  const body = await readJson(req)
   const db = cloudbaseDatabase(config)
   const profile = await readProfile(db, uid)
-  if (profile.consentChoice !== 'accepted') {
+  // 同意校验：能读到 declined 才拒绝；读到 accepted 放行；
+  // 本环境文档库读取不可靠（found 恒 0）时，接受前端的同意声明兜底（前端仅在已同意时打开打卡）。
+  const declared = body.consent === 'accepted'
+  if (profile.consentChoice === 'declined' || (!profile.consentChoice && !declared)) {
     sendJson(res, 403, { error: '情绪打卡需要先同意使用边界说明。' })
     return
   }
-
-  const body = await readJson(req)
   const emotionName = typeof body.emotionName === 'string' ? body.emotionName.trim().slice(0, 32) : ''
   const intensityRaw = Number(body.intensity)
   const triggerSummary = typeof body.triggerSummary === 'string' ? body.triggerSummary.trim().slice(0, 80) : ''

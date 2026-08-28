@@ -107,8 +107,9 @@ test('uses gateway identity for session isolation and ignores forged identity fi
       'x-cloudbase-context': contextFor('user-a'),
     },
   })
-  assert.equal(failedProfile.status, 500)
-  assert.equal((await failedProfile.json()).error, '用户资料处理失败。')
+  // readProfile 读失败时优雅降级为空资料（200），不再抛 500
+  assert.equal(failedProfile.status, 200)
+  assert.equal((await failedProfile.json()).consentChoice, '')
   app._test.setDatabaseFactory((config) => {
     databaseConfigs.push(config)
     return database
