@@ -204,11 +204,8 @@ function getDatabaseConfig() {
   if (!envId) throw Object.assign(new Error('service_not_configured'), { status: 503 })
   return {
     envId,
-    // 仅当显式配置了有效实例时才传 instance；否则用环境默认文档库。
-    // 历史值 tnt-nsoau01qw 在当前环境已无对应连接器，会导致所有读写失败。
-    instance: process.env.CLOUDBASE_DATABASE_INSTANCE && process.env.CLOUDBASE_DATABASE_INSTANCE !== 'tnt-nsoau01qw'
-      ? process.env.CLOUDBASE_DATABASE_INSTANCE
-      : undefined,
+    // 数据实际存放在 tnt-nsoau01qw 实例；必须显式指定，默认实例是另一个空库。
+    instance: process.env.CLOUDBASE_DATABASE_INSTANCE || DEFAULT_DATABASE_INSTANCE,
     database: process.env.CLOUDBASE_DATABASE_NAME || undefined,
   }
 }
