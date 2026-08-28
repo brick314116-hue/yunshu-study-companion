@@ -143,6 +143,11 @@ const finishOnboarding = () => {
   onboardingOpen.value = false
 }
 
+// 顶栏「新手引导」按钮：随时可重新打开，不受"只弹一次"限制。
+const openGuide = () => {
+  onboardingOpen.value = true
+}
+
 const onOnboardingPick = (module: ModuleId, prompt: string) => {
   finishOnboarding()
   if (activeTab.value !== module) selectTab(module)
@@ -416,6 +421,7 @@ const sendMessage = async (preset?: string) => {
       @account="openNickname"
       @logout="logout"
       @login="openLogin"
+      @guide="openGuide"
     />
 
     <LandingPage v-if="activeTab === 'landing'" :user-name="userName || null" @start="newChat" />

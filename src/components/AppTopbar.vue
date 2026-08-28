@@ -3,6 +3,7 @@ import {
   Brain,
   ClipboardList,
   Cloud,
+  Compass,
   HeartHandshake,
   History,
   LogIn,
@@ -27,6 +28,7 @@ const emit = defineEmits<{
   account: []
   logout: []
   login: []
+  guide: []
 }>()
 
 const props = defineProps<{
@@ -161,6 +163,16 @@ const onSelectConversation = (id: string) => {
           />
         </div>
       </div>
+
+      <button
+        class="topbar-action-button"
+        type="button"
+        title="打开新手引导"
+        @click="emit('guide')"
+      >
+        <Compass :size="16" :stroke-width="1.8" />
+        <span>新手引导</span>
+      </button>
 
       <button
         class="topbar-action-button safety"
