@@ -521,10 +521,10 @@ async function handleMoodCheckin(req, res) {
   const body = await readJson(req)
   const db = cloudbaseDatabase(config)
   const profile = await readProfile(db, uid)
-  // 同意校验：能读到 declined 才拒绝；读到 accepted 放行；
-  // 本环境文档库读取不可靠（found 恒 0）时，接受前端的同意声明兜底（前端仅在已同意时打开打卡）。
-  const declared = body.consent === 'accepted'
-  if (profile.consentChoice === 'declined' || (!profile.consentChoice && !declared)) {
+  // 同意校验：只有明确读到 declined 才拒绝。
+  // 本环境文档库读取不可靠（found 恒 0），无法服务端核实 accepted；
+  // 前端已做门禁（仅同意后可见打卡），此处不再因读不到而拦截。
+  if (profile.consentChoice === 'declined') {
     sendJson(res, 403, { error: '情绪打卡需要先同意使用边界说明。' })
     return
   }
