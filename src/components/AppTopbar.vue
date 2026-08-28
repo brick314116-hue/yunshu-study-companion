@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Cloud, Menu, MessageCircleMore } from '@lucide/vue'
+import { Menu, MessageCircleMore } from '@lucide/vue'
 import type { AppTab } from '../types'
 
 defineProps<{ activeTab: AppTab }>()
@@ -26,16 +26,6 @@ const emit = defineEmits<{
       >
         <MessageCircleMore :size="16" :stroke-width="1.8" aria-hidden="true" />
         <span>对话</span>
-      </button>
-      <button
-        type="button"
-        class="topbar-tab"
-        :class="{ active: activeTab === 'intro' }"
-        :aria-current="activeTab === 'intro' ? 'page' : undefined"
-        @click="emit('select', 'intro')"
-      >
-        <Cloud :size="16" :stroke-width="1.8" aria-hidden="true" />
-        <span>认识云小舒</span>
       </button>
     </nav>
   </header>
@@ -71,19 +61,21 @@ const emit = defineEmits<{
 
 .topbar-tabs {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 6px;
 }
 
 .topbar-tab {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 7px;
-  padding: 8px 16px;
+  padding: 7px 14px;
   color: var(--text-muted);
   background: transparent;
   border: 0;
-  border-radius: 999px;
+  border-radius: 10px;
   font-size: 13.5px;
   transition: all 0.18s ease;
 }

@@ -439,7 +439,16 @@ const sendMessage = async (preset?: string) => {
     <div class="app-main">
       <AppTopbar v-if="activeTab !== 'landing'" :active-tab="activeTab" @select="selectTab" @menu="sidebarOpen = true" />
 
-      <LandingPage v-if="activeTab === 'landing'" :user-name="userName || null" @start="newChat" @enter="enterModule" />
+      <LandingPage
+        v-if="activeTab === 'landing'"
+        :user-name="userName || null"
+        :auth-ready="authReady"
+        @start="newChat"
+        @intro="selectTab('intro')"
+        @login="openLogin"
+        @account="openNickname"
+        @logout="logout"
+      />
 
       <IntroPage v-else-if="activeTab === 'intro'" :user-name="userName || null" @start="newChat" @enter="enterModule" />
 

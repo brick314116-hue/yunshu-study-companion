@@ -145,7 +145,15 @@ const emit = defineEmits<{
   text-align: left;
 }
 
+.collapsed .sidebar-top {
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0 10px;
+}
+
 .collapsed .sidebar-brand {
+  flex: 0 0 auto;
   justify-content: center;
 }
 
