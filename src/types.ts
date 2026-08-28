@@ -1,6 +1,7 @@
 export type ModuleId = 'study' | 'thought' | 'emotion' | 'records'
 
-export type AppTab = 'landing' | 'intro' | ModuleId
+/** 顶层视图：首页(landing,点品牌回) / 认识云小舒(intro) / 对话(chat,合并学业·认知·情绪·记录) */
+export type AppTab = 'landing' | 'intro' | 'chat'
 
 export type PsychConsent = 'unknown' | 'accepted' | 'declined'
 

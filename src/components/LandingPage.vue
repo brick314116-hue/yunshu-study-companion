@@ -32,7 +32,7 @@ const emit = defineEmits<{
       <div class="home-hero-copy">
         <h1 id="home-title">云舒学伴</h1>
         <p class="home-slogan">云舒少年忧，学伴逐光游</p>
-        <p class="home-summary">面向青少年学业发展与心理健康的一体化智能助手，结合初中学生身心发展特点，搭建学业辅导与轻量化情绪陪伴体系，致力于成为青少年值得信任的成长伙伴，让成长不再孤单。</p>
+        <p class="home-summary">我是云小舒，陪你学习、也听你聊心情。作业太多、心情不好、或者只是想找人说说话，都可以来找我。</p>
         <button type="button" class="start-chat-button" @click="emit('start')">
           <MessageCircleMore :size="20" :stroke-width="1.8" />
           <span>开始对话</span>

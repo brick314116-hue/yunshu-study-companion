@@ -115,7 +115,7 @@ const handleKeydown = (event: KeyboardEvent) => {
           rows="1"
           maxlength="500"
           :disabled="sending"
-          :placeholder="`和云小舒聊聊${module.label}`"
+          placeholder="想聊点什么？学习、心情都可以"
           aria-label="输入消息"
           @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
           @keydown="handleKeydown"

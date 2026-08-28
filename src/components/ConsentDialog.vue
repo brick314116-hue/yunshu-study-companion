@@ -51,9 +51,9 @@ onMounted(() => {
           <div class="consent-mark" aria-hidden="true">
             <ShieldCheck :size="25" :stroke-width="1.7" />
           </div>
-          <h2 id="consent-title">开始前，先确认使用边界</h2>
+          <h2 id="consent-title">开始前，先说明几件事</h2>
           <p class="dialog-lead">
-            云舒学伴提供学业支持、认知结构化练习和轻量情绪调节，不进行心理诊断、测评或风险分级。
+            云小舒陪你学习、聊心情，但它不是医生或老师，不做诊断、不给你打分。
           </p>
 
           <div class="consent-points">
@@ -68,7 +68,7 @@ onMounted(() => {
               <Database :size="18" :stroke-width="1.7" />
               <span
                 ><strong>短期记录需要你确认</strong
-                ><small>只保存必要的结构化摘要，最多保留7天，也可以主动删除。</small></span
+                ><small>只保存你同意后的简要记录，最多留7天，也能随时删。</small></span
               >
             </div>
             <div>
@@ -86,9 +86,9 @@ onMounted(() => {
           <div class="consent-mark" aria-hidden="true">
             <Database :size="25" :stroke-width="1.7" />
           </div>
-          <h2>是否使用情绪与认知功能</h2>
+          <h2>要不要开启"聊心情"和"换个想法"？</h2>
           <p class="dialog-lead">
-            你可以同意使用情绪调节与认知建构，也可以只使用学业支持。这个选择不会影响账号登录。
+            你可以开启聊心情和换个想法，也可以只用学习功能。这个选择不会影响登录。
           </p>
 
           <button class="step-back" type="button" @click="stepperRef?.back()">
