@@ -57,7 +57,7 @@ test('uses gateway identity for session isolation and ignores forged identity fi
   process.env.NUWAX_SKILL_IDS = '42, 43'
   process.env.NUWAX_AGENT_MODE = 'yolo'
   process.env.USER_ID_SECRET = '12345678901234567890123456789012'
-  process.env.CLOUDBASE_DATABASE_INSTANCE = 'tnt-nsoau01qw'
+  process.env.CLOUDBASE_DATABASE_INSTANCE = 'tnt-testinst'
 
   const { database, sessions, profiles } = createDatabase()
   const databaseConfigs = []
@@ -90,7 +90,7 @@ test('uses gateway identity for session isolation and ignores forged identity fi
     headers: { Origin: origin },
   })
   assert.equal(health.status, 200)
-  assert.equal((await health.json()).databaseInstance, 'tnt-nsoau01qw')
+  assert.equal((await health.json()).databaseInstance, 'tnt-testinst')
 
   app._test.setDatabaseFactory(() => ({
     collection() {
@@ -168,7 +168,7 @@ test('uses gateway identity for session isolation and ignores forged identity fi
   assert.equal(created[1].variables.subject_id, app._test.subjectId('user-b', process.env.USER_ID_SECRET))
   assert.notEqual(created[0].variables.subject_id, created[1].variables.subject_id)
   assert.deepEqual([...sessions.values()].map((item) => item.userId).sort(), ['user-a', 'user-b'])
-  assert.equal(databaseConfigs.at(-1).instance, 'tnt-nsoau01qw')
+  assert.equal(databaseConfigs.at(-1).instance, 'tnt-testinst')
 
   const profile = (method, body) => nativeFetch(`http://127.0.0.1:${port}/?resource=profile`, {
     method,
@@ -273,7 +273,7 @@ test('maps one local conversationKey to one nuwax conversation and passes psych_
   process.env.NUWAX_API_KEY = 'test-key'
   process.env.NUWAX_MAIN_AGENT_ID = '123'
   process.env.USER_ID_SECRET = '12345678901234567890123456789012'
-  process.env.CLOUDBASE_DATABASE_INSTANCE = 'tnt-nsoau01qw'
+  process.env.CLOUDBASE_DATABASE_INSTANCE = 'tnt-testinst'
 
   const { database, sessions } = createDatabase()
   app._test.setDatabaseFactory(() => database)
@@ -331,7 +331,7 @@ test('mood check-in enforces consent, validates input and proxies the workflow',
   process.env.NUWAX_MAIN_AGENT_ID = '123'
   process.env.NUWAX_CHECKIN_WORKFLOW_ID = '5257662'
   process.env.USER_ID_SECRET = '12345678901234567890123456789012'
-  process.env.CLOUDBASE_DATABASE_INSTANCE = 'tnt-nsoau01qw'
+  process.env.CLOUDBASE_DATABASE_INSTANCE = 'tnt-testinst'
 
   const { database, profiles } = createDatabase()
   app._test.setDatabaseFactory(() => database)

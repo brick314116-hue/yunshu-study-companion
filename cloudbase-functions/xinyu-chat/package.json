@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@cloudbase/js-sdk": "^3.7.1",
-    "@cloudbase/signature-nodejs": "^1.0.0",
-    "ws": "^8.18.0"
+    "@cloudbase/js-sdk": "3.7.1",
+    "@cloudbase/signature-nodejs": "1.1.0",
+    "ws": "8.18.0"
   },
   "scripts": {
     "start": "node app.js",
