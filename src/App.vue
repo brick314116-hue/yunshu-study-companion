@@ -18,7 +18,7 @@ import SafetyDialog from './components/SafetyDialog.vue'
 import SideBar from './components/SideBar.vue'
 import { clearLegacyConversationHistory, titleFromMessage } from './conversation-store'
 import { getModule } from './modules'
-import type { AppTab, AuthUser, ChatMessage, Conversation, ModuleId, PsychConsent } from './types'
+import type { AppTab, AuthUser, ChatAttachment, ChatMessage, Conversation, ModuleId, PsychConsent } from './types'
 
 // landing / intro 为免登录免同意的展示页；chat（合并学业·认知·情绪·记录）需要登录+同意。
 const isFreeTab = (tab: AppTab): tab is 'landing' | 'intro' => tab === 'landing' || tab === 'intro'
@@ -341,19 +341,21 @@ const onOnboardingPick = (module: ModuleId, prompt: string) => {
   sendMessage(prompt)
 }
 
-const sendMessage = async (preset?: string) => {
+const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
   if (!authUser.value) {
     void openLogin()
     return
   }
   if (sending.value) return
   const text = (preset ?? draft.value).trim()
-  if (!text) return
+  const files = attachments || []
+  if (!text && files.length === 0) return
+  const displayText = text || `（发送了 ${files.length} 个附件）`
 
   messages.value.push({
     id: crypto.randomUUID(),
     role: 'user',
-    text,
+    text: displayText,
     status: 'done',
     time: now(),
   })
@@ -362,7 +364,7 @@ const sendMessage = async (preset?: string) => {
     activeConversationId.value = id
     conversations.value = [{
       id,
-      title: titleFromMessage(text),
+      title: titleFromMessage(displayText),
       moduleId: chatModule.value,
       messages: cloneMessages(messages.value),
       updatedAt: new Date().toISOString(),
@@ -386,7 +388,7 @@ const sendMessage = async (preset?: string) => {
   sending.value = true
 
   try {
-    const result = await requestChat(text, newConversation, localConversationId)
+    const result = await requestChat(text || '请看一下我发送的附件。', newConversation, localConversationId, files)
     const reply = typeof result === 'string' ? result : result.reply
     const index = messages.value.findIndex((message) => message.id === assistantMessageId)
     if (index >= 0) messages.value[index] = { ...messages.value[index], text: reply, status: 'done' }
@@ -459,7 +461,7 @@ const sendMessage = async (preset?: string) => {
           :messages="messages"
           :user-name="userName"
           :sending="sending"
-          @send="sendMessage()"
+          @send="(atts) => sendMessage(undefined, atts)"
           @starter="sendMessage"
         />
       </div>

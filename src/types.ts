@@ -20,6 +20,14 @@ export interface ChatMessage {
   time: string
 }
 
+/** 上传到女娲后的附件引用，随聊天消息发送 */
+export interface ChatAttachment {
+  fileKey: string
+  url?: string
+  fileName: string
+  mimeType: string
+}
+
 export interface Conversation {
   id: string
   title: string

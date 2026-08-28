@@ -91,6 +91,83 @@ function readJson(req) {
   })
 }
 
+// 附件上传：单文件 base64 上限（约 6MB 原始），类型限图片/常见作业文档。
+const UPLOAD_MAX_BYTES = 6 * 1024 * 1024
+const UPLOAD_MIME_WHITELIST = new Set([
+  'image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain', 'text/markdown',
+])
+const UPLOAD_EXT_WHITELIST = /\.(png|jpe?g|gif|webp|pdf|docx?|xlsx?|pptx?|txt|md)$/i
+
+function readRawBody(req, cap) {
+  return new Promise((resolve, reject) => {
+    const chunks = []
+    let size = 0
+    let tooLarge = false
+    req.on('data', (chunk) => {
+      size += chunk.length
+      if (size > cap) { tooLarge = true; return }
+      chunks.push(chunk)
+    })
+    req.on('end', () => {
+      if (tooLarge) { reject(Object.assign(new Error('file_too_large'), { status: 413 })); return }
+      resolve(Buffer.concat(chunks))
+    })
+    req.on('error', reject)
+  })
+}
+
+// 前端把文件 base64 发上来，这里转存到女娲文件服务，返回附件引用。
+async function handleUpload(req, res) {
+  const id = requestId(req)
+  authenticatedUserId(req)
+  const config = getConfig()
+  const raw = await readRawBody(req, UPLOAD_MAX_BYTES + 1024 * 1024)
+  let body
+  try { body = JSON.parse(raw.toString('utf8')) } catch {
+    sendJson(res, 400, { error: '上传参数无效。' }); return
+  }
+  const name = String(body.name || 'file').slice(0, 120)
+  const type = String(body.type || '')
+  const base64 = String(body.base64 || '')
+  if (!base64) { sendJson(res, 400, { error: '文件内容为空。' }); return }
+  const buffer = Buffer.from(base64, 'base64')
+  if (buffer.length > UPLOAD_MAX_BYTES) { sendJson(res, 413, { error: '单个文件不能超过 6MB。' }); return }
+  if (!UPLOAD_MIME_WHITELIST.has(type) && !UPLOAD_EXT_WHITELIST.test(name)) {
+    sendJson(res, 415, { error: '仅支持图片或常见文档（pdf/word/excel/ppt/txt）。' }); return
+  }
+
+  const form = new FormData()
+  form.append('file', new Blob([buffer], { type: type || 'application/octet-stream' }), name)
+  let upstream
+  try {
+    upstream = await fetch(`${config.baseUrl}/api/v1/file/upload?type=store`, {
+      method: 'POST',
+      headers: { Authorization: config.authorization },
+      body: form,
+    })
+  } catch (error) {
+    logError('upload', id, error)
+    sendJson(res, 502, { error: '上传服务暂不可用。' }); return
+  }
+  const result = await upstream.json().catch(() => null)
+  const data = result?.data || {}
+  if (!upstream.ok || !data.key) {
+    logError('upload', id, Object.assign(new Error(String(result?.message || 'upload_failed')), { code: String(result?.code || upstream.status) }))
+    sendJson(res, 502, { error: '上传失败，请稍后重试。' }); return
+  }
+  sendJson(res, 200, {
+    data: { key: data.key, url: data.url, fileName: data.fileName || name, mimeType: data.mimeType || type },
+  })
+}
+
 function getConfig() {
   const baseUrl = process.env.NUWAX_BASE_URL?.replace(/\/$/, '')
   const apiKey = process.env.NUWAX_API_KEY
@@ -699,7 +776,15 @@ async function handleChat(req, res) {
       body: JSON.stringify({
         conversationId: session.conversationId,
         message,
-        attachments: [],
+        attachments: (Array.isArray(body.attachments) ? body.attachments : [])
+          .slice(0, 5)
+          .map((a) => ({
+            fileKey: String(a?.fileKey || a?.key || ''),
+            url: String(a?.url || ''),
+            fileName: String(a?.fileName || ''),
+            mimeType: String(a?.mimeType || ''),
+          }))
+          .filter((a) => a.fileKey),
         debug: false,
         variableParams: conversationVariables(profile, subject),
         filterSensitive: true,
@@ -786,6 +871,24 @@ const server = http.createServer(async (req, res) => {
   const isProfileRequest = isChatPath && resource === 'profile'
   const isDbCheckRequest = isChatPath && resource === 'db-check'
   const isMoodCheckinRequest = isChatPath && resource === 'mood-checkin'
+  const isUploadRequest = isChatPath && resource === 'upload'
+  if (req.method === 'POST' && isUploadRequest) {
+    try {
+      await handleUpload(req, res)
+    } catch (error) {
+      const id = requestId(req)
+      logError('upload', id, error)
+      if (!res.headersSent) {
+        sendJson(res, error?.status || 500, {
+          error: error?.status === 401 ? '登录状态无效，请重新登录。' :
+            error?.status === 413 ? '文件太大，单个不能超过 6MB。' :
+            error?.status === 415 ? '仅支持图片或常见文档。' : '上传失败。',
+          requestId: id,
+        })
+      }
+    }
+    return
+  }
   if (req.method === 'POST' && isMoodCheckinRequest) {
     try {
       await handleMoodCheckin(req, res)
