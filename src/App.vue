@@ -358,6 +358,7 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
     text: displayText,
     status: 'done',
     time: now(),
+    ...(files.length ? { attachments: files } : {}),
   })
   if (!activeConversationId.value) {
     const id = crypto.randomUUID()

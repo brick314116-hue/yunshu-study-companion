@@ -155,13 +155,13 @@ async function handleUpload(req, res) {
     })
   } catch (error) {
     logError('upload', id, error)
-    sendJson(res, 502, { error: '上传服务暂不可用。' }); return
+    sendJson(res, 502, { error: `上传服务暂不可用：${error?.message || 'network'}` }); return
   }
   const result = await upstream.json().catch(() => null)
   const data = result?.data || {}
   if (!upstream.ok || !data.key) {
     logError('upload', id, Object.assign(new Error(String(result?.message || 'upload_failed')), { code: String(result?.code || upstream.status) }))
-    sendJson(res, 502, { error: '上传失败，请稍后重试。' }); return
+    sendJson(res, 502, { error: `上传失败(${upstream.status})：${result?.message || 'no key'}` }); return
   }
   sendJson(res, 200, {
     data: { key: data.key, url: data.url, fileName: data.fileName || name, mimeType: data.mimeType || type },

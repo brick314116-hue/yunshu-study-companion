@@ -147,6 +147,12 @@ const handleKeydown = (event: KeyboardEvent) => {
               text="正在思考..."
             />
             <p v-else>{{ message.text }}</p>
+            <div v-if="message.attachments?.length" class="msg-files">
+              <span v-for="file in message.attachments" :key="file.fileKey || file.fileName" class="msg-file">
+                <Paperclip :size="13" :stroke-width="2" aria-hidden="true" />
+                {{ file.fileName }}
+              </span>
+            </div>
             <small v-if="message.status === 'stopped'">已停止生成</small>
             <small v-else-if="message.status === 'error'">回复失败，请稍后重试</small>
           </div>
@@ -218,6 +224,25 @@ const handleKeydown = (event: KeyboardEvent) => {
 </template>
 
 <style scoped>
+.msg-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.msg-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 200px;
+  padding: 4px 9px;
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
 .composer-files {
   display: flex;
   flex-wrap: wrap;

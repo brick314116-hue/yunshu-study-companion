@@ -18,6 +18,7 @@ export interface ChatMessage {
   text: string
   status: MessageStatus
   time: string
+  attachments?: ChatAttachment[]
 }
 
 /** 上传到女娲后的附件引用，随聊天消息发送 */
