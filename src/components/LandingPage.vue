@@ -155,9 +155,15 @@ const emit = defineEmits<{
 
 .landing-actions {
   display: flex;
+  width: min(100%, 320px);
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 12px;
+}
+
+.landing-actions .start-chat-button,
+.landing-actions .intro-button {
+  width: 100%;
 }
 
 /* 挖空按钮：与开始对话同尺寸，仅边框 */
