@@ -3,6 +3,8 @@ import { existsSync, readFileSync } from 'node:fs'
 
 const app = readFileSync(new URL('../src/App.vue', import.meta.url), 'utf8')
 const topbar = readFileSync(new URL('../src/components/AppTopbar.vue', import.meta.url), 'utf8')
+const sidebar = readFileSync(new URL('../src/components/SideBar.vue', import.meta.url), 'utf8')
+const actionMenu = readFileSync(new URL('../src/components/ActionMenuDialog.vue', import.meta.url), 'utf8')
 const workspace = readFileSync(new URL('../src/components/ChatWorkspace.vue', import.meta.url), 'utf8')
 const context = readFileSync(new URL('../src/components/ContextPanel.vue', import.meta.url), 'utf8')
 const home = readFileSync(new URL('../src/components/IntroPage.vue', import.meta.url), 'utf8')
@@ -23,15 +25,19 @@ assert.equal(existsSync(new URL('../src/mock-chat.js', import.meta.url)), false)
 assert.equal(existsSync(new URL('../src/components/AppSidebar.vue', import.meta.url)), false)
 assert.doesNotMatch(app, /getMockReply|chunkText/)
 
-// 顶栏导航结构（AppSidebar 已删除，由 AppTopbar 承担）
-assert.match(topbar, /class="topbar-brand"/)
-assert.match(topbar, /历史对话/)
-assert.match(topbar, /安全求助/)
-assert.match(topbar, /visibleModules/)
-// declined 时只保留学业模块（含“我的记录”在内的其余模块都隐藏）
-assert.match(topbar, /item\.id === 'study'/)
+// 顶栏/侧栏导航结构：模块工具与历史对话已移到左侧栏
+assert.match(topbar, /topbar-hamburger/)
+assert.match(topbar, /activeTab === 'chat'/)
+assert.match(topbar, /activeTab === 'intro'/)
+assert.match(sidebar, /class="app-sidebar"/)
+assert.match(sidebar, /想做点什么/)
+assert.match(sidebar, /历史对话/)
+assert.match(sidebar, /toggleCollapse/)
+assert.match(actionMenu, /想做点什么？/)
+assert.match(actionMenu, /我的记录/)
+assert.match(actionMenu, /@click="onMask"/)
 assert.doesNotMatch(workspace, /mobile-home-button|emit\('home'\)/)
-assert.match(context, /<\/Transition>\s*<div class="context-note">/)
+assert.match(app, /sidebarCollapsed|app-sidebar-wrap/)
 assert.match(workspace, /<ShinyText|<SplitText/)
 assert.match(home, /<BorderGlow>|<ScrollStack/)
 assert.match(landing, /云舒学伴/)
@@ -71,28 +77,30 @@ assert.match(workspace, /composer-count/)
 assert.match(store, /localStorage\.removeItem/)
 assert.doesNotMatch(store, /localStorage\.setItem|sessionStorage/)
 
-// 模块清单：三模块 + 我的记录（对话式记录管理入口）
-assert.match(modules, /label: '认知建构'|label: '情绪调节'/)
+// 模块清单：工具菜单中的学习、换个想法、聊心情、我的记录
+assert.match(modules, /label: '学习'/)
+assert.match(modules, /label: '换个想法'/)
+assert.match(modules, /label: '聊心情'/)
 assert.match(modules, /label: '我的记录'/)
 assert.match(modules, /情绪打卡/)
-assert.match(modules, /走神与拖延记录/)
-assert.match(modules, /本次学习困难清单/)
-assert.match(modules, /认知偏差线索/)
+assert.match(modules, /记下这次走神/)
+assert.match(modules, /这次的小困难/)
+assert.match(modules, /提醒我想得太绝对时/)
 assert.match(types, /prefill\??: string/)
+assert.match(types, /AppTab = 'landing' \| 'intro' \| 'chat'/)
 
 // 文案：隐私承诺与品牌
 assert.match(home, /云舒学伴|云小舒/)
-assert.match(topbar, /云舒学伴/)
-assert.match(workspace, /'云小舒'|和云小舒聊聊/)
-assert.match(consent, /仅使用学业功能|最多保留7天/)
+assert.match(landing, /云舒学伴|云小舒/)
+assert.match(sidebar, /云舒学伴/)
+assert.match(workspace, /'云小舒'|想聊点什么？学习、心情都可以/)
+assert.match(consent, /仅使用学业功能|最多留7天/)
 assert.match(consent, /本网站不保存对话记录/)
-assert.match(context, /本网站不保存对话记录/)
 assert.doesNotMatch(consent, /原始对话默认不保存/)
-assert.doesNotMatch(context, /原始对话默认不保存/)
 // 昵称弹窗不得再承诺“不会传给女娲”（云函数实际会把 display_name 作为会话变量下发）
 assert.doesNotMatch(readFileSync(new URL('../src/components/NicknameDialog.vue', import.meta.url), 'utf8'), /不会传给女娲/)
 
-for (const source of [app, topbar, workspace, home, auth, consent, chatApi]) {
+for (const source of [app, topbar, sidebar, actionMenu, workspace, home, landing, auth, consent, chatApi]) {
   assert.doesNotMatch(source, /心隅学伴/)
 }
 assert.doesNotMatch(home, /想法梳理|情绪支持|识别自动冒出的想法|没有固定脚本/)

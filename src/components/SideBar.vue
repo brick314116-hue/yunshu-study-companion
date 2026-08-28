@@ -3,6 +3,8 @@ import {
   Compass,
   LogIn,
   LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   ShieldCheck,
   Sparkles,
@@ -17,6 +19,7 @@ defineProps<{
   psychConsent: PsychConsent
   userName: string
   authReady: boolean
+  collapsed: boolean
 }>()
 
 const emit = defineEmits<{
@@ -30,33 +33,46 @@ const emit = defineEmits<{
   account: []
   logout: []
   login: []
+  toggleCollapse: []
 }>()
 </script>
 
 <template>
-  <aside class="app-sidebar">
-    <button class="sidebar-brand" type="button" aria-label="回到首页" @click="emit('home')">
-      <div class="brand-mark" aria-hidden="true">
-        <Sparkles :size="20" :stroke-width="1.8" />
-      </div>
-      <div class="sidebar-brand-text">
-        <strong>云舒学伴</strong>
-        <span>让成长不再孤单</span>
-      </div>
-    </button>
-
-    <div class="sidebar-actions">
-      <button class="sidebar-primary" type="button" @click="emit('newChat')">
-        <Plus :size="16" :stroke-width="1.9" />
-        <span>新对话</span>
+  <aside class="app-sidebar" :class="{ collapsed }">
+    <div class="sidebar-top">
+      <button class="sidebar-brand" type="button" aria-label="回到首页" @click="emit('home')">
+        <div class="brand-mark" aria-hidden="true">
+          <Sparkles :size="20" :stroke-width="1.8" />
+        </div>
+        <div v-if="!collapsed" class="sidebar-brand-text">
+          <strong>云舒学伴</strong>
+          <span>让成长不再孤单</span>
+        </div>
       </button>
-      <button class="sidebar-menu" type="button" @click="emit('openMenu')">
-        <Sparkles :size="16" :stroke-width="1.8" />
-        <span>想做点什么</span>
+      <button
+        class="sidebar-collapse"
+        type="button"
+        :title="collapsed ? '展开侧栏' : '收起侧栏'"
+        :aria-label="collapsed ? '展开侧栏' : '收起侧栏'"
+        @click="emit('toggleCollapse')"
+      >
+        <PanelLeftOpen v-if="collapsed" :size="16" :stroke-width="1.8" />
+        <PanelLeftClose v-else :size="16" :stroke-width="1.8" />
       </button>
     </div>
 
-    <div class="sidebar-history">
+    <div class="sidebar-actions">
+      <button class="sidebar-primary" type="button" :title="'新对话'" @click="emit('newChat')">
+        <Plus :size="16" :stroke-width="1.9" />
+        <span v-if="!collapsed">新对话</span>
+      </button>
+      <button class="sidebar-menu" type="button" :title="'想做点什么'" @click="emit('openMenu')">
+        <Sparkles :size="16" :stroke-width="1.8" />
+        <span v-if="!collapsed">想做点什么</span>
+      </button>
+    </div>
+
+    <div v-if="!collapsed" class="sidebar-history">
       <p class="sidebar-history-label">历史对话</p>
       <LineSidebar
         :items="conversations"
@@ -67,27 +83,27 @@ const emit = defineEmits<{
     </div>
 
     <div class="sidebar-footer">
-      <button class="sidebar-foot" type="button" @click="emit('guide')">
+      <button class="sidebar-foot" type="button" :title="'新手引导'" @click="emit('guide')">
         <Compass :size="16" :stroke-width="1.8" />
-        <span>新手引导</span>
+        <span v-if="!collapsed">新手引导</span>
       </button>
-      <button class="sidebar-foot safety" type="button" @click="emit('safety')">
+      <button class="sidebar-foot safety" type="button" :title="'安全求助'" @click="emit('safety')">
         <ShieldCheck :size="16" :stroke-width="1.8" />
-        <span>安全求助</span>
+        <span v-if="!collapsed">安全求助</span>
       </button>
 
       <div v-if="userName" class="sidebar-account">
-        <button class="sidebar-foot" type="button" title="设置你的称呼" @click="emit('account')">
+        <button class="sidebar-foot" type="button" :title="'设置你的称呼'" @click="emit('account')">
           <UserRound :size="16" :stroke-width="1.7" />
-          <span>{{ userName }}</span>
+          <span v-if="!collapsed">{{ userName }}</span>
         </button>
-        <button class="sidebar-logout" type="button" title="退出登录" aria-label="退出登录" @click="emit('logout')">
+        <button v-if="!collapsed" class="sidebar-logout" type="button" title="退出登录" aria-label="退出登录" @click="emit('logout')">
           <LogOut :size="16" :stroke-width="1.8" />
         </button>
       </div>
-      <button v-else class="sidebar-login" type="button" :disabled="!authReady" @click="emit('login')">
+      <button v-else class="sidebar-login" type="button" :title="'登录'" :disabled="!authReady" @click="emit('login')">
         <LogIn :size="16" :stroke-width="1.8" />
-        <span>{{ !authReady ? '正在检查...' : '登录' }}</span>
+        <span v-if="!collapsed">{{ !authReady ? '正在检查...' : '登录' }}</span>
       </button>
     </div>
   </aside>
@@ -102,17 +118,35 @@ const emit = defineEmits<{
   min-height: 0;
   background: var(--surface-soft);
   border-right: 1px solid var(--line);
+  transition: width 0.2s ease, flex-basis 0.2s ease;
+}
+
+.app-sidebar.collapsed {
+  width: 64px;
+  flex: 0 0 64px;
+}
+
+.sidebar-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 12px 10px;
 }
 
 .sidebar-brand {
   display: flex;
+  min-width: 0;
+  flex: 1;
   align-items: center;
   gap: 12px;
-  padding: 16px 16px 12px;
   color: var(--text);
   background: transparent;
   border: 0;
   text-align: left;
+}
+
+.collapsed .sidebar-brand {
+  justify-content: center;
 }
 
 .sidebar-brand .brand-mark {
@@ -140,11 +174,36 @@ const emit = defineEmits<{
   font-size: 11px;
 }
 
+.sidebar-collapse {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  color: var(--text-soft);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+}
+
+.sidebar-collapse:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.collapsed .sidebar-collapse {
+  margin: 0 auto;
+}
+
 .sidebar-actions {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 4px 12px 12px;
+}
+
+.collapsed .sidebar-actions {
+  padding: 4px 10px 12px;
 }
 
 .sidebar-primary,
@@ -208,6 +267,11 @@ const emit = defineEmits<{
   border-top: 1px solid var(--line);
 }
 
+.collapsed .sidebar-footer {
+  padding: 10px 8px 14px;
+  align-items: center;
+}
+
 .sidebar-foot {
   display: flex;
   align-items: center;
@@ -220,6 +284,12 @@ const emit = defineEmits<{
   font-size: 13px;
   text-align: left;
   transition: all 0.18s ease;
+}
+
+.collapsed .sidebar-foot {
+  justify-content: center;
+  padding: 9px 0;
+  width: 40px;
 }
 
 .sidebar-foot:hover {
@@ -277,6 +347,10 @@ const emit = defineEmits<{
   border: 0;
   border-radius: 10px;
   font-size: 14px;
+}
+
+.collapsed .sidebar-login {
+  width: 40px;
 }
 
 .sidebar-login:hover {

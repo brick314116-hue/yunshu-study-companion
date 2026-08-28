@@ -39,6 +39,7 @@ const loginNotice = ref('')
 const sending = ref(false)
 const sidebarOpen = ref(false)
 const actionMenuOpen = ref(false)
+const sidebarCollapsed = ref(false)
 
 const activeModule = computed(() => getModule(chatModule.value))
 const userName = computed(() => authUser.value?.displayName ?? '')
@@ -411,13 +412,15 @@ const sendMessage = async (preset?: string) => {
 
 <template>
   <div class="app-shell">
-    <div class="app-sidebar-wrap" :class="{ open: sidebarOpen }">
+    <!-- 首页(landing)全屏：不显示侧栏与顶栏 -->
+    <div v-if="activeTab !== 'landing'" class="app-sidebar-wrap" :class="{ open: sidebarOpen }">
       <SideBar
         :conversations="conversations"
         :active-conversation-id="activeConversationId"
         :psych-consent="psychConsent"
         :user-name="userName"
         :auth-ready="authReady"
+        :collapsed="sidebarCollapsed"
         @home="goHome"
         @new-chat="newChat"
         @open-menu="actionMenuOpen = true"
@@ -428,12 +431,13 @@ const sendMessage = async (preset?: string) => {
         @account="openNickname"
         @logout="logout"
         @login="openLogin"
+        @toggle-collapse="sidebarCollapsed = !sidebarCollapsed"
       />
       <div class="sidebar-overlay" @click="sidebarOpen = false"></div>
     </div>
 
     <div class="app-main">
-      <AppTopbar :active-tab="activeTab" @select="selectTab" @menu="sidebarOpen = true" />
+      <AppTopbar v-if="activeTab !== 'landing'" :active-tab="activeTab" @select="selectTab" @menu="sidebarOpen = true" />
 
       <LandingPage v-if="activeTab === 'landing'" :user-name="userName || null" @start="newChat" @enter="enterModule" />
 
