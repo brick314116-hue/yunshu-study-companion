@@ -18,3 +18,4 @@ deploy-package/
 
 # 临时函数部署目录
 .fn-deploy*
+.fn-clean
