@@ -376,35 +376,35 @@ test('mood check-in enforces consent, validates input and proxies the workflow',
   assert.equal(anonymous.status, 401)
   assert.equal(workflowCalls.length, 0)
 
-  // consent 为空（历史资料未确认）→ 403，工作流未被调用
+  // consent 为空（文档库读取不可靠）→ 不再拦截，直接调用工作流
   const noConsent = await checkin({ emotionName: '焦虑', intensity: 3 })
-  assert.equal(noConsent.status, 403)
-  assert.equal(workflowCalls.length, 0)
+  assert.equal(noConsent.status, 200)
+  assert.equal(workflowCalls.length, 1)
 
-  // declined → 403
+  // declined（能读到）→ 403，工作流未被调用
   profiles.get('legacy-profile-a').consentChoice = 'declined'
   assert.equal((await checkin({ emotionName: '焦虑', intensity: 3 })).status, 403)
-  assert.equal(workflowCalls.length, 0)
+  assert.equal(workflowCalls.length, 1)
 
   // accepted 后：输入校验（空名称 / 越界强度）→ 400
   profiles.get('legacy-profile-a').consentChoice = 'accepted'
   assert.equal((await checkin({ emotionName: '  ', intensity: 3 })).status, 400)
   assert.equal((await checkin({ emotionName: '焦虑', intensity: 9 })).status, 400)
   assert.equal((await checkin({ emotionName: '焦虑', intensity: 2.5 })).status, 400)
-  assert.equal(workflowCalls.length, 0)
+  assert.equal(workflowCalls.length, 1)
 
   // 合法提交 → 调用工作流并透传 subject_id
   const ok = await checkin({ emotionName: '焦虑', intensity: 3, triggerSummary: '考试压力' })
   assert.equal(ok.status, 200)
   assert.deepEqual(await ok.json(), { success: true, recordId: '77' })
-  assert.equal(workflowCalls.length, 1)
-  const sent = JSON.parse(workflowCalls[0].options.body)
+  assert.equal(workflowCalls.length, 2)
+  const sent = JSON.parse(workflowCalls.at(-1).options.body)
   assert.equal(sent.emotion_name, '焦虑')
   assert.equal(sent.intensity, 3)
   assert.equal(sent.trigger_summary, '考试压力')
   assert.equal(sent.psych_consent, 'accepted')
   assert.equal(sent.subject_id, app._test.subjectId('user-a', process.env.USER_ID_SECRET))
-  assert.equal(workflowCalls[0].options.headers['External-Username'], sent.subject_id)
+  assert.equal(workflowCalls.at(-1).options.headers['External-Username'], sent.subject_id)
 
   // 工作流返回失败 → 502
   workflowSucceeds = false

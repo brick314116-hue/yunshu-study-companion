@@ -674,10 +674,11 @@ function parseAgentStream(raw) {
     }
     const item = event?.eventType === 'MESSAGE' ? event.data || {} : null
     if (String(item?.role || '').toUpperCase() !== 'ASSISTANT' || String(item?.type || '').toUpperCase() === 'THINK') continue
-    const text = stripToolCallNoise(String(item?.text || ''))
+    const text = String(item?.text || '')
     if (text) messages.push(text)
   }
-  const reply = stripToolCallNoise(finalText || messages.join(' '))
+  // 不做任何剥离/截断：女娲返回什么就原样返回（吐代码是女娲侧的问题）
+  const reply = finalText || messages.join(' ')
   if (/Failed to process request:\s*Agent process failed|ACP InitializeRequest timeout/i.test(reply)) {
     throw Object.assign(new Error('agent_initialize_timeout'), {
       status: 502,
@@ -715,13 +716,12 @@ async function fetchFinalReply(config, conversationId) {
         const m = list[i]
         const role = String(m?.role || m?.messageType || '').toUpperCase()
         if (role !== 'ASSISTANT') continue
-        const text = stripToolCallNoise(String(m?.text ?? m?.content ?? ''))
+        // 不做任何剥离/截断：原样返回女娲存的最终消息
+        const text = String(m?.text ?? m?.content ?? '').trim()
         if (!text) continue
-        const clean = !/<tool|markdown-custom-process/.test(text)
         const finished = m?.finished === true || /ENDTURN/i.test(String(m?.finishReason || ''))
-        // 干净（无工具标签）且已结束，或轮询足够久后的干净消息，直接采用
-        if (clean && (finished || attempt >= 6)) return text
-        if (finished && !fallback) fallback = text
+        if (finished) return text
+        if (!fallback) fallback = text
       }
     } catch {
       /* 重试 */
@@ -844,7 +844,17 @@ async function handleChat(req, res) {
     if (full) reply = full
   }
   if (!reply) {
-    sendJson(res, 502, { error: '智能体没有返回可显示的内容。' })
+    // 临时诊断：区分"女娲流为空/出错"与"解析问题"（定位后移除）
+    sendJson(res, 502, {
+      error: '智能体没有返回可显示的内容。',
+      detail: {
+        rawLen: raw.length,
+        hasFinal: /FINAL_RESULT/.test(raw),
+        hasMessage: /"MESSAGE"/.test(raw),
+        hasTool: parsed.usedTools,
+        hasError: /"ERROR"/.test(raw),
+      },
+    })
     return
   }
   try {

@@ -190,6 +190,9 @@ def main(emotion_name="", intensity=0, trigger_summary="", psych_consent="", sub
         "mood_type": mood_type,
         "intensity_self": intensity_val,
         "trigger_event": trigger_event,
+        "duration_hours": 0,
+        "impact_study": "",
+        "impact_life": "",
         "expires_at": expires_at,
         "subject_id": (subject_id or "").strip(),
     }
@@ -218,6 +221,9 @@ const codeNode = {
       outputArg('mood_type', 'String'),
       outputArg('intensity_self', 'Integer'),
       outputArg('trigger_event', 'String'),
+      outputArg('duration_hours', 'Number'),
+      outputArg('impact_study', 'String'),
+      outputArg('impact_life', 'String'),
       outputArg('expires_at', 'String'),
       outputArg('subject_id', 'String'),
     ],
@@ -276,21 +282,21 @@ const conditionNode = {
 
 // --- TableDataAdd 节点: mood_checkin ---
 const tableDataAddNode = {
-  ...nodeSkeleton(S_DATA, 'TableDataAdd', 'mood_checkin', '表单情绪打卡记录表', WORKFLOW_ID),
+  ...nodeSkeleton(S_DATA, 'TableDataAdd', 'mood_log', '情绪记录表（对话+表单共用）', WORKFLOW_ID),
   nextNodeIds: [S_VAR_OK],
   nodeConfig: {
-    ...nodeSkeleton(S_DATA, 'TableDataAdd', 'mood_checkin', '', WORKFLOW_ID).nodeConfig,
-    description: '表单情绪打卡记录表',
+    ...nodeSkeleton(S_DATA, 'TableDataAdd', 'mood_log', '', WORKFLOW_ID).nodeConfig,
+    description: '情绪记录表（对话+表单共用）',
     extension: { x: 1000, width: 220, y: -88, height: 79 },
     icon: 'https://agent.nuwax.com/api/f/s3/icon/20260817/checkin.svg',
-    name: 'mood_checkin',
-    // inputArgs: 写入的字段（key 与 tableFields 的 key 对应）
+    name: 'mood_log',
+    // inputArgs: 写入的字段（key 与 mood_log 表字段对应；uid/created 由系统自动填）
     inputArgs: [
-      { ...ref(S_CODE, 'subject_id', 'String'), key: 'subject_id' },
       { ...ref(S_CODE, 'mood_type', 'String'), key: 'mood_type' },
       { ...ref(S_CODE, 'intensity_self', 'Integer'), key: 'intensity_self' },
       { ...ref(S_CODE, 'trigger_event', 'String'), key: 'trigger_summary' },
       { ...ref(S_CODE, 'expires_at', 'String'), key: 'expires_at' },
+      { ...ref(S_CODE, 'subject_id', 'String'), key: 'subject_id' },
     ],
     outputArgs: [
       {
@@ -322,11 +328,14 @@ const tableDataAddNode = {
       { dataType: 'String', description: '智能体名称', enable: true, key: 'agent_name', name: 'agent_name', require: false, systemVariable: true },
       { bindValue: 'CURRENT_TIMESTAMP', dataType: 'String', description: '数据创建时间', enable: true, key: 'created', name: 'created', require: true, systemVariable: true },
       { bindValue: 'CURRENT_TIMESTAMP', dataType: 'String', description: '数据修改时间', enable: true, key: 'modified', name: 'modified', require: true, systemVariable: true },
-      { ...ref(S_CODE, 'subject_id', 'String'), key: 'subject_id', require: false },
       { ...ref(S_CODE, 'mood_type', 'String'), key: 'mood_type', require: false },
       { ...ref(S_CODE, 'intensity_self', 'Integer'), key: 'intensity_self', require: false },
+      { ...ref(S_CODE, 'duration_hours', 'Number'), key: 'duration_hours', require: false },
       { ...ref(S_CODE, 'trigger_event', 'String'), key: 'trigger_summary', require: false },
+      { ...ref(S_CODE, 'impact_study', 'String'), key: 'impact_study', require: false },
+      { ...ref(S_CODE, 'impact_life', 'String'), key: 'impact_life', require: false },
       { ...ref(S_CODE, 'expires_at', 'String'), key: 'expires_at', require: false },
+      { ...ref(S_CODE, 'subject_id', 'String'), key: 'subject_id', require: false },
     ],
   },
 };
