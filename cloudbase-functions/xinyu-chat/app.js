@@ -587,7 +587,9 @@ async function handleMoodCheckin(req, res) {
       new Error(String(data.error_msg || result?.message || 'workflow_failed')),
       { code: String(result?.code || `HTTP_${upstream.status}`) },
     ))
-    sendJson(res, 502, { error: '打卡保存失败，请稍后重试。' })
+    // 把工作流的真实失败原因透出（如字段缺失/表不匹配），便于定位
+    const reason = String(data.error_msg || result?.message || '').slice(0, 120)
+    sendJson(res, 502, { error: `打卡保存失败：${reason || '工作流未返回成功'}` })
     return
   }
   logDb(id, 'CHECKIN-SAVE-OK', `subject=${subject.slice(0, 8)}… record=${data.record_id ?? '-'}`)
