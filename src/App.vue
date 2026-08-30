@@ -341,12 +341,41 @@ const onOnboardingPick = (module: ModuleId, prompt: string) => {
   sendMessage(prompt)
 }
 
+// 打字机效果：后端仍是完整回复，前端逐段显示。
+// 新的发送会让进行中的打字立刻补完，避免两条消息交叠。
+let typeOutSession = 0
+
+const typeOutMessage = (messageId: string, full: string) =>
+  new Promise<void>((resolve) => {
+    const session = ++typeOutSession
+    const patch = (text: string, status: 'streaming' | 'done') => {
+      const idx = messages.value.findIndex((m) => m.id === messageId)
+      if (idx >= 0) messages.value[idx] = { ...messages.value[idx], text, status }
+    }
+    if (!full) { resolve(); return }
+    const perTick = Math.max(2, Math.ceil(full.length / 150))
+    let shown = 0
+    const tick = () => {
+      if (session !== typeOutSession) {
+        patch(full, 'done')
+        resolve()
+        return
+      }
+      shown = Math.min(full.length, shown + perTick)
+      patch(full.slice(0, shown), shown >= full.length ? 'done' : 'streaming')
+      if (shown < full.length) setTimeout(tick, 16)
+      else resolve()
+    }
+    tick()
+  })
+
 const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
   if (!authUser.value) {
     void openLogin()
     return
   }
   if (sending.value) return
+  typeOutSession++ // 新发送让进行中的打字立刻补完
   const text = (preset ?? draft.value).trim()
   const files = attachments || []
   if (!text && files.length === 0) return
@@ -391,8 +420,8 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
   try {
     const result = await requestChat(text || '请看一下我发送的附件。', newConversation, localConversationId, files)
     const reply = typeof result === 'string' ? result : result.reply
-    const index = messages.value.findIndex((message) => message.id === assistantMessageId)
-    if (index >= 0) messages.value[index] = { ...messages.value[index], text: reply, status: 'done' }
+    // 打字机：占位消息逐段补全为完整回复
+    await typeOutMessage(assistantMessageId, reply)
     const synced = conversations.value.find((item) => item.id === localConversationId)
     if (synced) synced.serverSynced = true
     if (typeof result !== 'string' && result.action === 'mood-checkin' && psychConsent.value === 'accepted') {
