@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  ClipboardList,
   Compass,
   LogIn,
   LogOut,
@@ -34,6 +35,7 @@ const emit = defineEmits<{
   logout: []
   login: []
   toggleCollapse: []
+  checkin: []
 }>()
 </script>
 
@@ -83,6 +85,10 @@ const emit = defineEmits<{
     </div>
 
     <div class="sidebar-footer">
+      <button class="sidebar-foot checkin" type="button" :title="'情绪打卡'" @click="emit('checkin')">
+        <ClipboardList :size="16" :stroke-width="1.8" />
+        <span v-if="!collapsed">情绪打卡</span>
+      </button>
       <button class="sidebar-foot" type="button" :title="'新手引导'" @click="emit('guide')">
         <Compass :size="16" :stroke-width="1.8" />
         <span v-if="!collapsed">新手引导</span>
@@ -308,6 +314,11 @@ const emit = defineEmits<{
 .sidebar-foot.safety:hover {
   color: var(--danger);
   background: var(--danger-soft);
+}
+
+.sidebar-foot.checkin:hover {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
 }
 
 .sidebar-account {

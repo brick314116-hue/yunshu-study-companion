@@ -581,13 +581,14 @@ async function handleMoodCheckin(req, res) {
   }
   clearTimeout(timeout)
   const data = result?.data || {}
-  const saved = String(data.success) === 'true' || data.success === true
-  if (!upstream.ok || !result?.success || !saved) {
+  // 以女娲执行码判定成功：code 0000 表示工作流已执行（含写表）。
+  // 旧版工作流结束节点的 success 输出引用可能失效（data.success 为空），不能据此判失败。
+  const nuwaxOk = upstream.ok && (result?.success === true || String(result?.code) === '0000')
+  if (!nuwaxOk) {
     logError('checkin-workflow', id, Object.assign(
       new Error(String(data.error_msg || result?.message || 'workflow_failed')),
       { code: String(result?.code || `HTTP_${upstream.status}`) },
     ))
-    // 把工作流的真实失败原因透出（如字段缺失/表不匹配），便于定位
     const reason = String(data.error_msg || result?.message || '').slice(0, 120)
     sendJson(res, 502, { error: `打卡保存失败：${reason || '工作流未返回成功'}` })
     return

@@ -345,7 +345,7 @@ test('mood check-in enforces consent, validates input and proxies the workflow',
       workflowCalls.push({ url: String(url), options })
       return Response.json(workflowSucceeds
         ? { code: '0000', success: true, data: { success: 'true', record_id: '77' } }
-        : { code: '0000', success: true, data: { success: 'false', record_id: '', error_msg: '未通过知情同意校验' } })
+        : { code: '0001', success: false, data: { success: 'false', record_id: '', error_msg: '工作流执行失败' } })
     }
     throw new Error(`unexpected fetch: ${url}`)
   }
@@ -410,5 +410,5 @@ test('mood check-in enforces consent, validates input and proxies the workflow',
   workflowSucceeds = false
   const failed = await checkin({ emotionName: '焦虑', intensity: 3 })
   assert.equal(failed.status, 502)
-  assert.equal((await failed.json()).error, '打卡保存失败，请稍后重试。')
+  assert.equal((await failed.json()).error, '打卡保存失败：工作流执行失败')
 })

@@ -445,7 +445,7 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
 <template>
   <div class="app-shell">
     <!-- 首页(landing)全屏：不显示侧栏与顶栏 -->
-    <div v-if="activeTab !== 'landing'" class="app-sidebar-wrap" :class="{ open: sidebarOpen }">
+    <div v-if="activeTab !== 'landing' && activeTab !== 'intro'" class="app-sidebar-wrap" :class="{ open: sidebarOpen }">
       <SideBar
         :conversations="conversations"
         :active-conversation-id="activeConversationId"
@@ -464,12 +464,25 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
         @logout="logout"
         @login="openLogin"
         @toggle-collapse="sidebarCollapsed = !sidebarCollapsed"
+        @checkin="runToolAction('mood-checkin')"
       />
       <div class="sidebar-overlay" @click="sidebarOpen = false"></div>
     </div>
 
     <div class="app-main">
-      <AppTopbar v-if="activeTab !== 'landing'" :active-tab="activeTab" @select="selectTab" @menu="sidebarOpen = true" />
+      <AppTopbar
+        v-if="activeTab !== 'landing'"
+        :active-tab="activeTab"
+        :minimal="activeTab === 'intro'"
+        :user-name="userName"
+        :auth-ready="authReady"
+        @select="selectTab"
+        @menu="sidebarOpen = true"
+        @home="goHome"
+        @login="openLogin"
+        @account="openNickname"
+        @logout="logout"
+      />
 
       <LandingPage
         v-if="activeTab === 'landing'"
