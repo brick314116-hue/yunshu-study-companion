@@ -54,10 +54,14 @@ async function callProfile(method: 'GET' | 'POST', body?: Record<string, unknown
     } catch {
       /* ignore */
     }
-    if (response.status === 401 || response.status === 403) {
+    if (message) throw new Error(message)
+    if (response.status === 401) {
       throw new Error('登录状态已失效，请重新登录后再试。')
     }
-    throw new Error(message || `用户资料接口失败（${response.status}）`)
+    if (response.status === 403) {
+      throw new Error('请求来源被拦截（403），请检查云函数 ALLOWED_ORIGINS 配置。')
+    }
+    throw new Error(`用户资料接口失败（${response.status}）`)
   }
   return (await response.json()) as Record<string, unknown>
 }

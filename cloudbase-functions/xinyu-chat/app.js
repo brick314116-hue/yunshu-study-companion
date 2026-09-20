@@ -36,7 +36,17 @@ function allowedOrigins() {
 function requestOrigin(req) {
   const origin = req.headers.origin
   if (!origin) return ''
-  return allowedOrigins().includes(origin) ? origin : null
+  const configured = allowedOrigins()
+  if (configured.includes(origin) || configured.includes('*')) return origin
+  try {
+    const url = new URL(origin)
+    if (url.hostname.endsWith('.vercel.app') || url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      return origin
+    }
+  } catch {
+    // 忽略非法 URL 格式
+  }
+  return null
 }
 
 function isRateLimited(key) {

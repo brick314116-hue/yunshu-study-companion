@@ -37,11 +37,15 @@ const responseError = async (response: Response) => {
     // The status-specific message below is safer than returning an HTML error page.
   }
 
-  if (response.status === 401 || response.status === 403) {
+  if (message) return message
+  if (response.status === 401) {
     return '登录状态已失效，请重新登录后再试。'
   }
+  if (response.status === 403) {
+    return '当前访问来源未被允许（403），请将该域名添加到云函数 ALLOWED_ORIGINS 白名单。'
+  }
   if (response.status === 404) return '对话接口尚未部署，请检查 CloudBase 的 /api/chat 路由。'
-  return message || '暂时没有连接上云小舒，请稍后重试。'
+  return '暂时没有连接上云小舒，请稍后重试。'
 }
 
 export type ChatAction = 'mood-checkin'
