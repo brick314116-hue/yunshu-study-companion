@@ -465,6 +465,9 @@ export const getAccessToken = async (): Promise<string> => {
   try {
     if (typeof auth.getAccessToken === 'function') {
       const result: unknown = await auth.getAccessToken()
+      if (typeof result === 'string' && result.trim()) {
+        return result.trim()
+      }
       if (isRecord(result)) {
         const token =
           readString(result.accessToken) || readString(result.access_token) || readString(result.token)
@@ -481,10 +484,14 @@ export const getAccessToken = async (): Promise<string> => {
   try {
     if (typeof auth.getSession === 'function') {
       const session: unknown = await auth.getSession()
+      if (typeof session === 'string' && session.trim()) {
+        return session.trim()
+      }
       if (isRecord(session)) {
         const data = isRecord(session.data) ? session.data : session
         const sess = isRecord(data.session) ? data.session : data
-        const token = readString(sess.access_token) || readString(sess.accessToken)
+        const token =
+          readString(sess.access_token) || readString(sess.accessToken) || readString(sess.token)
         if (token) {
           return token
         }
@@ -498,6 +505,9 @@ export const getAccessToken = async (): Promise<string> => {
   try {
     if (typeof auth.getLoginState === 'function') {
       const state: unknown = await auth.getLoginState()
+      if (typeof state === 'string' && state.trim()) {
+        return state.trim()
+      }
       if (isRecord(state)) {
         const token =
           readString(state.access_token) ||

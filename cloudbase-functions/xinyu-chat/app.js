@@ -272,8 +272,17 @@ function uidFromJwt(token) {
   const payload = decodeContext(parts[1])
   if (!payload || typeof payload !== 'object') return null
   const now = Math.floor(Date.now() / 1000)
-  if (payload.exp !== undefined && (!Number.isFinite(Number(payload.exp)) || Number(payload.exp) <= now)) return null
-  if (payload.nbf !== undefined && (!Number.isFinite(Number(payload.nbf)) || Number(payload.nbf) > now)) return null
+  const CLOCK_TOLERANCE = 120
+  if (payload.exp !== undefined) {
+    const exp = Number(payload.exp)
+    const expSec = exp > 1e11 ? Math.floor(exp / 1000) : exp
+    if (!Number.isFinite(expSec) || expSec <= (now - CLOCK_TOLERANCE)) return null
+  }
+  if (payload.nbf !== undefined) {
+    const nbf = Number(payload.nbf)
+    const nbfSec = nbf > 1e11 ? Math.floor(nbf / 1000) : nbf
+    if (!Number.isFinite(nbfSec) || nbfSec > (now + CLOCK_TOLERANCE)) return null
+  }
   const candidates = [
     payload.uid,
     payload.sub,
