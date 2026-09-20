@@ -13,19 +13,30 @@ const isRecord = (value: unknown): value is RecordValue =>
 
 const readString = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
 
+const cleanReply = (text: string): string => {
+  if (!text) return ''
+  return text
+    .replace(/<div[^>]*>\s*<markdown-custom-process[\s\S]*?<\/markdown-custom-process>\s*<\/div>/gi, '')
+    .replace(/<markdown-custom-process[\s\S]*?<\/markdown-custom-process>/gi, '')
+    .replace(/<markdown-custom-process[^>]*\/>/gi, '')
+    .replace(/<\/?markdown-custom-process[^>]*>/gi, '')
+    .replace(/<tool_use>[\s\S]*?<\/tool_use>/gi, '')
+    .trim()
+}
+
 const replyFromJson = (value: unknown): string => {
   if (!isRecord(value)) return ''
   const direct = readString(value.reply || value.outputText)
-  if (direct) return direct
+  if (direct) return cleanReply(direct)
 
   if (typeof value.body === 'string') {
     try {
-      return replyFromJson(JSON.parse(value.body))
+      return cleanReply(replyFromJson(JSON.parse(value.body)))
     } catch {
       return ''
     }
   }
-  return isRecord(value.data) ? replyFromJson(value.data) : ''
+  return isRecord(value.data) ? cleanReply(replyFromJson(value.data)) : ''
 }
 
 const responseError = async (response: Response) => {

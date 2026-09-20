@@ -379,4 +379,12 @@ const emit = defineEmits<{
 .sidebar-login:disabled {
   opacity: 0.6;
 }
+
+@media (max-width: 1000px) {
+  .app-sidebar,
+  .app-sidebar.collapsed {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+  }
+}
 </style>

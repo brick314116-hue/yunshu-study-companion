@@ -118,6 +118,11 @@ a:focus-visible {
   flex: 0 0 auto;
 }
 
+/* 独立遮罩：桌面端隐藏 */
+.sidebar-backdrop {
+  display: none;
+}
+
 .sidebar-overlay {
   display: none;
 }
@@ -131,6 +136,25 @@ a:focus-visible {
 }
 
 @media (max-width: 1000px) {
+  /* 移动端独立全屏遮罩：挂载在 app-shell 顶层，无 transform 包含块限制，全屏铺满点击即关 */
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    display: block;
+    background: rgb(26 34 51 / 45%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+
+  .sidebar-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .app-sidebar-wrap {
     position: fixed;
     inset: 0 auto 0 0;
@@ -140,26 +164,22 @@ a:focus-visible {
     pointer-events: none;
     visibility: hidden;
     transform: translateX(-105%);
-    transition: transform 0.22s ease, visibility 0s linear 0.22s;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0.22s;
+    box-shadow: none;
   }
 
   .app-sidebar-wrap.open {
     pointer-events: auto;
     visibility: visible;
     transform: translateX(0);
-    transition: transform 0.22s ease;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 4px 0 24px rgb(0 0 0 / 18%);
   }
 
   .app-sidebar-wrap .app-sidebar {
     height: 100%;
-  }
-
-  .app-sidebar-wrap.open .sidebar-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    display: block;
-    background: rgb(26 34 51 / 32%);
+    width: 100% !important;
+    flex: 1 1 auto !important;
   }
 }
 

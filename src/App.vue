@@ -73,7 +73,21 @@ watch(
   { deep: true },
 )
 
+const isMobile = ref(false)
+const updateMobileState = () => {
+  if (typeof window !== 'undefined') {
+    isMobile.value = window.innerWidth <= 1000
+    if (isMobile.value) {
+      sidebarCollapsed.value = false
+    }
+  }
+}
+
 onMounted(async () => {
+  updateMobileState()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateMobileState)
+  }
   clearLegacyConversationHistory()
   try {
     authUser.value = await restoreAuth()
@@ -86,6 +100,9 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateMobileState)
+  }
   clearTimeout(conversationSyncTimer)
   clearTimeout(loginNoticeTimer)
   syncActiveConversation()
@@ -250,6 +267,22 @@ const onMenuPick = (moduleId: ModuleId, prompt: string) => {
 const onMenuPickAction = (action: 'mood-checkin') => {
   sidebarOpen.value = false
   runToolAction(action)
+}
+
+const openSidebar = () => {
+  if (isMobile.value || (typeof window !== 'undefined' && window.innerWidth <= 1000)) {
+    sidebarCollapsed.value = false
+  }
+  sidebarOpen.value = true
+}
+
+const toggleSidebarCollapse = () => {
+  if (isMobile.value || (typeof window !== 'undefined' && window.innerWidth <= 1000)) {
+    sidebarOpen.value = false
+    sidebarCollapsed.value = false
+    return
+  }
+  sidebarCollapsed.value = !sidebarCollapsed.value
 }
 
 const newChat = () => {
@@ -444,6 +477,14 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
 
 <template>
   <div class="app-shell">
+    <!-- 移动端全屏独立遮罩：脱离transform包含块限制，全屏点击即关 -->
+    <div
+      v-if="activeTab !== 'landing' && activeTab !== 'intro'"
+      class="sidebar-backdrop"
+      :class="{ open: sidebarOpen }"
+      @click="sidebarOpen = false"
+    />
+
     <!-- 首页(landing)全屏：不显示侧栏与顶栏 -->
     <div v-if="activeTab !== 'landing' && activeTab !== 'intro'" class="app-sidebar-wrap" :class="{ open: sidebarOpen }">
       <SideBar
@@ -452,21 +493,20 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
         :psych-consent="psychConsent"
         :user-name="userName"
         :auth-ready="authReady"
-        :collapsed="sidebarCollapsed"
+        :collapsed="isMobile ? false : sidebarCollapsed"
         @home="goHome"
         @new-chat="newChat"
-        @open-menu="actionMenuOpen = true"
+        @open-menu="actionMenuOpen = true; sidebarOpen = false"
         @select-conversation="selectConversation"
         @delete-conversation="deleteConversation"
-        @guide="openGuide"
-        @safety="safetyOpen = true"
-        @account="openNickname"
-        @logout="logout"
-        @login="openLogin"
-        @toggle-collapse="sidebarCollapsed = !sidebarCollapsed"
-        @checkin="runToolAction('mood-checkin')"
+        @guide="openGuide(); sidebarOpen = false"
+        @safety="safetyOpen = true; sidebarOpen = false"
+        @account="openNickname(); sidebarOpen = false"
+        @logout="logout(); sidebarOpen = false"
+        @login="openLogin(); sidebarOpen = false"
+        @toggle-collapse="toggleSidebarCollapse"
+        @checkin="runToolAction('mood-checkin'); sidebarOpen = false"
       />
-      <div class="sidebar-overlay" @click="sidebarOpen = false"></div>
     </div>
 
     <div class="app-main">
@@ -477,7 +517,7 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
         :user-name="userName"
         :auth-ready="authReady"
         @select="selectTab"
-        @menu="sidebarOpen = true"
+        @menu="openSidebar"
         @home="goHome"
         @login="openLogin"
         @account="openNickname"

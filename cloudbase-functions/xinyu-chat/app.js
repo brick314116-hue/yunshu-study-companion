@@ -675,9 +675,9 @@ function stripToolCallNoise(text) {
   return text
     .replace(/<tool_use>[\s\S]*?<\/tool_use>/g, '')     // 闭合的工具调用块
     .replace(/<tool_use>[\s\S]*$/g, '')                  // 流式未闭合（到字符串末尾）
-    .replace(/<div><markdown-custom-process[\s\S]*?<\/div>/g, '')  // 工作流/数据表执行卡片
-    .replace(/<div><markdown-custom-process[^<]*<\/div>/g, '')
-    .replace(/<\/?markdown-custom-process[^>]*>/g, '')
+    .replace(/<div[^>]*>\s*<markdown-custom-process[\s\S]*?<\/markdown-custom-process>\s*<\/div>/gi, '')
+    .replace(/<div[^>]*>\s*<markdown-custom-process[\s\S]*?<\/div>/gi, '')  // 工作流/数据表执行卡片
+    .replace(/<\/?markdown-custom-process[^>]*>/gi, '')
     .replace(/<\/?tool[\s\S]*$/g, '')                    // 半截残片（如被超时掐断的 <tool_）
     .replace(/<\/?tool_use>/g, '')                       // 残片
     .replace(/<\/?arguments>?/g, '')                    // 残片
