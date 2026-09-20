@@ -40,7 +40,15 @@ function requestOrigin(req) {
   if (configured.includes(origin) || configured.includes('*')) return origin
   try {
     const url = new URL(origin)
-    if (url.hostname.endsWith('.vercel.app') || url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+    if (
+      url.hostname === 'yunshu.bond' ||
+      url.hostname.endsWith('.yunshu.bond') ||
+      url.hostname.endsWith('.vercel.app') ||
+      url.hostname.endsWith('.tcloudbaseapp.com') ||
+      url.hostname.endsWith('.tcloudbase.com') ||
+      url.hostname === 'localhost' ||
+      url.hostname === '127.0.0.1'
+    ) {
       return origin
     }
   } catch {
