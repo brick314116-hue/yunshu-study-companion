@@ -11,7 +11,7 @@ const REQUEST_TIMEOUT_MS = Number.isFinite(configuredTimeoutMs)
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000
 const RATE_LIMIT_MAX = 30
 const AGENT_KEY = 'main'
-const BUILD_VERSION = '2026-08-19-profile-probe'
+const BUILD_VERSION = '2026-09-12-user-identity-bridge'
 const DEFAULT_DATABASE_INSTANCE = 'tnt-nsoau01qw'
 const DEFAULT_CHECKIN_WORKFLOW_ID = 5257662
 const CHECKIN_TIMEOUT_MS = 30 * 1000
@@ -597,13 +597,21 @@ async function handleMoodCheckin(req, res) {
   sendJson(res, 200, { success: true, recordId: data.record_id ?? null })
 }
 
+// 女娲上游身份头：只接受云函数根据登录态派生的匿名身份，不接受浏览器传入值。
+function nuwaxHeaders(config, subject, extra = {}) {
+  return {
+    Authorization: config.authorization,
+    'External-Username': subject,
+    ...extra,
+  }
+}
+
 async function createConversation(config, profile, subject) {
   const response = await fetch(`${config.baseUrl}/api/v1/chat/conversation/add`, {
     method: 'POST',
-    headers: {
-      Authorization: config.authorization,
+    headers: nuwaxHeaders(config, subject, {
       'Content-Type': 'application/json',
-    },
+    }),
     body: JSON.stringify({
       agentId: config.agentId,
       variables: conversationVariables(profile, subject),
@@ -785,11 +793,10 @@ async function handleChat(req, res) {
   try {
     upstream = await fetch(`${config.baseUrl}/api/v1/chat/${session.conversationId}`, {
       method: 'POST',
-      headers: {
-        Authorization: config.authorization,
+      headers: nuwaxHeaders(config, subject, {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
-      },
+      }),
       body: JSON.stringify({
         conversationId: session.conversationId,
         message,

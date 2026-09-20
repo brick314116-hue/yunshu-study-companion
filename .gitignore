@@ -16,7 +16,21 @@ Thumbs.db
 .zcode/
 deploy-package/
 
-# 临时函数部署目录
+# 临时函数与部署目录
 .fn-deploy*
 .fn-clean
 .fn-*
+.deploy/
+
+# 临时分析与抓取文件
+scratch_*
+scratch_f2_media/
+
+# 汇报演示、高清截图与非代码文档（用户指定无用文档不提交）
+*.pptx
+*.docx
+*.pdf
+微信图片_*.png
+云舒学伴_演示视频终极讲稿*.md
+docs/
+docx-build/

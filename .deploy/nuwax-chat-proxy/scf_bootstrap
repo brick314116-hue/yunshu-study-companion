@@ -1,2 +1,0 @@
-#!/bin/bash
-exec /var/lang/node20/bin/node app.js

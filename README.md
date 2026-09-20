@@ -9,6 +9,11 @@
 | `src/` | 前端源码（Vue3 + Vite + `@cloudbase/js-sdk` v3） |
 | `dist/` | 构建产物（已被 `.gitignore` 忽略，**不入库**） |
 | `cloudbase-functions/xinyu-chat/` | 云函数源码（部署到 CloudBase 函数名 **`nuwax-chat-proxy`**） |
+| `platform-assets/` | 女娲平台资产（`source/` 原始备份、`repaired/` 生产修复版、`legacy/` 历史备份） |
+| `docs/` | 项目说明与方案文档（含部署交接文档与方案 Word 设计稿） |
+| `docx-build/` | 方案文档生成工程源码与资源 |
+| `scripts/` | 工程规范检查与资产生成/校验脚本（`check.mjs` 等） |
+| `deploy-package/` | 历史独立打包发布包 |
 | `.env` | 本地前端环境变量（已被 `.gitignore` 忽略，**不入库**）；模板见 `.env.example` |
 | `cloudbase-functions/xinyu-chat/.env.example` | 云函数环境变量模板（**可入库**） |
 
@@ -59,7 +64,7 @@ VITE_CHAT_API_URL=https://xueou-d7gwem7g2452a7ea3-1462770697.ap-shanghai.app.tcl
 - **云函数数据库必须绑定实例。** 通过 `CLOUDBASE_DATABASE_INSTANCE=tnt-nsoau01qw` 明确写入控制台当前实例。`agent_sessions` 保持 `ADMINONLY`（安全规则 `read/write=false`）是正常配置，不需要开放客户端权限。
 - **女娲 API 与网页端不是同一条会话路径。** 网页端会把 `sandboxId`、`skillIds`、`agentMode` 带给 `/api/v1/chat/{conversationId}`；云函数现在可通过同名 `NUWAX_*` 环境变量传入。未配置固定沙箱时，女娲会按默认沙箱启动，若出现 ACP 初始化超时，应先检查沙箱服务和该 ID，而不是修改 `project_id`。
 - **55 秒 504 是代理自己的超时。** 女娲后端 `/computer/chat` 的允许等待时间可到 180 秒，云函数默认等待 180 秒；`project_id=1674213` 是女娲根据会话生成的内部项目 ID，不是本项目配置项。
-- **上线后先验新包。** 给 HTTP 函数访问 `/health`（带正式 Origin）应看到 `version=2026-08-14-upstream-timeout-sandbox`、`databaseInstance=tnt-nsoau01qw`、`upstreamTimeoutMs=180000`。若不是这三个值，说明仍在运行旧版本或旧实例。
+- **上线后先验新包。** 给 HTTP 函数访问 `/health`（带正式 Origin）应看到 `version=2026-09-12-user-identity-bridge`、`databaseInstance=tnt-nsoau01qw`、`upstreamTimeoutMs=180000`。若不是这三个值，说明仍在运行旧版本或旧实例。
 - **仍出现 ACP 初始化超时时的检查顺序。** 先重新登录取得新 Token，再在女娲网页端开发者工具中查看成功对话的 `/api/v1/chat/{conversationId}` 请求；若 payload 有数字 `sandboxId`，把它填入函数环境变量 `NUWAX_SANDBOX_ID`。若无该字段，检查女娲平台的默认沙箱服务状态。`agent_sessions` 和 `user_profiles` 都由函数 Admin SDK 写入，两个表同时为空时只检查函数包、`CLOUDBASE_ENV_ID` 和 `CLOUDBASE_DATABASE_INSTANCE`，不要开放 `agent_sessions` 权限。
 
 ## 本地构建 + 部署流程
@@ -108,4 +113,15 @@ npm run build                 # = vue-tsc -b && vite build，产出 dist/
 ## 会话与会话变量（前端 ↔ 云函数 ↔ 女娲）
 
 - 前端每个本地会话有唯一 `conversationKey`（本地会话 id），云函数按 `HMAC(uid, key)` 在 `agent_sessions` 里一一对应地存女娲 `conversationId`；切换历史对话不会再互相覆盖上下文。
-- 云函数每次对话都会把 `subject_id`（uid 的 HMAC 匿名身份）、`display_name`、`consent_version`、`psych_consent`（accepted/declined/unknown）作为会话变量下发给女娲。**女娲侧的情绪/认知/记录增删改查工作流必须检查 `psych_consent=accepted` 且使用 `subject_id` 过滤数据表**，declined/unknown 时拒绝并引导学业功能。
+- 云函数每次对话都会把 `subject_id`（uid 的 HMAC 匿名身份）、`display_name`、`consent_version`、`psych_consent`（accepted/declined/unknown）作为会话变量下发给女娲。创建会话和后续聊天请求的 `External-Username` 均使用同一个 `subject_id`，以便女娲平台把系统变量 `USER_UID` 稳定映射到当前网站用户。
+- 用户身份桥接链路为：`Authorization: Bearer token` → 云函数解析真实 `uid` → `HMAC(uid, USER_ID_SECRET)` 得到 `subject_id` → 女娲 `External-Username`/`USER_UID` → 数据表系统字段 `uid`。原始 `uid`、openid、unionid、手机号和 access token 不发送给女娲，也不从浏览器请求体读取。
+- “我的记录”查询必须使用固定条件 `uid = USER_UID`，不能使用用户消息中的 `owner_uid` 或其他自报身份。`owner_uid` 如为兼容旧工具保留，只能绑定到女娲系统变量 `USER_UID`。
+- 女娲侧的情绪/认知/记录增删改查工作流必须检查 `psych_consent=accepted` 且使用当前系统用户身份过滤数据表，declined/unknown 时拒绝并引导学业功能。
+
+### 身份桥接验收
+
+1. 网站账号 A 保存记录后，数据表中的 `uid` 等于 A 的 `subject_id`，不是明文 CloudBase uid。
+2. 账号 A 查询“我的记录”时，工作流实际条件为 `uid = USER_UID`，且 `USER_UID` 等于 A 的 `subject_id`。
+3. 账号 B 使用同样入口只能得到 B 的记录，不能通过消息中的 `uid`、`owner_uid` 或 `subject_id` 查询 A 的记录。
+4. 记录查询工作流必须执行查询并返回结果行，不能只把 `query_sql` 文本返回给智能体；同时保留 `expires_at > current_time` 的 7 天生命周期过滤。
+5. 发布后先检查 `/health` 的版本 `2026-09-12-user-identity-bridge`，再使用登录态访问 `?resource=db-check`。

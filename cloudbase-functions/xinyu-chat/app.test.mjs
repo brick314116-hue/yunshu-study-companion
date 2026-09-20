@@ -68,14 +68,18 @@ test('uses gateway identity for session isolation and ignores forged identity fi
   app._test.resetRequestCounts()
   const nativeFetch = globalThis.fetch
   const created = []
+  const conversationHeaders = []
   const chatRequests = []
+  const chatHeaders = []
   globalThis.fetch = async (url, options = {}) => {
     const body = JSON.parse(options.body)
     if (String(url).endsWith('/conversation/add')) {
       created.push(body)
+      conversationHeaders.push(options.headers)
       return Response.json({ success: true, data: 456 + created.length - 1 })
     }
     chatRequests.push(body)
+    chatHeaders.push(options.headers)
     return new Response('data: {"eventType":"FINAL_RESULT","data":{"outputText":"收到，我会陪你一起梳理。"}}\n\n')
   }
   await new Promise((resolve) => app.server.listen(0, '127.0.0.1', resolve))
@@ -145,6 +149,12 @@ test('uses gateway identity for session isolation and ignores forged identity fi
   assert.equal(created[0].variables.display_name, '小安')
   assert.equal(created[0].variables.subject_id, app._test.subjectId('user-a', process.env.USER_ID_SECRET))
   assert.equal('web_user_id' in created[0].variables, false)
+  assert.equal(conversationHeaders[0]['External-Username'], app._test.subjectId('user-a', process.env.USER_ID_SECRET))
+  assert.equal(conversationHeaders[0].Authorization, 'Bearer test-key')
+  assert.equal(chatHeaders[0]['External-Username'], app._test.subjectId('user-a', process.env.USER_ID_SECRET))
+  assert.equal(chatHeaders[0].Authorization, 'Bearer test-key')
+  assert.equal(chatRequests[0].message, '你好')
+  assert.equal('uid' in created[0].variables, false)
   assert.equal('selectedComponents' in chatRequests.at(-1), false)
   assert.equal(chatRequests.at(-1).sandboxId, 789)
   assert.deepEqual(chatRequests.at(-1).skillIds, [42, 43])
@@ -153,6 +163,7 @@ test('uses gateway identity for session isolation and ignores forged identity fi
   const forged = await send('user-a', {
     uid: 'user-b',
     userId: 'user-b',
+    owner_uid: 'user-b',
     subject_id: 'other-user',
     agentId: 999,
     conversationId: 999,
@@ -161,7 +172,9 @@ test('uses gateway identity for session isolation and ignores forged identity fi
   assert.equal(forged.status, 200)
   assert.equal(created.length, 1)
   assert.equal(chatRequests.at(-1).conversationId, 456)
+  assert.equal(chatRequests.at(-1).message, '你好')
   assert.equal(chatRequests.at(-1).variableParams.subject_id, app._test.subjectId('user-a', process.env.USER_ID_SECRET))
+  assert.equal(chatHeaders.at(-1)['External-Username'], app._test.subjectId('user-a', process.env.USER_ID_SECRET))
 
   const otherUser = await send('user-b')
   assert.equal(otherUser.status, 200)

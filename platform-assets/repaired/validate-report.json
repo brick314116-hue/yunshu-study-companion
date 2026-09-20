@@ -1,0 +1,171 @@
+{
+  "generatedAt": "2026-09-14T11:57:04.450Z",
+  "source": {
+    "workflows": "E:/wechat/xwechat_files/wxid_imxr25jxekyu22_26cd/msg/file/2026-09/工作流.zip",
+    "tables": "E:/wechat/xwechat_files/wxid_imxr25jxekyu22_26cd/msg/file/2026-09/数据表.zip"
+  },
+  "errors": [],
+  "warnings": [],
+  "checks": [
+    {
+      "name": "workflow:ABC练习保存_网站用户版.workflow:type",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "workflow:ABC练习保存_网站用户版.workflow:structure",
+      "ok": true,
+      "detail": "workflowId=5258505, nodes=8"
+    },
+    {
+      "name": "workflow:E1_近7天事实查询_网站用户版.workflow:type",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "workflow:E1_近7天事实查询_网站用户版.workflow:structure",
+      "ok": true,
+      "detail": "workflowId=5258502, nodes=7"
+    },
+    {
+      "name": "workflow:学业任务保存_网站用户版.workflow:type",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "workflow:学业任务保存_网站用户版.workflow:structure",
+      "ok": true,
+      "detail": "workflowId=5258504, nodes=8"
+    },
+    {
+      "name": "workflow:学业任务状态更新_网站用户版.workflow:type",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "workflow:学业任务状态更新_网站用户版.workflow:structure",
+      "ok": true,
+      "detail": "workflowId=5258508, nodes=7"
+    },
+    {
+      "name": "workflow:情绪保存_网站用户版.workflow:type",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "workflow:情绪保存_网站用户版.workflow:structure",
+      "ok": true,
+      "detail": "workflowId=5258503, nodes=8"
+    },
+    {
+      "name": "workflow:数据管理_用户删除_网站用户版.workflow:type",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "workflow:数据管理_用户删除_网站用户版.workflow:structure",
+      "ok": true,
+      "detail": "workflowId=5258507, nodes=10"
+    },
+    {
+      "name": "workflow:表单情绪打卡保存_网站用户版.workflow:type",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "workflow:表单情绪打卡保存_网站用户版.workflow:structure",
+      "ok": true,
+      "detail": "workflowId=5258506, nodes=7"
+    },
+    {
+      "name": "workflow:记录查询_网站用户版.workflow:type",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "workflow:记录查询_网站用户版.workflow:structure",
+      "ok": true,
+      "detail": "workflowId=5258501, nodes=10"
+    },
+    {
+      "name": "workflow:unique-ids",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "workflow:记录查询_网站用户版.workflow:identity",
+      "ok": true,
+      "detail": "TableSQL=3"
+    },
+    {
+      "name": "workflow:E1_近7天事实查询_网站用户版.workflow:identity",
+      "ok": true,
+      "detail": "TableSQL=1"
+    },
+    {
+      "name": "workflow:数据管理_用户删除_网站用户版.workflow:identity",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "workflow:学业任务状态更新_网站用户版.workflow:identity",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "workflow:form:subject_id-input",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "table:cognitive_practice_网站用户版.table:uid",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "table:cognitive_practice_网站用户版.table:structure",
+      "ok": true,
+      "detail": "tableId=4142, fields=14"
+    },
+    {
+      "name": "table:mood_checkin_1_网站用户版.table:uid",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "table:mood_checkin_1_网站用户版.table:structure",
+      "ok": true,
+      "detail": "tableId=4337, fields=13"
+    },
+    {
+      "name": "table:mood_log_网站用户版.table:uid",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "table:mood_log_网站用户版.table:structure",
+      "ok": true,
+      "detail": "tableId=4140, fields=15"
+    },
+    {
+      "name": "table:study_tasks_网站用户版.table:uid",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "table:study_tasks_网站用户版.table:structure",
+      "ok": true,
+      "detail": "tableId=4141, fields=13"
+    },
+    {
+      "name": "prompt:contract",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "summary": {
+    "errors": 0,
+    "warnings": 0,
+    "checks": 31
+  }
+}
