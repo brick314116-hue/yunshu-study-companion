@@ -1,18 +1,21 @@
 <script setup lang="ts">
 import {
   ClipboardList,
+  Clock,
   Compass,
   LogIn,
   LogOut,
+  MessageCircleMore,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
   ShieldCheck,
   Sparkles,
   UserRound,
+  Wind,
 } from '@lucide/vue'
 import LineSidebar from './LineSidebar.vue'
-import type { Conversation, PsychConsent } from '../types'
+import type { AppTab, Conversation, PsychConsent } from '../types'
 
 defineProps<{
   conversations: Conversation[]
@@ -21,6 +24,7 @@ defineProps<{
   userName: string
   authReady: boolean
   collapsed: boolean
+  activeTab?: AppTab
 }>()
 
 const emit = defineEmits<{
@@ -36,6 +40,7 @@ const emit = defineEmits<{
   login: []
   toggleCollapse: []
   checkin: []
+  selectTab: [tab: AppTab]
 }>()
 </script>
 
@@ -62,6 +67,51 @@ const emit = defineEmits<{
         <PanelLeftClose v-else :size="16" :stroke-width="1.8" />
       </button>
     </div>
+
+    <!-- 四大工作区切换 -->
+    <nav class="sidebar-workspaces" aria-label="工作区导航">
+      <div v-if="!collapsed" class="workspaces-header">工作区</div>
+      <button
+        type="button"
+        class="workspace-tab-btn"
+        :class="{ active: activeTab === 'chat' }"
+        :title="'会话中枢'"
+        @click="emit('selectTab', 'chat')"
+      >
+        <MessageCircleMore :size="16" :stroke-width="1.8" />
+        <span v-if="!collapsed">会话中枢</span>
+      </button>
+      <button
+        type="button"
+        class="workspace-tab-btn"
+        :class="{ active: activeTab === 'focus' }"
+        :title="'专注自习室'"
+        @click="emit('selectTab', 'focus')"
+      >
+        <Clock :size="16" :stroke-width="1.8" />
+        <span v-if="!collapsed">专注自习室</span>
+      </button>
+      <button
+        type="button"
+        class="workspace-tab-btn"
+        :class="{ active: activeTab === 'mind' }"
+        :title="'心灵避风港'"
+        @click="emit('selectTab', 'mind')"
+      >
+        <Wind :size="16" :stroke-width="1.8" />
+        <span v-if="!collapsed">心灵避风港</span>
+      </button>
+      <button
+        type="button"
+        class="workspace-tab-btn"
+        :class="{ active: activeTab === 'footprint' }"
+        :title="'成长足迹'"
+        @click="emit('selectTab', 'footprint')"
+      >
+        <ShieldCheck :size="16" :stroke-width="1.8" />
+        <span v-if="!collapsed">成长足迹</span>
+      </button>
+    </nav>
 
     <div class="sidebar-actions">
       <button class="sidebar-primary" type="button" :title="'新对话'" @click="emit('newChat')">
@@ -207,6 +257,65 @@ const emit = defineEmits<{
 
 .collapsed .sidebar-collapse {
   margin: 0 auto;
+}
+
+.sidebar-workspaces {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px 12px 10px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 6px;
+}
+
+.collapsed .sidebar-workspaces {
+  padding: 4px 8px 10px;
+  align-items: center;
+}
+
+.workspaces-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 4px 6px;
+}
+
+.workspace-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.collapsed .workspace-tab-btn {
+  width: 40px;
+  justify-content: center;
+  padding: 0;
+}
+
+.workspace-tab-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.workspace-tab-btn.active {
+  background: #FFFFFF;
+  color: var(--ink);
+  border-color: rgba(31, 35, 40, 0.12);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .sidebar-actions {

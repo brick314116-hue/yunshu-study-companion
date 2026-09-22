@@ -1,5 +1,16 @@
 <script setup lang="ts">
-import { Cloud, LogIn, LogOut, Menu, MessageCircleMore, Sparkles, UserRound } from '@lucide/vue'
+import {
+  Clock,
+  Cloud,
+  LogIn,
+  LogOut,
+  Menu,
+  MessageCircleMore,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+  Wind,
+} from '@lucide/vue'
 import type { AppTab } from '../types'
 
 defineProps<{
@@ -46,12 +57,12 @@ const emit = defineEmits<{
       </div>
     </template>
 
-    <!-- 常规模式：汉堡 + 对话 tab + 右侧工具箱开关 -->
+    <!-- 常规模式：汉堡 + 四大工作区 Tab + 右侧工具箱开关 -->
     <template v-else>
       <button class="topbar-hamburger" type="button" aria-label="打开菜单" @click="emit('menu')">
         <Menu :size="18" :stroke-width="1.8" />
       </button>
-      <nav class="topbar-tabs" aria-label="主导航">
+      <nav class="topbar-tabs" aria-label="工作区导航">
         <button
           type="button"
           class="topbar-tab"
@@ -60,7 +71,40 @@ const emit = defineEmits<{
           @click="emit('select', 'chat')"
         >
           <MessageCircleMore :size="16" :stroke-width="1.8" aria-hidden="true" />
-          <span>对话</span>
+          <span>会话中枢</span>
+        </button>
+
+        <button
+          type="button"
+          class="topbar-tab"
+          :class="{ active: activeTab === 'focus' }"
+          :aria-current="activeTab === 'focus' ? 'page' : undefined"
+          @click="emit('select', 'focus')"
+        >
+          <Clock :size="16" :stroke-width="1.8" aria-hidden="true" />
+          <span>专注自习室</span>
+        </button>
+
+        <button
+          type="button"
+          class="topbar-tab"
+          :class="{ active: activeTab === 'mind' }"
+          :aria-current="activeTab === 'mind' ? 'page' : undefined"
+          @click="emit('select', 'mind')"
+        >
+          <Wind :size="16" :stroke-width="1.8" aria-hidden="true" />
+          <span>心灵避风港</span>
+        </button>
+
+        <button
+          type="button"
+          class="topbar-tab"
+          :class="{ active: activeTab === 'footprint' }"
+          :aria-current="activeTab === 'footprint' ? 'page' : undefined"
+          @click="emit('select', 'footprint')"
+        >
+          <ShieldCheck :size="16" :stroke-width="1.8" aria-hidden="true" />
+          <span>成长足迹</span>
         </button>
       </nav>
 
@@ -76,6 +120,17 @@ const emit = defineEmits<{
         >
           <Sparkles :size="15" :stroke-width="2" />
           <span class="dock-btn-label">伴学工具箱</span>
+        </button>
+
+        <button
+          v-if="userName"
+          class="topbar-account-mini"
+          type="button"
+          title="设置称呼"
+          @click="emit('account')"
+        >
+          <UserRound :size="15" :stroke-width="1.8" />
+          <span class="topbar-user-name">{{ userName }}</span>
         </button>
       </div>
     </template>
@@ -254,6 +309,46 @@ const emit = defineEmits<{
   background: var(--accent-soft);
   border-color: rgb(61 125 214 / 30%);
   font-weight: 600;
+}
+
+.topbar-account-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  color: var(--text-muted);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.topbar-account-mini:hover {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+
+.topbar-user-name {
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .topbar-tabs button span {
+    display: none;
+  }
+  .topbar-tab {
+    padding: 7px 10px;
+  }
+  .topbar-user-name {
+    display: none;
+  }
 }
 
 @media (max-width: 640px) {

@@ -9,8 +9,11 @@ import AuthDialog from './components/AuthDialog.vue'
 import ChatWorkspace from './components/ChatWorkspace.vue'
 import CompanionDock from './components/CompanionDock.vue'
 import ConsentDialog from './components/ConsentDialog.vue'
+import FocusRoom from './components/FocusRoom.vue'
+import FootprintView from './components/FootprintView.vue'
 import IntroPage from './components/IntroPage.vue'
 import LandingPage from './components/LandingPage.vue'
+import MindSanctuary from './components/MindSanctuary.vue'
 import MoodCheckinDialog from './components/MoodCheckinDialog.vue'
 import OnboardingGuide from './components/OnboardingGuide.vue'
 import NicknameDialog from './components/NicknameDialog.vue'
@@ -137,14 +140,15 @@ const nicknameDialogOpen = ref(false)
 const registerDialogOpen = ref(false)
 const moodCheckinOpen = ref(false)
 
-// 进入对话类视图的准入门禁：登录 + 同意。返回 false 表示已弹出登录/同意框。
-const requireAccess = (): boolean => {
+// 进入四大工作区（chat / focus / mind / footprint）的准入门禁：登录 + 同意。返回 false 表示已弹出登录/同意框。
+const requireAccess = (targetTab: AppTab = 'chat'): boolean => {
   if (!authUser.value) {
+    pendingTab.value = targetTab
     void openLogin()
     return false
   }
   if (psychConsent.value === 'unknown') {
-    pendingTab.value = 'chat'
+    pendingTab.value = targetTab
     consentOpen.value = true
     return false
   }
@@ -233,10 +237,30 @@ const handleSessionExpired = async () => {
   openLogin()
 }
 
-// 顶栏切换：chat 需准入；intro/landing 免准入。
+// 成长足迹中确认物理抹除所有本地数据
+const handleFullReset = async () => {
+  try {
+    if (authConfigured && authUser.value) await signOut()
+  } catch {
+    // 忽略登出错误
+  }
+  clearTimeout(conversationSyncTimer)
+  authUser.value = null
+  psychConsent.value = 'unknown'
+  consentOpen.value = false
+  conversations.value = []
+  activeConversationId.value = null
+  messages.value = []
+  draft.value = ''
+  activeTab.value = 'landing'
+  chatModule.value = 'study'
+  showLoginNotice('所有本地足迹与会话数据已全部物理粉碎，已安全重置。')
+}
+
+// 顶栏/侧栏切换：chat / focus / mind / footprint 需准入；intro/landing 免准入。
 const selectTab = (tab: AppTab) => {
   sidebarOpen.value = false
-  if (tab === 'chat' && !requireAccess()) return
+  if (!isFreeTab(tab) && !requireAccess(tab)) return
   if (tab === 'chat' && psychConsent.value === 'declined') chatModule.value = 'study'
   syncActiveConversation()
   activeTab.value = tab
@@ -512,6 +536,7 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
         :user-name="userName"
         :auth-ready="authReady"
         :collapsed="isMobile ? false : sidebarCollapsed"
+        :active-tab="activeTab"
         @home="goHome"
         @new-chat="newChat"
         @open-menu="actionMenuOpen = true; sidebarOpen = false"
@@ -524,6 +549,7 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
         @login="openLogin(); sidebarOpen = false"
         @toggle-collapse="toggleSidebarCollapse"
         @checkin="runToolAction('mood-checkin'); sidebarOpen = false"
+        @select-tab="selectTab"
       />
     </div>
 
@@ -557,6 +583,23 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
       />
 
       <IntroPage v-else-if="activeTab === 'intro'" :user-name="userName || null" @start="newChat" @enter="enterModule" />
+
+      <FocusRoom
+        v-else-if="activeTab === 'focus'"
+        @ask-agent="(prompt) => startWithPrompt({ module: 'study', prompt })"
+      />
+
+      <MindSanctuary
+        v-else-if="activeTab === 'mind'"
+        @ask-agent="(prompt) => startWithPrompt({ module: 'thought', prompt })"
+        @checkin="runToolAction('mood-checkin')"
+      />
+
+      <FootprintView
+        v-else-if="activeTab === 'footprint'"
+        @ask-agent="(prompt) => startWithPrompt({ module: 'records', prompt })"
+        @clear-all="handleFullReset"
+      />
 
       <div v-else class="chat-columns" :class="{ 'dock-open': dockOpen }">
         <ChatWorkspace
