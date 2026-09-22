@@ -2,6 +2,7 @@
 import {
   ArrowUp,
   Check,
+  ClipboardList,
   LoaderCircle,
   MessageCircleMore,
   MessageSquareText,
@@ -26,6 +27,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
   send: [attachments: ChatAttachment[]]
   starter: [prompt: string]
+  checkin: []
 }>()
 
 const messageList = ref<HTMLElement | null>(null)
@@ -191,6 +193,16 @@ const handleKeydown = (event: KeyboardEvent) => {
             @change="onPickFiles"
           />
           <button
+            class="checkin-button"
+            type="button"
+            title="独立情绪打卡（快速记录此刻心情，7天自毁）"
+            aria-label="情绪打卡"
+            @click="emit('checkin')"
+          >
+            <ClipboardList :size="15" :stroke-width="1.8" />
+            <span class="checkin-label">打卡</span>
+          </button>
+          <button
             class="attach-button"
             type="button"
             title="上传图片或文档（最多5个，单个≤6MB）"
@@ -279,6 +291,32 @@ const handleKeydown = (event: KeyboardEvent) => {
   color: var(--danger);
   font-size: 12px;
   align-self: center;
+}
+
+.checkin-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 10px;
+  color: var(--text-muted);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.checkin-button:hover {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  background: var(--accent-faint);
+}
+
+.checkin-button svg {
+  color: var(--accent);
 }
 
 .attach-button {

@@ -178,6 +178,8 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .topbar-account {
@@ -353,10 +355,11 @@ const emit = defineEmits<{
 
 @media (max-width: 640px) {
   .dock-btn-label {
-    display: none;
+    font-size: 11px;
   }
   .topbar-dock-btn {
-    padding: 0 10px;
+    padding: 0 8px;
+    height: 32px;
   }
 }
 </style>

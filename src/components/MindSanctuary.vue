@@ -123,14 +123,7 @@ onMounted(() => {
     if (saved) {
       notes.value = JSON.parse(saved)
     } else {
-      notes.value = [
-        {
-          id: '1',
-          fact: '数学模拟考有 2 道大题没来得及动笔',
-          thought: '我觉得自己脑子笨，下次高考肯定完蛋了',
-          reframe: '事实只是一次小测时间分配没把握好，与能力无关。下次先易后难即可。',
-        },
-      ]
+      notes.value = []
     }
   } catch {
     /* ignore */
@@ -310,8 +303,11 @@ onBeforeUnmount(() => {
             </button>
           </div>
 
-          <!-- 便签列表 -->
-          <div class="cbt-notes-list">
+          <!-- 便签列表：无记录时展示真实空状态 -->
+          <div v-if="notes.length === 0" class="cbt-empty-state">
+            <p>沙盒暂无记录。当你感到紧绷、焦虑或自我怀疑时，在上方分别写下客观事实与自动脑补的想法，小舒陪你一起理清思路。</p>
+          </div>
+          <div v-else class="cbt-notes-list">
             <div v-for="(note, index) in notes" :key="note.id" class="cbt-note-card">
               <div class="note-columns">
                 <div class="fact-block">
@@ -707,6 +703,21 @@ onBeforeUnmount(() => {
 .cbt-submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.cbt-empty-state {
+  padding: 28px 20px;
+  text-align: center;
+  background: var(--surface-muted);
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.cbt-empty-state p {
+  margin: 0;
 }
 
 .cbt-notes-list {

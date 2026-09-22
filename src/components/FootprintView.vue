@@ -9,11 +9,13 @@ import {
   ShieldCheck,
   Trash2,
 } from '@lucide/vue'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 const emit = defineEmits<{
   askAgent: [prompt: string]
   clearAll: []
+  navigate: [tab: 'focus' | 'chat']
+  checkin: []
 }>()
 
 interface DailyFootprint {
@@ -28,23 +30,28 @@ const totalFocusCount = ref(0)
 const todayFocusMinutes = ref(0)
 const confirmClearOpen = ref(false)
 
+const hasAnyActivity = computed(() =>
+  recentDays.value.some((item) => item.focusMinutes > 0 || item.hasMoodCheckin),
+)
+
 onMounted(() => {
   try {
     totalFocusCount.value = Number(localStorage.getItem('yunshu_total_focus_count') || '0')
     const today = new Date().toISOString().slice(0, 10)
     todayFocusMinutes.value = Number(localStorage.getItem(`yunshu_focus_${today}`) || '0')
 
-    // 构造最近 7 天的足迹
+    // 构造最近 7 天的真实足迹（严禁任何编造数据，真实读取）
     const list: DailyFootprint[] = []
     for (let i = 0; i < 7; i++) {
       const d = new Date()
       d.setDate(d.getDate() - i)
       const dateStr = d.toISOString().slice(0, 10)
       const focusMins = Number(localStorage.getItem(`yunshu_focus_${dateStr}`) || '0')
+      const hasMood = localStorage.getItem(`yunshu_checkin_${dateStr}`) === '1'
       list.push({
         date: dateStr,
         focusMinutes: focusMins,
-        hasMoodCheckin: i === 0 || i === 2, // 示例展示
+        hasMoodCheckin: hasMood,
         taskCount: focusMins > 0 ? Math.ceil(focusMins / 20) : 0,
       })
     }
@@ -134,7 +141,26 @@ const handleConfirmClear = () => {
             <span class="time-hint">最多保留7天 · 只陈述客观事实</span>
           </div>
 
-          <div class="timeline-list">
+          <!-- 真实空状态：绝不捏造任何数据 -->
+          <div v-if="!hasAnyActivity" class="timeline-empty-state">
+            <div class="empty-icon-box">
+              <Calendar :size="26" :stroke-width="1.8" />
+            </div>
+            <h4>近 7 天暂无打卡或专注足迹</h4>
+            <p>云小舒严格遵循客观事实原则，绝不编造任何假数据。当你在自习室开启专注，或完成一次情绪打卡，这里会真实为你留存成长印记。</p>
+            <div class="empty-actions">
+              <button type="button" class="empty-btn primary" @click="emit('navigate', 'focus')">
+                <Clock :size="14" :stroke-width="2" />
+                <span>前往自习室开启专注</span>
+              </button>
+              <button type="button" class="empty-btn secondary" @click="emit('checkin')">
+                <CheckCircle2 :size="14" :stroke-width="2" />
+                <span>完成一次情绪打卡</span>
+              </button>
+            </div>
+          </div>
+
+          <div v-else class="timeline-list">
             <div
               v-for="item in recentDays"
               :key="item.date"
@@ -418,6 +444,88 @@ const handleConfirmClear = () => {
 .time-hint {
   font-size: 12px;
   color: var(--text-soft);
+}
+
+/* 真实空状态样式 */
+.timeline-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 36px 20px;
+  background: var(--surface-soft);
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  margin: 10px 0;
+}
+
+.empty-icon-box {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  color: var(--text-soft);
+  background: #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-bottom: 12px;
+}
+
+.timeline-empty-state h4 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.timeline-empty-state p {
+  margin: 0 0 18px;
+  max-width: 380px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.empty-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.empty-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.empty-btn.primary {
+  color: #FFFFFF;
+  background: var(--ink);
+  border: 0;
+}
+
+.empty-btn.primary:hover {
+  background: var(--ink-hover);
+}
+
+.empty-btn.secondary {
+  color: var(--text);
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+}
+
+.empty-btn.secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
 }
 
 /* 时间线列表 */

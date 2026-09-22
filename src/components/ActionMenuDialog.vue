@@ -19,13 +19,13 @@ const icons: Record<ModuleId, Component> = {
   records: ClipboardList,
 }
 
-// 我的记录放最前，其后 学习 / 换个想法 / 聊心情
+// 学习 / 换个想法 / 聊心情（情绪打卡已作为独立专属功能剥离）
 const groups = computed<ModuleDefinition[]>(() => {
-  const order: ModuleId[] = ['records', 'study', 'thought', 'emotion']
+  const order: ModuleId[] = ['study', 'thought', 'emotion']
   const list = order
     .map((id) => modules.find((m) => m.id === id))
     .filter((m): m is ModuleDefinition => Boolean(m))
-  // 不同意情绪/认知功能时：不显示 我的记录(含情绪数据) 与 换个想法/聊心情
+  // 不同意情绪/认知功能时：仅显示 学习
   if (props.psychConsent === 'declined') return list.filter((m) => m.id === 'study')
   return list
 })
@@ -69,8 +69,8 @@ const dialogRef = ref<HTMLElement | null>(null)
         <X :size="18" :stroke-width="1.8" />
       </button>
 
-      <h2 id="am-title">想做点什么？</h2>
-      <p class="am-sub">选一个，我帮你开好头；不想选也可以直接关掉。</p>
+      <h2 id="am-title">伴学锦囊</h2>
+      <p class="am-sub">精选高频伴学提示词与场景灵感，点击一键开好头。</p>
 
       <div class="am-body">
         <section v-for="group in groups" :key="group.id" class="am-group">

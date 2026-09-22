@@ -144,10 +144,7 @@ onMounted(() => {
     if (saved) {
       tasks.value = JSON.parse(saved)
     } else {
-      tasks.value = [
-        { id: '1', text: '5分钟启动：翻开课本第 1 节看一道例题', done: false },
-        { id: '2', text: '完成数学课后第 1~3 道练习题', done: false },
-      ]
+      tasks.value = []
     }
   } catch {
     /* ignore */
@@ -251,7 +248,10 @@ onBeforeUnmount(() => {
             </button>
           </div>
 
-          <div class="task-list-wrap">
+          <div v-if="tasks.length === 0" class="task-empty-state">
+            <p>暂无待办微任务。在上方输入你当下最容易开始的一个小步骤，或点击右上角让小舒帮你拆解。</p>
+          </div>
+          <div v-else class="task-list-wrap">
             <div
               v-for="(task, index) in tasks"
               :key="task.id"
@@ -654,6 +654,21 @@ onBeforeUnmount(() => {
 .add-task-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.task-empty-state {
+  padding: 24px 16px;
+  text-align: center;
+  background: var(--surface-muted);
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  color: var(--text-soft);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.task-empty-state p {
+  margin: 0;
 }
 
 .task-list-wrap {

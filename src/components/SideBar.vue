@@ -118,9 +118,9 @@ const emit = defineEmits<{
         <Plus :size="16" :stroke-width="1.9" />
         <span v-if="!collapsed">新对话</span>
       </button>
-      <button class="sidebar-menu" type="button" :title="'想做点什么'" @click="emit('openMenu')">
+      <button class="sidebar-menu" type="button" :title="'伴学锦囊'" @click="emit('openMenu')">
         <Sparkles :size="16" :stroke-width="1.8" />
-        <span v-if="!collapsed">想做点什么</span>
+        <span v-if="!collapsed">伴学锦囊</span>
       </button>
     </div>
 

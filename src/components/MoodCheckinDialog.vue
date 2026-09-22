@@ -55,6 +55,12 @@ const submit = async () => {
       intensity: intensity.value,
       triggerSummary: trigger.value,
     })
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      localStorage.setItem(`yunshu_checkin_${today}`, '1')
+    } catch {
+      /* ignore */
+    }
     done.value = true
     setTimeout(() => {
       emit('submitted')

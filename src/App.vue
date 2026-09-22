@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { Sparkles } from '@lucide/vue'
 import { authConfigured, restoreAuth, signOut } from './auth'
 import { loadUserProfile, saveDisplayName, sanitizeDisplayName, saveConsent, restoreConsent } from './user-profile'
 import { requestChat } from './chat-api'
@@ -599,6 +600,8 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
         v-else-if="activeTab === 'footprint'"
         @ask-agent="(prompt) => startWithPrompt({ module: 'records', prompt })"
         @clear-all="handleFullReset"
+        @navigate="selectTab"
+        @checkin="runToolAction('mood-checkin')"
       />
 
       <div v-else class="chat-columns" :class="{ 'dock-open': dockOpen }">
@@ -610,7 +613,17 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
           :sending="sending"
           @send="(atts) => sendMessage(undefined, atts)"
           @starter="sendMessage"
+          @checkin="runToolAction('mood-checkin')"
         />
+
+        <!-- 移动端伴学工具箱遮罩：全屏点击即关 -->
+        <div
+          v-if="dockOpen"
+          class="dock-backdrop"
+          aria-label="关闭工具箱"
+          @click="dockOpen = false"
+        />
+
         <CompanionDock
           :module="activeModule"
           :open="dockOpen"
@@ -618,6 +631,19 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
           @prompt="(p) => { draft = p; if (!messages.length) sendMessage(p) }"
           @action="onMenuPickAction"
         />
+
+        <!-- 工具箱收起时常驻右侧边缘的极简唤起手柄 -->
+        <button
+          v-if="!dockOpen"
+          type="button"
+          class="dock-floating-handle"
+          title="展开伴学工具箱（专注钟·白噪音·呼吸平复）"
+          aria-label="展开伴学工具箱"
+          @click="dockOpen = true"
+        >
+          <Sparkles :size="14" :stroke-width="2" />
+          <span>伴学工具箱</span>
+        </button>
       </div>
 
       <footer v-if="activeTab === 'chat'" class="app-footer">
