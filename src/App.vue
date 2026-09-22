@@ -7,6 +7,7 @@ import ActionMenuDialog from './components/ActionMenuDialog.vue'
 import AppTopbar from './components/AppTopbar.vue'
 import AuthDialog from './components/AuthDialog.vue'
 import ChatWorkspace from './components/ChatWorkspace.vue'
+import CompanionDock from './components/CompanionDock.vue'
 import ConsentDialog from './components/ConsentDialog.vue'
 import IntroPage from './components/IntroPage.vue'
 import LandingPage from './components/LandingPage.vue'
@@ -73,12 +74,18 @@ watch(
   { deep: true },
 )
 
+const dockOpen = ref(true)
+const toggleDock = () => {
+  dockOpen.value = !dockOpen.value
+}
+
 const isMobile = ref(false)
 const updateMobileState = () => {
   if (typeof window !== 'undefined') {
     isMobile.value = window.innerWidth <= 1000
     if (isMobile.value) {
       sidebarCollapsed.value = false
+      dockOpen.value = false
     }
   }
 }
@@ -527,8 +534,10 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
         :minimal="activeTab === 'intro'"
         :user-name="userName"
         :auth-ready="authReady"
+        :dock-open="dockOpen"
         @select="selectTab"
         @menu="openSidebar"
+        @toggle-dock="toggleDock"
         @home="goHome"
         @login="openLogin"
         @account="openNickname"
@@ -549,7 +558,7 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
 
       <IntroPage v-else-if="activeTab === 'intro'" :user-name="userName || null" @start="newChat" @enter="enterModule" />
 
-      <div v-else class="chat-columns">
+      <div v-else class="chat-columns" :class="{ 'dock-open': dockOpen }">
         <ChatWorkspace
           v-model="draft"
           :module="activeModule"
@@ -558,6 +567,13 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
           :sending="sending"
           @send="(atts) => sendMessage(undefined, atts)"
           @starter="sendMessage"
+        />
+        <CompanionDock
+          :module="activeModule"
+          :open="dockOpen"
+          @close="dockOpen = false"
+          @prompt="(p) => { draft = p; if (!messages.length) sendMessage(p) }"
+          @action="onMenuPickAction"
         />
       </div>
 

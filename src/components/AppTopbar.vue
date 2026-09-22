@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Cloud, LogIn, LogOut, Menu, MessageCircleMore, UserRound } from '@lucide/vue'
+import { Cloud, LogIn, LogOut, Menu, MessageCircleMore, Sparkles, UserRound } from '@lucide/vue'
 import type { AppTab } from '../types'
 
 defineProps<{
@@ -7,6 +7,7 @@ defineProps<{
   minimal?: boolean
   userName?: string
   authReady?: boolean
+  dockOpen?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -16,6 +17,7 @@ const emit = defineEmits<{
   login: []
   account: []
   logout: []
+  toggleDock: []
 }>()
 </script>
 
@@ -44,7 +46,7 @@ const emit = defineEmits<{
       </div>
     </template>
 
-    <!-- 常规模式：汉堡 + 对话 tab -->
+    <!-- 常规模式：汉堡 + 对话 tab + 右侧工具箱开关 -->
     <template v-else>
       <button class="topbar-hamburger" type="button" aria-label="打开菜单" @click="emit('menu')">
         <Menu :size="18" :stroke-width="1.8" />
@@ -61,6 +63,21 @@ const emit = defineEmits<{
           <span>对话</span>
         </button>
       </nav>
+
+      <div class="topbar-right">
+        <button
+          v-if="activeTab === 'chat'"
+          type="button"
+          class="topbar-dock-btn"
+          :class="{ active: dockOpen }"
+          title="展开/收起伴学工具箱（专注钟·白噪音·呼吸平复）"
+          aria-label="展开/收起伴学工具箱"
+          @click="emit('toggleDock')"
+        >
+          <Sparkles :size="15" :stroke-width="2" />
+          <span class="dock-btn-label">伴学工具箱</span>
+        </button>
+      </div>
     </template>
   </header>
 </template>
@@ -207,6 +224,44 @@ const emit = defineEmits<{
 @media (max-width: 1000px) {
   .topbar-hamburger {
     display: grid;
+  }
+}
+
+.topbar-dock-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  color: var(--text-muted);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.topbar-dock-btn:hover {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  background: var(--accent-faint);
+}
+
+.topbar-dock-btn.active {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border-color: rgb(61 125 214 / 30%);
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .dock-btn-label {
+    display: none;
+  }
+  .topbar-dock-btn {
+    padding: 0 10px;
   }
 }
 </style>
