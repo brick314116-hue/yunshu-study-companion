@@ -293,6 +293,17 @@ const newChat = () => {
   sidebarOpen.value = false
 }
 
+const startWithPrompt = (payload: { module: ModuleId; prompt?: string }) => {
+  if (!requireAccess()) return
+  chatModule.value = safeModule(payload.module)
+  resetConversation()
+  activeTab.value = 'chat'
+  sidebarOpen.value = false
+  if (payload.prompt) {
+    draft.value = payload.prompt
+  }
+}
+
 const logout = async () => {
   try {
     if (authConfigured && authUser.value) await signOut()
@@ -529,6 +540,7 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
         :user-name="userName || null"
         :auth-ready="authReady"
         @start="newChat"
+        @start-with="startWithPrompt"
         @intro="selectTab('intro')"
         @login="openLogin"
         @account="openNickname"
