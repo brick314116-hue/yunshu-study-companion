@@ -140,9 +140,11 @@ onBeforeUnmount(() => {
 
         <div class="landing-actions">
           <button type="button" class="start-chat-button" @click="emit('start')">
-            <MessageCircleMore :size="20" :stroke-width="1.8" />
-            <span>开始伴学对话</span>
-            <ArrowRight :size="19" :stroke-width="1.8" />
+            <MessageCircleMore :size="18" :stroke-width="1.8" />
+            <span>开启智能体伴学</span>
+            <span class="btn-arrow-box" aria-hidden="true">
+              <ArrowRight :size="16" :stroke-width="2" />
+            </span>
           </button>
           <div class="landing-sub-actions">
             <button type="button" class="matrix-scroll-btn" @click="scrollToMatrix">
@@ -414,9 +416,11 @@ onBeforeUnmount(() => {
           <p>无论今天过得怎样，云小舒都在这里，准备好与你一起出发。</p>
           <div class="footer-cta-actions">
             <button type="button" class="start-chat-button" @click="emit('start')">
-              <MessageCircleMore :size="20" :stroke-width="1.8" />
+              <MessageCircleMore :size="18" :stroke-width="1.8" />
               <span>开始今日伴学</span>
-              <ArrowRight :size="19" :stroke-width="1.8" />
+              <span class="btn-arrow-box" aria-hidden="true">
+                <ArrowRight :size="16" :stroke-width="2" />
+              </span>
             </button>
           </div>
         </div>
@@ -633,24 +637,45 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
   height: 54px;
-  padding: 0 28px;
+  padding: 0 10px 0 24px;
   color: #FFFFFF;
   background: var(--ink);
-  border: 0;
-  border-radius: 12px;
-  font-size: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  font-size: 15.5px;
   font-weight: 600;
-  box-shadow: 0 4px 18px rgb(26 34 51 / 18%);
-  transition: all 0.2s ease;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25), 0 2px 6px rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .start-chat-button:hover {
   background: var(--ink-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgb(26 34 51 / 24%);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px -6px rgba(15, 23, 42, 0.35);
+}
+
+.start-chat-button:active {
+  transform: scale(0.98);
+}
+
+.btn-arrow-box {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #FFFFFF;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.start-chat-button:hover .btn-arrow-box {
+  transform: translateX(3px);
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .landing-sub-actions {
@@ -772,23 +797,25 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 32px;
+  padding: 34px;
   background: #FFFFFF;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  box-shadow: 0 2px 12px rgb(26 34 51 / 3%);
-  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 24px;
+  box-shadow: 0 8px 30px -8px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
+  outline: 1px solid rgba(255, 255, 255, 0.85);
+  outline-offset: -1px;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .bento-card:hover {
-  transform: translateY(-3px);
-  border-color: var(--line-strong);
-  box-shadow: 0 10px 30px rgb(26 34 51 / 7%);
+  transform: translateY(-4px);
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 20px 40px -12px rgba(15, 23, 42, 0.09), 0 2px 6px rgba(15, 23, 42, 0.04);
 }
 
 .bento-card-primary {
-  border-color: rgb(61 125 214 / 28%);
-  background: linear-gradient(180deg, #FFFFFF 0%, #FAFCFF 100%);
+  border-color: rgba(37, 99, 235, 0.3);
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
 }
 
 .card-header {

@@ -445,20 +445,26 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
 
 .dock-close-btn {
   display: grid;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   place-items: center;
   color: var(--text-muted);
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.2s var(--ease-spring);
 }
 
 .dock-close-btn:hover {
   color: var(--text);
   background: var(--hover);
+  border-color: var(--line-strong);
+  transform: rotate(90deg);
+}
+
+.dock-close-btn:active {
+  transform: rotate(90deg) scale(0.92);
 }
 
 /* 抽屉可滚动正文 */
@@ -552,23 +558,25 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
   box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
 }
 
-/* 时钟展示框 */
+/* 时钟展示框：Double-Bezel 硬件微质感 */
 .timer-display-box {
-  padding: 16px;
-  background: var(--surface-soft);
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  padding: 18px 14px;
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9);
   text-align: center;
-  transition: all 0.2s ease;
+  transition: all 0.24s var(--ease-spring);
 }
 
 .timer-display-box.active {
-  border-color: rgb(61 125 214 / 35%);
-  background: var(--accent-faint);
+  border-color: rgba(37, 99, 235, 0.35);
+  background: #F8FAFC;
+  box-shadow: 0 8px 24px -6px rgba(37, 99, 235, 0.08);
 }
 
 .timer-display-box.finished {
-  border-color: rgb(16 185 129 / 35%);
+  border-color: rgba(16, 185, 129, 0.35);
   background: #ECFDF5;
 }
 

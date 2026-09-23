@@ -6,46 +6,55 @@
    ============================================================ */
 
 :root {
-  font-family: -apple-system, "SF Pro Text", "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
-  color: #1A2233;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #111827;
   background: #FFFFFF;
   font-synthesis: none;
-  text-rendering: auto;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  letter-spacing: 0;
 
-  /* 主色 */
-  --surface: #FFFFFF;          /* 背景白 */
-  --surface-soft: #FAFBFC;     /* 次级背景 */
-  --surface-muted: #F5F7FA;    /* 内容层背景 */
-  --hover: #F0F4F8;            /* hover 背景 */
+  /* 主色体系 · Soft Structuralism (温润结构主义) */
+  --surface: #FFFFFF;
+  --surface-soft: #F9FAFB;
+  --surface-muted: #F3F4F6;
+  --hover: #F3F4F6;
 
-  /* 中性灰阶 */
-  --text: #1A2233;
-  --text-muted: #5A6477;
-  --text-soft: #9AA3B2;
-  --line: #E8ECF1;
-  --line-strong: #D9DFE7;
+  /* 高级灰阶排版 */
+  --text: #0F172A;
+  --text-muted: #475569;
+  --text-soft: #94A3B8;
+  --line: #E2E8F0;
+  --line-strong: #CBD5E1;
 
-  /* 强调色（唯一彩色点缀） */
-  --accent: #3D7DD6;
-  --accent-strong: #2E6BC4;    /* hover */
-  --accent-active: #2459A8;    /* 按下 */
-  --accent-soft: #EAF2FC;      /* 选中/提示条浅底 */
-  --accent-faint: #F2F7FD;     /* 更浅的强调浅底 */
+  /* 唯一专注点缀色 · 科技深海蓝 */
+  --accent: #2563EB;
+  --accent-strong: #1D4ED8;
+  --accent-active: #1E40AF;
+  --accent-soft: #EFF6FF;
+  --accent-faint: #F8FAFC;
 
-  /* 墨色（主按钮） */
-  --ink: #1A2233;
-  --ink-hover: #2B3550;        /* 加深 8% */
-  --ink-active: #343F5C;       /* 加深 12% */
+  /* 墨黑（高精工质感） */
+  --ink: #0F172A;
+  --ink-hover: #1E293B;
+  --ink-active: #334155;
 
-  /* 语义色 */
-  --success: #2F9E6B;
-  --danger: #B5495B;
-  --danger-soft: #FBEEF1;
+  /* 状态与语义 */
+  --success: #10B981;
+  --danger: #EF4444;
+  --danger-soft: #FEF2F2;
 
-  --shadow-card: 0 1px 3px rgb(26 34 51 / 4%);
+  /* 物理弹簧动力学缓动 (Spring Physics) */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-fluid: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Double-Bezel 双层硬件嵌套质感 */
+  --bezel-outer-bg: rgba(248, 250, 252, 0.85);
+  --bezel-outer-border: 1px solid rgba(226, 232, 240, 0.85);
+  --bezel-outer-shadow: 0 12px 36px -12px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.03);
+  --bezel-inner-highlight: inset 0 1px 1px 0 rgba(255, 255, 255, 0.9);
+  --bezel-inner-border: 1px solid rgba(226, 232, 240, 0.7);
+  --shadow-card: var(--bezel-outer-shadow);
 }
 
 * {
@@ -1263,26 +1272,50 @@ a:focus-visible {
 
 .assistant-avatar {
   display: grid;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   place-items: center;
   color: #FFFFFF;
-  background: var(--ink);
-  border-radius: 8px;
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
 }
 
 .message-content {
   min-width: 0;
-  max-width: min(86%, 660px);
+  max-width: min(88%, 680px);
 }
 
-/* 用户消息：中性内容层底色 */
+/* 用户消息：高精工深邃色，微光内嵌 */
 .message-row.user .message-content {
-  padding: 12px 16px;
-  background: var(--surface-muted);
-  border: 1px solid var(--line);
-  border-radius: 12px 12px 4px 12px;
+  padding: 13px 18px;
+  background: #0F172A;
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px 18px 4px 18px;
+  box-shadow: 0 6px 20px -4px rgba(15, 23, 42, 0.2);
+}
+
+.message-row.user .message-meta strong {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.message-row.user .message-meta time {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.message-row.user .message-content > p {
+  color: #F8FAFC;
+}
+
+/* 小舒消息：高精工微质感 */
+.message-row.assistant .message-content {
+  padding: 14px 18px;
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 18px 18px 18px 4px;
+  box-shadow: 0 6px 20px -6px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
 }
 
 .message-meta {
@@ -1294,7 +1327,7 @@ a:focus-visible {
 
 .message-meta strong {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .message-meta time {
@@ -1305,21 +1338,20 @@ a:focus-visible {
 .message-content > p {
   margin: 0;
   color: var(--text);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 14.5px;
+  line-height: 1.65;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .message-content > .shiny-text {
-  font-size: 13px;
+  font-size: 13.5px;
 }
 
-/* 思考中提示：去渐变，改为呼吸式透明度动画 */
 .shiny-text {
   display: inline-block;
   color: var(--text-soft);
-  animation: shimmer-pulse 1.6s ease-in-out infinite;
+  animation: shimmer-pulse 1.8s ease-in-out infinite;
 }
 
 .shiny-text.disabled {
@@ -1338,36 +1370,37 @@ a:focus-visible {
 }
 
 .message-enter-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity 0.22s var(--ease-spring), transform 0.22s var(--ease-spring);
 }
 
 .message-enter-from {
   opacity: 0;
-  transform: translateY(6px);
+  transform: translateY(8px);
 }
 
-/* 输入区 */
-
+/* 输入区：Double-Bezel 工业硬件质感 */
 .composer-area {
-  padding: 14px 36px 16px;
-  background: #FFFFFF;
+  padding: 16px 28px 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, #FFFFFF 100%);
   border-top: 1px solid var(--line);
+  backdrop-filter: blur(8px);
 }
 
 .composer-box {
   width: min(100%, 820px);
   margin: 0 auto;
-  padding: 10px 10px 9px 14px;
+  padding: 12px 14px 10px 16px;
   background: #FFFFFF;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  border-radius: 18px;
+  box-shadow: 0 8px 30px -8px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03);
+  transition: all 0.22s var(--ease-spring);
 }
 
 .composer-box:focus-within,
 .composer-box.focused {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgb(61 125 214 / 12%);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12), 0 12px 32px -8px rgba(15, 23, 42, 0.08);
 }
 
 .composer-box textarea {

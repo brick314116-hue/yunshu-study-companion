@@ -143,10 +143,14 @@ const emit = defineEmits<{
   flex: 0 0 auto;
   align-items: center;
   gap: 12px;
-  height: 52px;
+  height: 54px;
   padding: 0 20px;
-  background: #FFFFFF;
-  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+  z-index: 10;
 }
 
 .app-topbar.minimal {
@@ -162,6 +166,12 @@ const emit = defineEmits<{
   border: 0;
   font-size: 15px;
   font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.18s ease;
+}
+
+.topbar-brand:hover {
+  opacity: 0.85;
 }
 
 .topbar-brand .brand-mark {
@@ -172,6 +182,7 @@ const emit = defineEmits<{
   color: #FFFFFF;
   background: var(--ink);
   border-radius: 9px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
 }
 
 .topbar-right {
@@ -193,6 +204,7 @@ const emit = defineEmits<{
   border: 1px solid var(--line);
   border-radius: 999px;
   font-size: 13px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .topbar-account span {
@@ -211,6 +223,13 @@ const emit = defineEmits<{
   background: #FFFFFF;
   border: 1px solid var(--line);
   border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.topbar-icon:hover {
+  color: var(--text);
+  border-color: var(--line-strong);
 }
 
 .topbar-login {
@@ -224,6 +243,14 @@ const emit = defineEmits<{
   border: 0;
   border-radius: 999px;
   font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+  cursor: pointer;
+  transition: transform 0.18s var(--ease-spring), opacity 0.18s ease;
+}
+
+.topbar-login:hover {
+  transform: translateY(-1px);
 }
 
 .topbar-login:disabled {
@@ -239,6 +266,8 @@ const emit = defineEmits<{
   background: transparent;
   border: 0;
   border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.18s ease;
 }
 
 .topbar-hamburger:hover {
@@ -250,31 +279,39 @@ const emit = defineEmits<{
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(241, 245, 249, 0.75);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 
 .topbar-tab {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 7px;
-  padding: 7px 14px;
+  gap: 6px;
+  padding: 6px 13px;
   color: var(--text-muted);
   background: transparent;
   border: 0;
-  border-radius: 10px;
-  font-size: 13.5px;
-  transition: all 0.18s ease;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-spring);
 }
 
 .topbar-tab:hover {
   color: var(--text);
-  background: var(--hover);
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .topbar-tab.active {
   color: var(--accent-strong);
-  background: var(--accent-soft);
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), inset 0 1px 1px #FFFFFF;
   font-weight: 600;
 }
 
@@ -287,30 +324,33 @@ const emit = defineEmits<{
 .topbar-dock-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   height: 34px;
-  padding: 0 14px;
+  padding: 0 13px;
   color: var(--text-muted);
-  background: var(--surface-soft);
-  border: 1px solid var(--line);
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 999px;
   font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.18s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s var(--ease-spring);
 }
 
 .topbar-dock-btn:hover {
   color: var(--accent-strong);
-  border-color: var(--accent);
+  border-color: rgba(99, 102, 241, 0.4);
   background: var(--accent-faint);
+  transform: translateY(-1px);
 }
 
 .topbar-dock-btn.active {
   color: var(--accent-strong);
   background: var(--accent-soft);
-  border-color: rgb(61 125 214 / 30%);
+  border-color: rgba(99, 102, 241, 0.35);
   font-weight: 600;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.12);
 }
 
 .topbar-account-mini {
@@ -320,12 +360,13 @@ const emit = defineEmits<{
   height: 34px;
   padding: 0 12px;
   color: var(--text-muted);
-  background: var(--surface-soft);
-  border: 1px solid var(--line);
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 999px;
   font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   transition: all 0.18s ease;
 }
 
@@ -346,7 +387,7 @@ const emit = defineEmits<{
     display: none;
   }
   .topbar-tab {
-    padding: 7px 10px;
+    padding: 6px 9px;
   }
   .topbar-user-name {
     display: none;
