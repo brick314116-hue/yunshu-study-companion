@@ -1,0 +1,15 @@
+{
+  "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
+  "envId": "xueou-d7gwem7g2452a7ea3",
+  "functionRoot": "cloudbase-functions",
+  "functions": [
+    {
+      "name": "nuwax-chat-proxy",
+      "dir": "cloudbase-functions/xinyu-chat",
+      "type": "HTTP",
+      "runtime": "Nodejs20.19",
+      "timeout": 240,
+      "installDependency": true
+    }
+  ]
+}
