@@ -11,7 +11,7 @@ const REQUEST_TIMEOUT_MS = Number.isFinite(configuredTimeoutMs)
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000
 const RATE_LIMIT_MAX = 30
 const AGENT_KEY = 'main'
-const BUILD_VERSION = '2026-09-12-user-identity-bridge'
+const BUILD_VERSION = '2026-10-08-multimodal-attachment-bridge'
 const DEFAULT_DATABASE_INSTANCE = 'tnt-nsoau01qw'
 const DEFAULT_CHECKIN_WORKFLOW_ID = 5257662
 const CHECKIN_TIMEOUT_MS = 30 * 1000
@@ -181,6 +181,7 @@ async function handleUpload(req, res) {
     logError('upload', id, Object.assign(new Error(String(result?.message || 'upload_failed')), { code: String(result?.code || upstream.status) }))
     sendJson(res, 502, { error: `上传失败(${upstream.status})：${result?.message || 'no key'}` }); return
   }
+  logDb(id, 'UPLOAD-ATTACHMENT-OK', `name=${name} key=${data.key} url=${data.url || 'none'}`)
   sendJson(res, 200, {
     data: { key: data.key, url: data.url, fileName: data.fileName || name, mimeType: data.mimeType || type },
   })
@@ -818,6 +819,33 @@ async function handleChat(req, res) {
   res.once('close', () => controller.abort())
   let upstream
   try {
+    const formattedAttachments = (Array.isArray(body.attachments) ? body.attachments : [])
+      .slice(0, 5)
+      .map((a) => {
+        const fileKey = String(a?.fileKey || a?.key || a?.file_key || '')
+        const fileName = String(a?.fileName || a?.name || '')
+        const url = String(a?.url || a?.fileUrl || '')
+        const mimeType = String(a?.mimeType || a?.type || '')
+        return {
+          key: fileKey,
+          fileKey,
+          file_key: fileKey,
+          id: fileKey,
+          fileId: fileKey,
+          url,
+          fileUrl: url,
+          fileName,
+          name: fileName,
+          mimeType,
+          type: mimeType,
+        }
+      })
+      .filter((a) => a.fileKey)
+
+    if (formattedAttachments.length) {
+      logDb(id, 'CHAT-ATTACHMENTS', `count=${formattedAttachments.length} keys=${formattedAttachments.map((a) => a.key).join(',')}`)
+    }
+
     upstream = await fetch(`${config.baseUrl}/api/v1/chat/${session.conversationId}`, {
       method: 'POST',
       headers: nuwaxHeaders(config, subject, {
@@ -827,24 +855,8 @@ async function handleChat(req, res) {
       body: JSON.stringify({
         conversationId: session.conversationId,
         message,
-        attachments: (Array.isArray(body.attachments) ? body.attachments : [])
-          .slice(0, 5)
-          .map((a) => {
-            const fileKey = String(a?.fileKey || a?.key || '')
-            const fileName = String(a?.fileName || a?.name || '')
-            const url = String(a?.url || '')
-            const mimeType = String(a?.mimeType || a?.type || '')
-            return {
-              key: fileKey,
-              fileKey,
-              url,
-              fileName,
-              name: fileName,
-              mimeType,
-              type: mimeType,
-            }
-          })
-          .filter((a) => a.fileKey),
+        attachments: formattedAttachments,
+        files: formattedAttachments,
         debug: false,
         variableParams: conversationVariables(profile, subject),
         filterSensitive: true,
