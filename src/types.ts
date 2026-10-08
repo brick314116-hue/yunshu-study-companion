@@ -24,6 +24,7 @@ export interface ChatMessage {
 /** 上传到女娲后的附件引用，随聊天消息发送 */
 export interface ChatAttachment {
   fileKey: string
+  key?: string
   url?: string
   fileName: string
   mimeType: string

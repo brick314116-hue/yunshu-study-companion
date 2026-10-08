@@ -101,8 +101,10 @@ export const uploadAttachment = async (file: File): Promise<ChatAttachment> => {
   }
   const body = (await response.json()) as Record<string, unknown>
   const d = (isRecord(body.data) ? body.data : body) as Record<string, unknown>
+  const key = readString(d.key)
   return {
-    fileKey: readString(d.key),
+    fileKey: key,
+    key,
     url: readString(d.url) || undefined,
     fileName: readString(d.fileName) || file.name,
     mimeType: readString(d.mimeType) || file.type,

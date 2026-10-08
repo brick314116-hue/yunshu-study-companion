@@ -829,12 +829,21 @@ async function handleChat(req, res) {
         message,
         attachments: (Array.isArray(body.attachments) ? body.attachments : [])
           .slice(0, 5)
-          .map((a) => ({
-            fileKey: String(a?.fileKey || a?.key || ''),
-            url: String(a?.url || ''),
-            fileName: String(a?.fileName || ''),
-            mimeType: String(a?.mimeType || ''),
-          }))
+          .map((a) => {
+            const fileKey = String(a?.fileKey || a?.key || '')
+            const fileName = String(a?.fileName || a?.name || '')
+            const url = String(a?.url || '')
+            const mimeType = String(a?.mimeType || a?.type || '')
+            return {
+              key: fileKey,
+              fileKey,
+              url,
+              fileName,
+              name: fileName,
+              mimeType,
+              type: mimeType,
+            }
+          })
           .filter((a) => a.fileKey),
         debug: false,
         variableParams: conversationVariables(profile, subject),
