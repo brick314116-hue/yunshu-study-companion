@@ -132,10 +132,10 @@ onBeforeUnmount(() => {
           <span>以智能体为主 · 学习与心理协同支持</span>
         </div>
 
-        <h1 id="home-title">云舒学伴</h1>
-        <p class="home-slogan">云舒少年忧，学伴逐光游</p>
+        <h1 id="home-title">心隅学伴</h1>
+        <p class="home-slogan">心隅有光，学伴同行</p>
         <p class="home-summary">
-          我是云小舒。作业不知从何下手、复习感到压力，或此刻有些烦躁？我陪你把大任务拆小、把想法理清、把节奏稳住。非说教、零评判，随时由你掌控。
+          我是心小隅。作业不知从何下手、复习感到压力，或此刻有些烦躁？我陪你把大任务拆小、把想法理清、把节奏稳住。非说教、零评判，随时由你掌控。
         </p>
 
         <div class="landing-actions">
@@ -152,8 +152,8 @@ onBeforeUnmount(() => {
               <ArrowDown :size="16" :stroke-width="1.8" />
             </button>
             <button type="button" class="intro-button" @click="emit('intro')">
-              <Cloud :size="18" :stroke-width="1.8" />
-              <span>认识云小舒</span>
+              <Sparkles :size="18" :stroke-width="1.8" />
+              <span>认识心小隅</span>
             </button>
           </div>
         </div>
@@ -199,7 +199,7 @@ onBeforeUnmount(() => {
                   <p>作业太多了完全不想碰，下周又要模考，整个人好烦躁...</p>
                 </div>
                 <div class="mock-bubble mock-agent">
-                  <span class="mock-sender">云小舒</span>
+                  <span class="mock-sender">心小隅</span>
                   <p>抱抱你，压力大时想逃避是人的正常保护机制。我们先不想整周的事，今天哪一科最容易？我们花5分钟只看第一道题，做完随时可以停，好吗？</p>
                 </div>
               </div>
@@ -209,9 +209,9 @@ onBeforeUnmount(() => {
               <button
                 type="button"
                 class="card-action-btn"
-                @click="emit('startWith', { module: 'study', prompt: '云小舒，我今天有点学不进去，能陪我聊聊并帮我拆分一下任务吗？' })"
+                @click="emit('startWith', { module: 'study', prompt: '心小隅，我今天有点学不进去，能陪我聊聊并帮我拆分一下任务吗？' })"
               >
-                <span>向小舒倾诉</span>
+                <span>向小隅倾诉</span>
                 <ArrowRight :size="16" :stroke-width="1.8" />
               </button>
             </div>
@@ -413,7 +413,7 @@ onBeforeUnmount(() => {
       <div class="section-container footer-content">
         <div class="footer-cta-card">
           <h2>让成长的每一次跋涉，都不再孤单</h2>
-          <p>无论今天过得怎样，云小舒都在这里，准备好与你一起出发。</p>
+          <p>无论今天过得怎样，心小隅都在这里，准备好与你一起出发。</p>
           <div class="footer-cta-actions">
             <button type="button" class="start-chat-button" @click="emit('start')">
               <MessageCircleMore :size="18" :stroke-width="1.8" />
@@ -431,10 +431,10 @@ onBeforeUnmount(() => {
             <span>合规与安全申明</span>
           </div>
           <p>
-            云舒学伴是由智能体驱动的伴学与情绪调适支持工具，<strong>不提供临床医学、精神心理障碍诊断或处方药物建议</strong>。
+            心隅学伴是由智能体驱动的伴学与情绪调适支持工具，<strong>不提供临床医学、精神心理障碍诊断或处方药物建议</strong>。
             若你或身边的伙伴正面临生命安全紧急状况，请立刻拨打全国24小时心理援助热线：<a href="tel:4001619995">400-161-9995</a> 或紧急求助电话 110。
           </p>
-          <p class="copyright">© 云舒学伴 · 专注于青少年与大学生的自主伴学智能体系统</p>
+          <p class="copyright">© 心隅学伴 · 专注于青少年与大学生的自主伴学智能体系统</p>
         </div>
       </div>
     </footer>

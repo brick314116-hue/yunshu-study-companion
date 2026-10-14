@@ -160,7 +160,7 @@ const removeNote = (index: number) => {
 const askAgentReframe = (item: ReframingItem) => {
   emit(
     'askAgent',
-    `云小舒，我正在做认知想法理清练习。\n【客观事实】：${item.fact}\n【我脑补的想法】：${item.thought}\n能帮我把事实和想法解离开，找找别的积极可能吗？`,
+    `心小隅，我正在做认知想法理清练习。\n【客观事实】：${item.fact}\n【我脑补的想法】：${item.thought}\n能帮我把事实和想法解离开，找找别的积极可能吗？`,
   )
 }
 

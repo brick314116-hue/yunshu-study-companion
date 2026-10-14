@@ -508,7 +508,7 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
     if (errMsg.includes('登录') || errMsg.includes('重新登录')) {
       handleSessionExpired()
     }
-    const text2 = errMsg || '暂时没有连接上云小舒，请稍后重试。'
+    const text2 = errMsg || '暂时没有连接上心小隅，请稍后重试。'
     const index = messages.value.findIndex((message) => message.id === assistantMessageId)
     if (index >= 0) messages.value[index] = { ...messages.value[index], text: text2, status: 'error' }
   } finally {
@@ -647,8 +647,8 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
       </div>
 
       <footer v-if="activeTab === 'chat'" class="app-footer">
-        <p>可以按自己的节奏慢慢说，一次只梳理当下最在意的一小部分，云小舒永远在这里。</p>
-        <span class="app-watermark" aria-hidden="true">云舒少年忧，学伴逐光游</span>
+        <p>可以按自己的节奏慢慢说，一次只梳理当下最在意的一小部分，心小隅永远在这里。</p>
+        <span class="app-watermark" aria-hidden="true">心隅有光，学伴同行</span>
       </footer>
     </div>
   </div>

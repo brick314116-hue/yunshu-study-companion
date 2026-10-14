@@ -2,7 +2,6 @@
 import {
   ArrowRight,
   Check,
-  Cloud,
   Compass,
   HeartHandshake,
   MessageCircleMore,
@@ -10,6 +9,7 @@ import {
   Brain,
   ClipboardList,
   ShieldCheck,
+  Sparkles,
 } from '@lucide/vue'
 import type { Component } from 'vue'
 import { modules } from '../modules'
@@ -39,7 +39,7 @@ const moduleIcons: Record<ModuleId, Component> = {
   records: ClipboardList,
 }
 
-const introExample = '云小舒，介绍一下你自己，说说你能帮我做什么。'
+const introExample = '心小隅，介绍一下你自己，说说你能帮我做什么。'
 
 const conversationFlow = [
   { title: '说一件具体的事', description: '从作业、一次考试、一个想法或此刻的感受开始。' },
@@ -54,7 +54,7 @@ const conversationFlow = [
       <div class="home-story-inner">
         <header class="home-story-copy">
           <h2 id="story-title">让成长不再孤单</h2>
-          <p>云舒学伴是一个陪你学习、也听你聊心情的伙伴。它帮你把任务拆小、把想法理清楚、把心情说出来，一步一步慢慢来。</p>
+          <p>心隅学伴是一个陪你学习、也听你聊心情的伙伴。它帮你把任务拆小、把想法理清楚、把心情说出来，一步一步慢慢来。</p>
           <div class="story-notice">
             <Compass :size="19" :stroke-width="1.7" aria-hidden="true" />
             <span>它不会替你写作业或做决定，也会听你的节奏——不想聊的可以随时跳过或停下。</span>
@@ -65,12 +65,12 @@ const conversationFlow = [
           <article :style="{ '--stack-index': 0, '--stack-top': '92px' }">
             <header class="capability-card-header">
               <span class="capability-icon" aria-hidden="true">
-                <Cloud :size="21" :stroke-width="1.6" />
+                <Sparkles :size="21" :stroke-width="1.6" />
               </span>
-              <span>认识云小舒</span>
+              <span>认识心小隅</span>
             </header>
-            <h3>你好，我叫云小舒</h3>
-            <p>我是云小舒。学习上，我陪你把任务拆小、把错题理清楚；心情上，我听你说，陪你慢慢放松。你不用组织好语言再来，想到什么说什么。</p>
+            <h3>你好，我叫心小隅</h3>
+            <p>我是心小隅。学习上，我陪你把任务拆小、把错题理清楚；心情上，我听你说，陪你慢慢放松。你不用组织好语言再来，想到什么说什么。</p>
             <ul>
               <li v-for="point in sellingPoints" :key="point">
                 <Check :size="15" :stroke-width="2" aria-hidden="true" />
@@ -132,7 +132,7 @@ const conversationFlow = [
         </ol>
         <div class="home-boundary">
           <ShieldCheck :size="19" :stroke-width="1.7" aria-hidden="true" />
-          <p>云小舒不是医生或老师，不做诊断、不给你贴标签。如果真的遇到危险，请马上告诉身边你信任的大人，或拨打紧急电话。</p>
+          <p>心小隅不是医生或老师，不做诊断、不给你贴标签。如果真的遇到危险，请马上告诉身边你信任的大人，或拨打紧急电话。</p>
         </div>
       </div>
     </section>

@@ -57,7 +57,7 @@ const pickExample = (module: ModuleId, text: string) => emit('pick', module, tex
 
       <template v-if="step === 1">
         <div class="onboard-mark" aria-hidden="true"><Sparkles :size="24" :stroke-width="1.7" /></div>
-        <h2 id="onboard-title">你好，我是云小舒</h2>
+        <h2 id="onboard-title">你好，我是心小隅</h2>
         <p class="onboard-lead">
           我陪你学习、也听你聊心情。我不是医生或老师，不做诊断。
           聊天内容不会乱存，记录最多保留 7 天、可随时删除。

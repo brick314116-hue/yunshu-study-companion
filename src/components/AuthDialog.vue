@@ -178,7 +178,7 @@ watch(mode, () => { error.value = '' })
       <div class="auth-mark" aria-hidden="true">
         <LogIn :size="24" :stroke-width="1.7" />
       </div>
-      <h2 id="auth-title">登录云舒学伴</h2>
+      <h2 id="auth-title">登录心隅学伴</h2>
       <p class="dialog-lead">选择一种方式继续，你的身份由 CloudBase 安全管理。</p>
 
       <div v-if="!authConfigured" class="auth-config-note">

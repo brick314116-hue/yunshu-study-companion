@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /* ============================================================
-   云舒学伴 · 设计系统
-   基调：极简、留白、白底为主，唯一强调色 #3D7DD6
+   心隅学伴 · 设计系统
+   基调：极简、留白、白底为主，静心温润靛紫强调色 #4F46E5
    ============================================================ */
 
 :root {
@@ -29,12 +29,12 @@
   --line: rgba(15, 23, 42, 0.07);
   --line-strong: rgba(15, 23, 42, 0.12);
 
-  /* 点缀主色 · 科技深海蓝 (仅占 5% 视觉重心) */
-  --accent: #2563EB;
-  --accent-strong: #1D4ED8;
-  --accent-active: #1E40AF;
-  --accent-soft: #EFF6FF;
-  --accent-faint: #F8FAFC;
+  /* 点缀主色 · 心隅温润靛紫 (仅占 5% 视觉重心，辨识度高且温和治愈) */
+  --accent: #4F46E5;
+  --accent-strong: #4338CA;
+  --accent-active: #3730A3;
+  --accent-soft: #EEF2FF;
+  --accent-faint: #F8F9FF;
 
   /* 深色态与交互 */
   --ink: #1E293B;
@@ -124,7 +124,7 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid rgba(37, 99, 235, 0.45);
+  outline: 2px solid rgba(79, 70, 229, 0.45);
   outline-offset: 2px;
 }
 
@@ -1275,7 +1275,7 @@ a:focus-visible {
 
 .welcome-example:hover {
   background: #F8FAFC;
-  border-color: rgba(37, 99, 235, 0.18);
+  border-color: rgba(79, 70, 229, 0.18);
   box-shadow: 0 6px 16px -2px rgba(15, 23, 42, 0.05);
   transform: translateY(-1px);
 }
@@ -1324,7 +1324,7 @@ a:focus-visible {
   flex: 0 0 32px;
   color: var(--accent);
   background: var(--accent-soft);
-  border: 1px solid rgba(37, 99, 235, 0.15);
+  border: 1px solid rgba(79, 70, 229, 0.15);
   border-radius: 8px;
   margin-top: 2px;
 }
@@ -1476,8 +1476,8 @@ a:focus-visible {
 
 .composer-box:focus-within,
 .composer-box.focused {
-  border-color: rgba(37, 99, 235, 0.35);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08), 0 6px 20px -4px rgba(15, 23, 42, 0.05);
+  border-color: rgba(79, 70, 229, 0.35);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08), 0 6px 20px -4px rgba(15, 23, 42, 0.05);
 }
 
 .composer-box textarea {
@@ -1549,21 +1549,22 @@ a:focus-visible {
   width: 32px;
   height: 32px;
   color: #FFFFFF;
-  background: #2563EB;
+  background: var(--accent);
   border: 0;
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.16s ease;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
 }
 
 .send-button:hover:not(:disabled) {
-  background: #1D4ED8;
+  background: var(--accent-strong);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 .send-button:active:not(:disabled) {
+  background: var(--accent-active);
   transform: translateY(0);
 }
 

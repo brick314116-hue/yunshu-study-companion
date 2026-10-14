@@ -20,7 +20,7 @@ export interface MoodCheckinResult {
 const configuredEndpoint = import.meta.env.VITE_CHAT_API_URL?.trim()
 const CHECKIN_ENDPOINT = configuredEndpoint
   ? `${configuredEndpoint}?resource=mood-checkin`
-  : 'https://xueou-d7gwem7g2452a7ea3-1462770697.ap-shanghai.app.tcloudbase.com/nuwax/api/chat?resource=mood-checkin'
+  : 'https://xueou-d7gwem7g2452a7ea3-1462770697.ap-shanghai.app.tcloudbase.com/xinyu/api/chat?resource=mood-checkin'
 
 /**
  * 提交情绪打卡表单。consent 校验与输入合法性都在云函数侧完成，

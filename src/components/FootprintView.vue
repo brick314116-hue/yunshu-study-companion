@@ -147,7 +147,7 @@ const handleConfirmClear = () => {
               <Calendar :size="26" :stroke-width="1.8" />
             </div>
             <h4>近 7 天暂无打卡或专注足迹</h4>
-            <p>云小舒严格遵循客观事实原则，绝不编造任何假数据。当你在自习室开启专注，或完成一次情绪打卡，这里会真实为你留存成长印记。</p>
+            <p>心小隅严格遵循客观事实原则，绝不编造任何假数据。当你在自习室开启专注，或完成一次情绪打卡，这里会真实为你留存成长印记。</p>
             <div class="empty-actions">
               <button type="button" class="empty-btn primary" @click="emit('navigate', 'focus')">
                 <Clock :size="14" :stroke-width="2" />

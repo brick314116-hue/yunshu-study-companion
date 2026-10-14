@@ -34,7 +34,7 @@ const currentWorkspaceTitle = computed(() => {
     case 'focus': return '专注自习室'
     case 'mind': return '心灵避风港'
     case 'footprint': return '成长足迹'
-    case 'intro': return '认识云小舒'
+    case 'intro': return '认识心小隅'
     default: return '工作台'
   }
 })
@@ -45,8 +45,8 @@ const currentWorkspaceTitle = computed(() => {
     <!-- 极简模式（认识页）：左上 logo + 右上登录 -->
     <template v-if="minimal">
       <button class="topbar-brand" type="button" aria-label="回到首页" @click="emit('home')">
-        <span class="brand-mark" aria-hidden="true"><Cloud :size="18" :stroke-width="1.8" /></span>
-        <strong>云舒学伴</strong>
+        <span class="brand-mark" aria-hidden="true"><Sparkles :size="18" :stroke-width="1.8" /></span>
+        <strong>心隅学伴</strong>
       </button>
       <div class="topbar-right">
         <template v-if="userName">
@@ -72,7 +72,7 @@ const currentWorkspaceTitle = computed(() => {
           <Menu :size="17" :stroke-width="1.8" />
         </button>
         <nav class="topbar-breadcrumb" aria-label="当前路径">
-          <button class="breadcrumb-item breadcrumb-home" type="button" @click="emit('home')">云舒学伴</button>
+          <button class="breadcrumb-item breadcrumb-home" type="button" @click="emit('home')">心隅学伴</button>
           <span class="breadcrumb-separator" aria-hidden="true">/</span>
           <span class="breadcrumb-item current">{{ currentWorkspaceTitle }}</span>
         </nav>

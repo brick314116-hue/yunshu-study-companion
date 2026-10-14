@@ -163,7 +163,7 @@ const handleKeydown = (event: KeyboardEvent) => {
           </div>
           <div class="message-content">
             <div class="message-meta">
-              <strong>{{ message.role === 'assistant' ? '云小舒' : '你' }}</strong>
+              <strong>{{ message.role === 'assistant' ? '心小隅' : '你' }}</strong>
               <time>{{ message.time }}</time>
             </div>
             <ShinyText

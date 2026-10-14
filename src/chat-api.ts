@@ -4,7 +4,7 @@ import type { ChatAttachment } from './types'
 const configuredEndpoint = import.meta.env.VITE_CHAT_API_URL?.trim()
 const endpoint =
   configuredEndpoint ||
-  'https://xueou-d7gwem7g2452a7ea3-1462770697.ap-shanghai.app.tcloudbase.com/nuwax/api/chat'
+  'https://xueou-d7gwem7g2452a7ea3-1462770697.ap-shanghai.app.tcloudbase.com/xinyu/api/chat'
 
 type RecordValue = Record<string, unknown>
 
@@ -55,8 +55,8 @@ const responseError = async (response: Response) => {
   if (response.status === 403) {
     return '当前访问来源未被允许（403），请将该域名添加到云函数 ALLOWED_ORIGINS 白名单。'
   }
-  if (response.status === 404) return '对话接口尚未部署，请检查 CloudBase 的 /api/chat 路由。'
-  return '暂时没有连接上云小舒，请稍后重试。'
+  if (response.status === 404) return '对话接口尚未部署，请检查 CloudBase 的 /xinyu/api/chat 路由。'
+  return '暂时没有连接上心小隅，请稍后重试。'
 }
 
 export type ChatAction = 'mood-checkin'

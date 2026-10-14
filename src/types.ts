@@ -1,6 +1,6 @@
 export type ModuleId = 'study' | 'thought' | 'emotion' | 'records'
 
-/** 顶层视图：首页门户(landing) / 认识云小舒(intro) / 四大专属工作区：会话中枢(chat) / 专注自习室(focus) / 心灵避风港(mind) / 成长足迹(footprint) */
+/** 顶层视图：首页门户(landing) / 认识心小隅(intro) / 四大专属工作区：会话中枢(chat) / 专注自习室(focus) / 心灵避风港(mind) / 成长足迹(footprint) */
 export type AppTab = 'landing' | 'intro' | 'chat' | 'focus' | 'mind' | 'footprint'
 
 export type PsychConsent = 'unknown' | 'accepted' | 'declined'

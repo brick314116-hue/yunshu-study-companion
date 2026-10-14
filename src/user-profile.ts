@@ -20,7 +20,7 @@ export interface UserProfile {
 const configuredEndpoint = import.meta.env.VITE_CHAT_API_URL?.trim()
 const PROFILE_ENDPOINT = configuredEndpoint
   ? `${configuredEndpoint}?resource=profile`
-  : 'https://xueou-d7gwem7g2452a7ea3-1462770697.ap-shanghai.app.tcloudbase.com/nuwax/api/chat?resource=profile'
+  : 'https://xueou-d7gwem7g2452a7ea3-1462770697.ap-shanghai.app.tcloudbase.com/xinyu/api/chat?resource=profile'
 
 const MAX_DISPLAY_NAME = 32
 

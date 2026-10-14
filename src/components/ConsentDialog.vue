@@ -53,7 +53,7 @@ onMounted(() => {
           </div>
           <h2 id="consent-title">开始前，先说明几件事</h2>
           <p class="dialog-lead">
-            云小舒陪你学习、聊心情，但它不是医生或老师，不做诊断、不给你打分。
+            心小隅陪你学习、聊心情，但它不是医生或老师，不做诊断、不给你打分。
           </p>
 
           <div class="consent-points">

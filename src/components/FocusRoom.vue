@@ -98,7 +98,7 @@ const recordCompletedFocus = (minutes: number) => {
 }
 
 const tellAgentFocusDone = () => {
-  emit('askAgent', `云小舒，我刚刚在专注自习室完成了 ${timerPreset.value} 分钟专注学习！感觉很充实，接下来想梳理下一步。`)
+  emit('askAgent', `心小隅，我刚刚在专注自习室完成了 ${timerPreset.value} 分钟专注学习！感觉很充实，接下来想梳理下一步。`)
 }
 
 // ==================== 2. 白噪音调音台 ====================
@@ -182,7 +182,7 @@ const removeTask = (index: number) => {
 }
 
 const askAgentDecompose = () => {
-  emit('askAgent', '云小舒，我手头的作业/任务有点大，不知道怎么开始，请帮我拆解成 3 个 15 分钟内能做完的微步骤！')
+  emit('askAgent', '心小隅，我手头的作业/任务有点大，不知道怎么开始，请帮我拆解成 3 个 15 分钟内能做完的微步骤！')
 }
 
 onBeforeUnmount(() => {
@@ -329,7 +329,7 @@ onBeforeUnmount(() => {
                 🎉 太棒了！本轮 {{ timerPreset }} 分钟专注达成！
               </template>
               <template v-else-if="timerRunning">
-                云小舒正在安静陪伴中，请保持平稳呼吸与专注
+                心小隅正在安静陪伴中，请保持平稳呼吸与专注
               </template>
               <template v-else>
                 消除外界杂音，准备好后点击下方开始
@@ -439,21 +439,21 @@ onBeforeUnmount(() => {
           <div class="agent-standby-card">
             <div class="standby-header">
               <Sparkles :size="16" :stroke-width="2" class="standby-icon" />
-              <strong>云小舒随时在侧</strong>
+              <strong>心小隅随时在侧</strong>
             </div>
-            <p>写题遇到想不通的卡点，或是走神看不进书？随时向小舒求助，小舒陪你理顺。</p>
+            <p>写题遇到想不通的卡点，或是走神看不进书？随时向小隅求助，小隅陪你理顺。</p>
             <div class="standby-actions">
               <button
                 type="button"
                 class="standby-btn"
-                @click="emit('askAgent', '云小舒，我这道题有些卡住了，想让你帮我从思维卡点上理一理。')"
+                @click="emit('askAgent', '心小隅，我这道题有些卡住了，想让你帮我从思维卡点上理一理。')"
               >
                 <span>这道题卡住了，理理思维 ➔</span>
               </button>
               <button
                 type="button"
                 class="standby-btn"
-                @click="emit('askAgent', '云小舒，我学着学着走神了，有点心烦，能帮我收收心吗？')"
+                @click="emit('askAgent', '心小隅，我学着学着走神了，有点心烦，能帮我收收心吗？')"
               >
                 <span>我走神了，帮我收收心 ➔</span>
               </button>

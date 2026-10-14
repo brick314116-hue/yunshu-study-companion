@@ -77,7 +77,7 @@ const resetTimer = () => {
 }
 
 const tellAgentFocusDone = () => {
-  emit('prompt', `云小舒，我刚刚完成了 ${timerPreset.value} 分钟的专注学习！感觉还挺顺利的。`)
+  emit('prompt', `心小隅，我刚刚完成了 ${timerPreset.value} 分钟的专注学习！感觉还挺顺利的。`)
   resetTimer()
 }
 
