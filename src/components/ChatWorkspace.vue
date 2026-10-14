@@ -87,6 +87,28 @@ watch(
   { deep: true },
 )
 
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
+
+const adjustTextareaHeight = () => {
+  if (!textareaRef.value) return
+  textareaRef.value.style.height = 'auto'
+  const nextHeight = Math.min(Math.max(textareaRef.value.scrollHeight, 36), 140)
+  textareaRef.value.style.height = `${nextHeight}px`
+}
+
+const handleInput = (event: Event) => {
+  const value = (event.target as HTMLTextAreaElement).value
+  emit('update:modelValue', value)
+  adjustTextareaHeight()
+}
+
+watch(
+  () => props.modelValue,
+  () => {
+    nextTick(adjustTextareaHeight)
+  },
+)
+
 const handleKeydown = (event: KeyboardEvent) => {
   if (props.sending) return
   if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
@@ -165,13 +187,14 @@ const handleKeydown = (event: KeyboardEvent) => {
     <footer class="composer-area">
       <div class="composer-box" :class="{ focused: modelValue.length > 0 }">
         <textarea
+          ref="textareaRef"
           :value="modelValue"
           rows="1"
           maxlength="500"
           :disabled="sending"
           placeholder="想聊点什么？学习、心情都可以"
           aria-label="输入消息"
-          @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
+          @input="handleInput"
           @keydown="handleKeydown"
         />
         <div v-if="attachments.length || uploadError" class="composer-files">
@@ -192,43 +215,47 @@ const handleKeydown = (event: KeyboardEvent) => {
             hidden
             @change="onPickFiles"
           />
-          <button
-            class="checkin-button"
-            type="button"
-            title="独立情绪打卡（快速记录此刻心情，7天自毁）"
-            aria-label="情绪打卡"
-            @click="emit('checkin')"
-          >
-            <ClipboardList :size="15" :stroke-width="1.8" />
-            <span class="checkin-label">打卡</span>
-          </button>
-          <button
-            class="attach-button"
-            type="button"
-            title="上传图片或文档（最多5个，单个≤6MB）"
-            aria-label="上传附件"
-            :disabled="uploading || sending"
-            @click="fileInput?.click()"
-          >
-            <LoaderCircle v-if="uploading" class="send-spinner" :size="16" :stroke-width="1.8" />
-            <Paperclip v-else :size="16" :stroke-width="1.8" />
-          </button>
-          <span
-            v-if="modelValue.length >= 400"
-            class="composer-count"
-            :class="{ full: modelValue.length >= 500 }"
-          >{{ modelValue.length }}/500</span>
-          <button
-            class="send-button"
-            type="button"
-            :title="sending ? '正在回复' : '发送'"
-            :aria-label="sending ? '正在回复' : '发送消息'"
-            :disabled="sending || (!modelValue.trim() && attachments.length === 0)"
-            @click="doSend"
-          >
-            <LoaderCircle v-if="sending" class="send-spinner" :size="18" :stroke-width="1.8" />
-            <ArrowUp v-else :size="19" :stroke-width="2" />
-          </button>
+          <div class="composer-actions-left">
+            <button
+              class="checkin-button"
+              type="button"
+              title="独立情绪打卡（快速记录此刻心情，7天自毁）"
+              aria-label="情绪打卡"
+              @click="emit('checkin')"
+            >
+              <ClipboardList :size="15" :stroke-width="1.8" />
+              <span class="checkin-label">打卡</span>
+            </button>
+            <button
+              class="attach-button"
+              type="button"
+              title="上传图片或文档（最多5个，单个≤6MB）"
+              aria-label="上传附件"
+              :disabled="uploading || sending"
+              @click="fileInput?.click()"
+            >
+              <LoaderCircle v-if="uploading" class="send-spinner" :size="16" :stroke-width="1.8" />
+              <Paperclip v-else :size="16" :stroke-width="1.8" />
+            </button>
+          </div>
+          <div class="composer-actions-right">
+            <span
+              v-if="modelValue.length >= 400"
+              class="composer-count"
+              :class="{ full: modelValue.length >= 500 }"
+            >{{ modelValue.length }}/500</span>
+            <button
+              class="send-button"
+              type="button"
+              :title="sending ? '正在回复' : '发送'"
+              :aria-label="sending ? '正在回复' : '发送消息'"
+              :disabled="sending || (!modelValue.trim() && attachments.length === 0)"
+              @click="doSend"
+            >
+              <LoaderCircle v-if="sending" class="send-spinner" :size="16" :stroke-width="1.8" />
+              <ArrowUp v-else :size="18" :stroke-width="2.2" />
+            </button>
+          </div>
         </div>
       </div>
     </footer>
@@ -296,7 +323,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 .checkin-button {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   height: 32px;
   padding: 0 10px;
   color: var(--text-muted);
@@ -320,23 +347,26 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 .attach-button {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   color: var(--text-muted);
   background: transparent;
   border: 0;
-  border-radius: 9px;
+  border-radius: 8px;
   transition: all 0.18s ease;
+  cursor: pointer;
 }
 
-.attach-button:hover {
+.attach-button:hover:not(:disabled) {
   color: var(--accent-strong);
   background: var(--hover);
 }
 
 .attach-button:disabled {
   opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

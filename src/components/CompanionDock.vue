@@ -165,27 +165,26 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
   <aside class="companion-dock" :class="{ open }" aria-label="伴学协同工具箱">
     <div class="dock-header">
       <div class="dock-title">
-        <Sparkles :size="16" :stroke-width="2" class="dock-icon" />
+        <Sparkles :size="15" :stroke-width="1.8" class="dock-icon" />
         <strong>伴学工具箱</strong>
-        <span class="dock-pill">FOCUS & CARE</span>
       </div>
       <button class="dock-close-btn" type="button" title="收起工具箱" aria-label="收起工具箱" @click="emit('close')">
-        <X :size="16" :stroke-width="2" />
+        <X :size="15" :stroke-width="1.8" />
       </button>
     </div>
 
     <div class="dock-body">
-      <!-- 板块 1：沉浸专注岛 -->
+      <!-- 板块 1：沉浸专注岛 (极细现代字体悬浮番茄钟) -->
       <section class="dock-section focus-island">
         <div class="section-title-bar">
           <div class="title-with-icon">
-            <Clock :size="15" :stroke-width="2" />
-            <span>沉浸专注岛</span>
+            <Clock :size="14" :stroke-width="1.8" />
+            <span>专注番茄钟</span>
           </div>
-          <span v-if="timerRunning" class="live-dot" title="专注计时中">正在计时</span>
+          <span v-if="timerRunning" class="live-dot" title="专注计时中">计时中</span>
         </div>
 
-        <!-- 预设时长切换 -->
+        <!-- 预设时长切换：温和胶囊 -->
         <div class="preset-pills">
           <button
             type="button"
@@ -193,7 +192,7 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
             :class="{ active: timerPreset === 15 }"
             @click="setPreset(15)"
           >
-            15m 极速启动
+            15m 极速
           </button>
           <button
             type="button"
@@ -201,7 +200,7 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
             :class="{ active: timerPreset === 25 }"
             @click="setPreset(25)"
           >
-            25m 经典番茄
+            25m 经典
           </button>
           <button
             type="button"
@@ -209,15 +208,15 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
             :class="{ active: timerPreset === 45 }"
             @click="setPreset(45)"
           >
-            45m 深度攻坚
+            45m 攻坚
           </button>
         </div>
 
-        <!-- 时钟显示板 -->
+        <!-- 悬浮时钟显示：去掉厚重粗边框与进度环，数字极细高级 -->
         <div class="timer-display-box" :class="{ active: timerRunning, finished: timerFinished }">
           <div class="timer-digits">{{ formattedTime }}</div>
           <p v-if="!timerFinished" class="timer-subtext">
-            {{ timerRunning ? '保持呼吸与专注，小舒在一旁陪你' : '准备好后，点击开始进入专注状态' }}
+            {{ timerRunning ? '保持呼吸，小舒在一旁陪你' : '准备好后，点击开始进入专注' }}
           </p>
           <div v-else class="timer-finish-notice">
             <p>🎉 本轮专注完成！辛苦啦！</p>
@@ -227,7 +226,7 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
           </div>
         </div>
 
-        <!-- 时钟操作按钮 -->
+        <!-- 时钟操作按钮：仅开始专注保留最深主色 -->
         <div class="timer-controls">
           <button
             v-if="!timerRunning"
@@ -235,7 +234,7 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
             class="timer-btn timer-btn-primary"
             @click="startTimer"
           >
-            <Play :size="15" :stroke-width="2" />
+            <Play :size="14" :stroke-width="2" />
             <span>{{ timerRemaining < timerPreset * 60 ? '继续专注' : '开始专注' }}</span>
           </button>
           <button
@@ -244,7 +243,7 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
             class="timer-btn timer-btn-pause"
             @click="pauseTimer"
           >
-            <Pause :size="15" :stroke-width="2" />
+            <Pause :size="14" :stroke-width="2" />
             <span>暂停一下</span>
           </button>
           <button
@@ -254,16 +253,16 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
             aria-label="重置时钟"
             @click="resetTimer"
           >
-            <RotateCcw :size="15" :stroke-width="1.8" />
+            <RotateCcw :size="14" :stroke-width="1.8" />
           </button>
         </div>
 
-        <!-- 纯前端环境白噪音 -->
+        <!-- 白噪音伴学微卡片 -->
         <div class="ambient-sound-bar">
           <div class="sound-selector">
             <span class="sound-label">
               <Headphones :size="13" :stroke-width="1.8" />
-              <span>白噪音伴学</span>
+              <span>白噪音</span>
             </span>
             <div class="sound-buttons">
               <button
@@ -273,7 +272,7 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
                 title="细雨敲窗"
                 @click="toggleSound('rain')"
               >
-                <CloudRain :size="14" :stroke-width="1.8" />
+                <CloudRain :size="13" :stroke-width="1.8" />
                 <span>细雨</span>
               </button>
               <button
@@ -283,7 +282,7 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
                 title="均匀白噪"
                 @click="toggleSound('white')"
               >
-                <Wind :size="14" :stroke-width="1.8" />
+                <Wind :size="13" :stroke-width="1.8" />
                 <span>白噪</span>
               </button>
               <button
@@ -291,16 +290,17 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
                 type="button"
                 class="sound-btn sound-btn-stop"
                 title="关闭声音"
+                aria-label="关闭声音"
                 @click="stopAllSound"
               >
-                <VolumeX :size="14" :stroke-width="1.8" />
+                <VolumeX :size="13" :stroke-width="1.8" />
               </button>
             </div>
           </div>
 
           <!-- 音量控制滑块 -->
           <div v-if="currentSound !== 'none'" class="volume-slider-row">
-            <Volume2 :size="13" :stroke-width="1.8" class="vol-icon" />
+            <Volume2 :size="12" :stroke-width="1.8" class="vol-icon" />
             <input
               type="range"
               min="1"
@@ -314,12 +314,12 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
         </div>
       </section>
 
-      <!-- 板块 2：4-7-8 呼吸平复坞 -->
+      <!-- 板块 2：4-7-8 呼吸平复微卡片 -->
       <section class="dock-section breath-dock">
         <div class="section-title-bar">
           <div class="title-with-icon">
-            <Wind :size="15" :stroke-width="2" />
-            <span>4-7-8 正念呼吸平复</span>
+            <Wind :size="14" :stroke-width="1.8" />
+            <span>4-7-8 正念呼吸</span>
           </div>
         </div>
 
@@ -327,19 +327,19 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
           <div class="dock-breath-visual">
             <div class="dock-breath-halo" />
             <div class="dock-breath-core">
-              <Wind v-if="breathPhase === 'idle'" :size="18" :stroke-width="1.8" />
-              <RotateCcw v-else-if="breathPhase === 'done'" :size="18" :stroke-width="1.8" />
+              <Wind v-if="breathPhase === 'idle'" :size="16" :stroke-width="1.8" />
+              <RotateCcw v-else-if="breathPhase === 'done'" :size="16" :stroke-width="1.8" />
               <span v-else class="dock-breath-num">{{ breathSeconds }}</span>
             </div>
           </div>
           <div class="dock-breath-text">
             <template v-if="breathPhase === 'idle'">
-              <strong>点击开启 1 分钟深呼吸</strong>
-              <span>题做不出来、焦虑紧绷时快速回稳</span>
+              <strong>1 分钟呼吸平复</strong>
+              <span>紧绷焦虑时快速回稳身心</span>
             </template>
             <template v-else-if="breathPhase === 'inhale'">
               <strong>慢慢吸气... (4秒)</strong>
-              <span>感受胸腔扩张</span>
+              <span>感受胸腔自然扩张</span>
             </template>
             <template v-else-if="breathPhase === 'hold'">
               <strong>屏住呼吸... (7秒)</strong>
@@ -347,7 +347,7 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
             </template>
             <template v-else-if="breathPhase === 'exhale'">
               <strong>缓缓吐气... (8秒)</strong>
-              <span>释放掉所有焦躁紧绷</span>
+              <span>彻底释放焦躁与压力</span>
             </template>
             <template v-else-if="breathPhase === 'done'">
               <strong>感觉平静些了吗？</strong>
@@ -357,33 +357,33 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
         </div>
       </section>
 
-      <!-- 板块 3：当前场景技能快捷卡片 -->
+      <!-- 板块 3：常用伴学技能列表（改用带微弱底部分割线的书本目录式 list） -->
       <section class="dock-section skills-dock">
         <div class="section-title-bar">
           <div class="title-with-icon">
-            <Sparkles :size="15" :stroke-width="2" />
-            <span>{{ module.label }} · 常用伴学技能</span>
+            <Sparkles :size="14" :stroke-width="1.8" />
+            <span>{{ module.label }} · 伴学技能</span>
           </div>
         </div>
 
-        <div class="skills-card-list">
+        <div class="skills-directory-list">
           <button
             v-for="tool in module.tools"
             :key="tool.title"
             type="button"
-            class="skill-mini-card"
+            class="skill-directory-item"
             @click="onToolClick(tool)"
           >
             <div class="skill-info">
               <strong>{{ tool.title }}</strong>
               <span>{{ tool.description }}</span>
             </div>
-            <ArrowRight :size="15" :stroke-width="1.8" class="skill-arrow" />
+            <ArrowRight :size="14" :stroke-width="1.8" class="skill-arrow" />
           </button>
         </div>
       </section>
 
-      <!-- 底部使用边界与隐私 -->
+      <!-- 底部使用边界与隐私：轻盈排版 -->
       <footer class="dock-footer-note">
         <strong>🛡️ 隐私与伦理边界</strong>
         <p>不进行医学诊断，7天数据物理自毁，你的学习与心情隐私完全由你掌控。</p>
@@ -399,21 +399,24 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
   min-width: 320px;
   flex-direction: column;
   height: 100%;
-  background: var(--surface);
-  border-left: 1px solid var(--line);
+  background: #F8FAFC;
+  border-left: 1px solid rgba(15, 23, 42, 0.05);
   transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), width 0.24s ease;
   overflow: hidden;
   z-index: 10;
+  box-sizing: border-box;
 }
 
 .dock-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 52px;
+  height: 48px;
   padding: 0 16px;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+  background: rgba(248, 250, 252, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   flex-shrink: 0;
 }
 
@@ -424,58 +427,42 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
 }
 
 .dock-icon {
-  color: var(--accent);
+  color: #2563EB;
 }
 
 .dock-title strong {
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: var(--text);
-}
-
-.dock-pill {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: var(--accent-strong);
-  background: var(--accent-soft);
-  padding: 2px 6px;
-  border-radius: 4px;
+  color: #1E293B;
 }
 
 .dock-close-btn {
   display: grid;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   place-items: center;
-  color: var(--text-muted);
-  background: var(--surface-muted);
-  border: 1px solid var(--line);
+  color: #64748B;
+  background: transparent;
+  border: 0;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s var(--ease-spring);
+  transition: all 0.16s ease;
 }
 
 .dock-close-btn:hover {
-  color: var(--text);
-  background: var(--hover);
-  border-color: var(--line-strong);
-  transform: rotate(90deg);
+  color: #1E293B;
+  background: rgba(15, 23, 42, 0.05);
 }
 
-.dock-close-btn:active {
-  transform: rotate(90deg) scale(0.92);
-}
-
-/* 抽屉可滚动正文 */
+/* 抽屉可滚动正文：严格 16px / 24px 间距法则 */
 .dock-body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   scrollbar-width: thin;
 }
 
@@ -495,18 +482,19 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text);
+  color: #475569;
+  letter-spacing: 0.02em;
 }
 
 .title-with-icon svg {
-  color: var(--accent);
+  color: #2563EB;
 }
 
 .live-dot {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: #10B981;
   display: flex;
   align-items: center;
@@ -527,24 +515,24 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
   50% { opacity: 1; transform: scale(1.2); }
 }
 
-/* 预设切换小药丸 */
+/* 预设切换微胶囊 */
 .preset-pills {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 4px;
   padding: 3px;
-  background: var(--surface-muted);
-  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.04);
+  border-radius: 12px;
 }
 
 .preset-pill {
   border: 0;
   background: transparent;
   padding: 6px 0;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 500;
-  color: var(--text-muted);
-  border-radius: 6px;
+  color: #64748B;
+  border-radius: 9px;
   cursor: pointer;
   transition: all 0.16s ease;
   white-space: nowrap;
@@ -553,46 +541,35 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
 
 .preset-pill.active {
   background: #FFFFFF;
-  color: var(--text);
+  color: #0F172A;
   font-weight: 600;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
 
-/* 时钟展示框：Double-Bezel 硬件微质感 */
+/* 悬浮数字时钟：极细高雅现代字体，直接悬浮 */
 .timer-display-box {
-  padding: 18px 14px;
-  background: #FFFFFF;
-  border: 1px solid rgba(226, 232, 240, 0.85);
-  border-radius: 16px;
-  box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  padding: 20px 0 16px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
   text-align: center;
-  transition: all 0.24s var(--ease-spring);
-}
-
-.timer-display-box.active {
-  border-color: rgba(37, 99, 235, 0.35);
-  background: #F8FAFC;
-  box-shadow: 0 8px 24px -6px rgba(37, 99, 235, 0.08);
-}
-
-.timer-display-box.finished {
-  border-color: rgba(16, 185, 129, 0.35);
-  background: #ECFDF5;
 }
 
 .timer-digits {
-  font-size: 34px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--text);
+  font-size: 52px;
+  font-weight: 200;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  letter-spacing: -1.5px;
+  color: #0F172A;
   font-variant-numeric: tabular-nums;
-  line-height: 1.1;
+  line-height: 1;
 }
 
 .timer-subtext {
-  margin: 6px 0 0;
-  font-size: 11.5px;
-  color: var(--text-muted);
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 400;
   line-height: 1.4;
 }
 
@@ -608,13 +585,13 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
   border: 0;
   padding: 0;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: #059669;
   cursor: pointer;
   text-decoration: underline;
 }
 
-/* 按钮行 */
+/* 按钮行：圆角胶囊规范，只保留开始专注为主色 */
 .timer-controls {
   display: flex;
   gap: 8px;
@@ -625,57 +602,62 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 36px;
-  border-radius: 8px;
+  height: 38px;
+  border-radius: 14px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.18s ease;
 }
 
 .timer-btn-primary {
   flex: 1;
-  background: var(--ink);
+  background: #2563EB;
   color: #FFFFFF;
   border: 0;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
 }
 
 .timer-btn-primary:hover {
-  background: var(--ink-hover);
+  background: #1D4ED8;
+  transform: translateY(-1px);
 }
 
 .timer-btn-pause {
   flex: 1;
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-  border: 1px solid rgb(61 125 214 / 20%);
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563EB;
+  border: 1px solid rgba(37, 99, 235, 0.15);
 }
 
 .timer-btn-pause:hover {
-  background: #DEECFC;
+  background: rgba(37, 99, 235, 0.14);
 }
 
 .timer-btn-reset {
-  width: 36px;
-  background: var(--surface-soft);
-  color: var(--text-muted);
-  border: 1px solid var(--line);
+  width: 38px;
+  background: #FFFFFF;
+  color: #64748B;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 
 .timer-btn-reset:hover {
-  background: var(--hover);
-  color: var(--text);
+  background: #F8FAFC;
+  color: #1E293B;
+  border-color: rgba(15, 23, 42, 0.15);
 }
 
-/* 白噪音伴学条 */
+/* 白噪音伴学微卡片 */
 .ambient-sound-bar {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 12px;
-  background: var(--surface-soft);
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  padding: 12px 14px;
+  background: #FFFFFF;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.03);
 }
 
 .sound-selector {
@@ -690,7 +672,7 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
   gap: 5px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-muted);
+  color: #64748B;
 }
 
 .sound-buttons {
@@ -703,81 +685,82 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  background: #FFFFFF;
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid transparent;
+  border-radius: 10px;
   font-size: 11.5px;
-  color: var(--text-muted);
+  color: #64748B;
   cursor: pointer;
   transition: all 0.16s ease;
 }
 
 .sound-btn:hover {
-  border-color: var(--accent);
-  color: var(--text);
+  background: rgba(15, 23, 42, 0.06);
+  color: #1E293B;
 }
 
 .sound-btn.active {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent-strong);
-  font-weight: 600;
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.2);
+  color: #2563EB;
+  font-weight: 500;
 }
 
 .sound-btn-stop {
-  color: var(--danger);
+  color: #EF4444;
 }
 
 .volume-slider-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-top: 4px;
-  border-top: 1px dashed var(--line);
+  padding-top: 6px;
+  border-top: 1px dashed rgba(15, 23, 42, 0.06);
 }
 
 .vol-icon {
-  color: var(--text-soft);
+  color: #94A3B8;
 }
 
 .volume-slider {
   flex: 1;
   height: 4px;
-  accent-color: var(--accent);
+  accent-color: #2563EB;
   cursor: pointer;
 }
 
 .vol-num {
   font-size: 11px;
-  color: var(--text-soft);
+  color: #94A3B8;
   width: 28px;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-/* ==================== 呼吸平复坞 ==================== */
+/* ==================== 呼吸平复微卡片 ==================== */
 .dock-breath-card {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 14px;
-  background: var(--surface-soft);
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  padding: 14px 16px;
+  background: #FFFFFF;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.03);
   cursor: pointer;
-  transition: all 0.24s ease;
+  transition: all 0.2s ease;
 }
 
 .dock-breath-card:hover {
-  border-color: var(--accent);
-  background: var(--accent-faint);
+  border-color: rgba(37, 99, 235, 0.2);
+  background: #F8FAFC;
 }
 
 .dock-breath-visual {
   position: relative;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
   display: grid;
   place-items: center;
 }
@@ -786,7 +769,7 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, rgb(61 125 214 / 30%) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.2) 0%, transparent 70%);
   transform: scale(1);
   transition: transform 1s ease;
 }
@@ -794,22 +777,22 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
 .dock-breath-core {
   position: relative;
   z-index: 2;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: grid;
   place-items: center;
   background: #FFFFFF;
-  color: var(--accent);
-  border: 1.5px solid var(--accent);
+  color: #2563EB;
+  border: 1.5px solid #2563EB;
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgb(61 125 214 / 20%);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
   transition: transform 1s ease;
 }
 
 .dock-breath-num {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  color: var(--accent);
+  color: #2563EB;
 }
 
 .dock-breath-text {
@@ -820,64 +803,58 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
 
 .dock-breath-text strong {
   font-size: 12.5px;
-  color: var(--text);
+  font-weight: 600;
+  color: #1E293B;
 }
 
 .dock-breath-text span {
   font-size: 11px;
-  color: var(--text-soft);
+  color: #64748B;
 }
 
 .retry-hint {
-  color: var(--accent) !important;
+  color: #2563EB !important;
   font-weight: 500;
 }
 
-.dock-breath-card.inhale .dock-breath-halo {
-  transform: scale(1.5);
-}
+.dock-breath-card.inhale .dock-breath-halo { transform: scale(1.5); }
+.dock-breath-card.inhale .dock-breath-core { transform: scale(1.12); }
+.dock-breath-card.hold .dock-breath-halo { transform: scale(1.35); }
+.dock-breath-card.exhale .dock-breath-halo { transform: scale(1); }
+.dock-breath-card.exhale .dock-breath-core { transform: scale(0.92); }
 
-.dock-breath-card.inhale .dock-breath-core {
-  transform: scale(1.15);
-}
-
-.dock-breath-card.hold .dock-breath-halo {
-  transform: scale(1.4);
-}
-
-.dock-breath-card.exhale .dock-breath-halo {
-  transform: scale(1);
-}
-
-.dock-breath-card.exhale .dock-breath-core {
-  transform: scale(0.92);
-}
-
-/* ==================== 快捷技能卡片 ==================== */
-.skills-card-list {
+/* ==================== 伴学技能：书本目录式 List ==================== */
+.skills-directory-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  background: #FFFFFF;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.03);
+  overflow: hidden;
 }
 
-.skill-mini-card {
+.skill-directory-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 10px 12px;
-  background: var(--surface-soft);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.04);
   text-align: left;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.16s ease;
 }
 
-.skill-mini-card:hover {
-  background: var(--accent-faint);
-  border-color: var(--accent);
-  transform: translateX(2px);
+.skill-directory-item:last-child {
+  border-bottom: 0;
+}
+
+.skill-directory-item:hover {
+  background: #F8FAFC;
 }
 
 .skill-info {
@@ -889,44 +866,43 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
 
 .skill-info strong {
   font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text);
+  font-weight: 500;
+  color: #1E293B;
 }
 
 .skill-info span {
   font-size: 11px;
-  color: var(--text-soft);
+  color: #64748B;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .skill-arrow {
-  color: var(--text-soft);
+  color: #94A3B8;
   flex-shrink: 0;
-  transition: transform 0.18s ease;
+  transition: all 0.16s ease;
 }
 
-.skill-mini-card:hover .skill-arrow {
-  color: var(--accent);
+.skill-directory-item:hover .skill-arrow {
+  color: #2563EB;
   transform: translateX(2px);
 }
 
-/* 底部提示 */
+/* 底部轻提示 */
 .dock-footer-note {
   margin-top: auto;
-  padding: 12px;
-  background: var(--surface-muted);
-  border-radius: 8px;
+  padding: 8px 4px 0;
   font-size: 11px;
-  color: var(--text-soft);
+  color: #94A3B8;
   line-height: 1.5;
 }
 
 .dock-footer-note strong {
   display: block;
-  margin-bottom: 3px;
-  color: var(--text-muted);
+  margin-bottom: 2px;
+  color: #64748B;
+  font-size: 11px;
 }
 
 .dock-footer-note p {
@@ -937,11 +913,11 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
 @media (max-width: 1100px) {
   .companion-dock {
     position: fixed;
-    top: 52px;
+    top: 48px;
     right: 0;
     bottom: 0;
     width: min(320px, calc(100vw - 32px));
-    box-shadow: -4px 0 24px rgb(0 0 0 / 12%);
+    box-shadow: -4px 0 24px rgba(15, 23, 42, 0.08);
     transform: translateX(105%);
     transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
   }

@@ -1,19 +1,16 @@
 <script setup lang="ts">
 import {
-  Clock,
   Cloud,
   LogIn,
   LogOut,
   Menu,
-  MessageCircleMore,
-  ShieldCheck,
   Sparkles,
   UserRound,
-  Wind,
 } from '@lucide/vue'
+import { computed } from 'vue'
 import type { AppTab } from '../types'
 
-defineProps<{
+const props = defineProps<{
   activeTab: AppTab
   minimal?: boolean
   userName?: string
@@ -30,6 +27,17 @@ const emit = defineEmits<{
   logout: []
   toggleDock: []
 }>()
+
+const currentWorkspaceTitle = computed(() => {
+  switch (props.activeTab) {
+    case 'chat': return '会话中枢'
+    case 'focus': return '专注自习室'
+    case 'mind': return '心灵避风港'
+    case 'footprint': return '成长足迹'
+    case 'intro': return '认识云小舒'
+    default: return '工作台'
+  }
+})
 </script>
 
 <template>
@@ -43,70 +51,32 @@ const emit = defineEmits<{
       <div class="topbar-right">
         <template v-if="userName">
           <button class="topbar-account" type="button" title="设置你的称呼" @click="emit('account')">
-            <UserRound :size="16" :stroke-width="1.7" />
+            <UserRound :size="15" :stroke-width="1.7" />
             <span>{{ userName }}</span>
           </button>
           <button class="topbar-icon" type="button" title="退出登录" aria-label="退出登录" @click="emit('logout')">
-            <LogOut :size="16" :stroke-width="1.8" />
+            <LogOut :size="15" :stroke-width="1.8" />
           </button>
         </template>
         <button v-else class="topbar-login" type="button" :disabled="!authReady" @click="emit('login')">
-          <LogIn :size="16" :stroke-width="1.8" />
+          <LogIn :size="15" :stroke-width="1.8" />
           <span>{{ !authReady ? '正在检查...' : '登录' }}</span>
         </button>
       </div>
     </template>
 
-    <!-- 常规模式：汉堡 + 四大工作区 Tab + 右侧工具箱开关 -->
+    <!-- 工作区常规模式：极低调单行面包屑，砍掉重复Tabs，释放大片留白 -->
     <template v-else>
-      <button class="topbar-hamburger" type="button" aria-label="打开菜单" @click="emit('menu')">
-        <Menu :size="18" :stroke-width="1.8" />
-      </button>
-      <nav class="topbar-tabs" aria-label="工作区导航">
-        <button
-          type="button"
-          class="topbar-tab"
-          :class="{ active: activeTab === 'chat' }"
-          :aria-current="activeTab === 'chat' ? 'page' : undefined"
-          @click="emit('select', 'chat')"
-        >
-          <MessageCircleMore :size="16" :stroke-width="1.8" aria-hidden="true" />
-          <span>会话中枢</span>
+      <div class="topbar-left">
+        <button class="topbar-hamburger" type="button" aria-label="打开侧边栏" @click="emit('menu')">
+          <Menu :size="17" :stroke-width="1.8" />
         </button>
-
-        <button
-          type="button"
-          class="topbar-tab"
-          :class="{ active: activeTab === 'focus' }"
-          :aria-current="activeTab === 'focus' ? 'page' : undefined"
-          @click="emit('select', 'focus')"
-        >
-          <Clock :size="16" :stroke-width="1.8" aria-hidden="true" />
-          <span>专注自习室</span>
-        </button>
-
-        <button
-          type="button"
-          class="topbar-tab"
-          :class="{ active: activeTab === 'mind' }"
-          :aria-current="activeTab === 'mind' ? 'page' : undefined"
-          @click="emit('select', 'mind')"
-        >
-          <Wind :size="16" :stroke-width="1.8" aria-hidden="true" />
-          <span>心灵避风港</span>
-        </button>
-
-        <button
-          type="button"
-          class="topbar-tab"
-          :class="{ active: activeTab === 'footprint' }"
-          :aria-current="activeTab === 'footprint' ? 'page' : undefined"
-          @click="emit('select', 'footprint')"
-        >
-          <ShieldCheck :size="16" :stroke-width="1.8" aria-hidden="true" />
-          <span>成长足迹</span>
-        </button>
-      </nav>
+        <nav class="topbar-breadcrumb" aria-label="当前路径">
+          <button class="breadcrumb-item breadcrumb-home" type="button" @click="emit('home')">云舒学伴</button>
+          <span class="breadcrumb-separator" aria-hidden="true">/</span>
+          <span class="breadcrumb-item current">{{ currentWorkspaceTitle }}</span>
+        </nav>
+      </div>
 
       <div class="topbar-right">
         <button
@@ -118,7 +88,7 @@ const emit = defineEmits<{
           aria-label="展开/收起伴学工具箱"
           @click="emit('toggleDock')"
         >
-          <Sparkles :size="15" :stroke-width="2" />
+          <Sparkles :size="14" :stroke-width="1.8" />
           <span class="dock-btn-label">伴学工具箱</span>
         </button>
 
@@ -129,8 +99,18 @@ const emit = defineEmits<{
           title="设置称呼"
           @click="emit('account')"
         >
-          <UserRound :size="15" :stroke-width="1.8" />
+          <UserRound :size="14" :stroke-width="1.7" />
           <span class="topbar-user-name">{{ userName }}</span>
+        </button>
+        <button
+          v-else
+          class="topbar-login-mini"
+          type="button"
+          :disabled="!authReady"
+          @click="emit('login')"
+        >
+          <LogIn :size="14" :stroke-width="1.8" />
+          <span>登录</span>
         </button>
       </div>
     </template>
@@ -142,19 +122,15 @@ const emit = defineEmits<{
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 12px;
-  height: 54px;
-  padding: 0 20px;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
-  z-index: 10;
-}
-
-.app-topbar.minimal {
   justify-content: space-between;
+  height: 48px;
+  padding: 0 24px;
+  background: rgba(248, 250, 252, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+  z-index: 10;
+  box-sizing: border-box;
 }
 
 .topbar-brand {
@@ -176,13 +152,71 @@ const emit = defineEmits<{
 
 .topbar-brand .brand-mark {
   display: grid;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   place-items: center;
   color: #FFFFFF;
   background: var(--ink);
-  border-radius: 9px;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.breadcrumb-home {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.breadcrumb-home:hover {
+  color: var(--text);
+}
+
+.breadcrumb-separator {
+  margin: 0 8px;
+  color: #CBD5E1;
+  font-weight: 300;
+  user-select: none;
+}
+
+.breadcrumb-item.current {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.topbar-hamburger {
+  display: none;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.topbar-hamburger:hover {
+  color: var(--text);
+  background: var(--hover);
 }
 
 .topbar-right {
@@ -196,15 +230,15 @@ const emit = defineEmits<{
 .topbar-account {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  height: 36px;
-  padding: 0 13px;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
   color: var(--text);
   background: #FFFFFF;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font-size: 13px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: 12px;
+  font-size: 12.5px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 
 .topbar-account span {
@@ -216,163 +250,94 @@ const emit = defineEmits<{
 
 .topbar-icon {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   place-items: center;
   color: var(--text-muted);
   background: #FFFFFF;
-  border: 1px solid var(--line);
-  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.18s ease;
 }
 
 .topbar-icon:hover {
   color: var(--text);
-  border-color: var(--line-strong);
+  border-color: rgba(15, 23, 42, 0.15);
 }
 
-.topbar-login {
+.topbar-login,
+.topbar-login-mini {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  height: 36px;
-  padding: 0 16px;
-  color: #FFFFFF;
-  background: var(--ink);
-  border: 0;
-  border-radius: 999px;
-  font-size: 13px;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  color: #2563EB;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  border-radius: 12px;
+  font-size: 12.5px;
   font-weight: 500;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
-  cursor: pointer;
-  transition: transform 0.18s var(--ease-spring), opacity 0.18s ease;
-}
-
-.topbar-login:hover {
-  transform: translateY(-1px);
-}
-
-.topbar-login:disabled {
-  opacity: 0.6;
-}
-
-.topbar-hamburger {
-  display: none;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  color: var(--text-muted);
-  background: transparent;
-  border: 0;
-  border-radius: 9px;
   cursor: pointer;
   transition: all 0.18s ease;
 }
 
-.topbar-hamburger:hover {
-  color: var(--text);
-  background: var(--hover);
-}
-
-.topbar-tabs {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 4px;
-  padding: 4px;
-  background: rgba(241, 245, 249, 0.75);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 12px;
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
-}
-
-.topbar-tab {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 13px;
-  color: var(--text-muted);
-  background: transparent;
-  border: 0;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s var(--ease-spring);
-}
-
-.topbar-tab:hover {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.topbar-tab.active {
-  color: var(--accent-strong);
-  background: #FFFFFF;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), inset 0 1px 1px #FFFFFF;
-  font-weight: 600;
-}
-
-@media (max-width: 1000px) {
-  .topbar-hamburger {
-    display: grid;
-  }
+.topbar-login:hover,
+.topbar-login-mini:hover {
+  background: rgba(37, 99, 235, 0.14);
 }
 
 .topbar-dock-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  height: 34px;
-  padding: 0 13px;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
   color: var(--text-muted);
   background: #FFFFFF;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: 999px;
-  font-size: 12.5px;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: 12px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  transition: all 0.2s var(--ease-spring);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  transition: all 0.18s ease;
 }
 
 .topbar-dock-btn:hover {
-  color: var(--accent-strong);
-  border-color: rgba(99, 102, 241, 0.4);
-  background: var(--accent-faint);
-  transform: translateY(-1px);
+  color: #2563EB;
+  border-color: rgba(37, 99, 235, 0.2);
+  background: #F8FAFC;
 }
 
 .topbar-dock-btn.active {
-  color: var(--accent-strong);
-  background: var(--accent-soft);
-  border-color: rgba(99, 102, 241, 0.35);
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.12);
+  color: #2563EB;
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.18);
+  font-weight: 500;
 }
 
 .topbar-account-mini {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 34px;
+  height: 32px;
   padding: 0 12px;
   color: var(--text-muted);
   background: #FFFFFF;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: 999px;
-  font-size: 12.5px;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: 12px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
   transition: all 0.18s ease;
 }
 
 .topbar-account-mini:hover {
-  color: var(--accent-strong);
-  border-color: var(--accent);
+  color: var(--text);
+  border-color: rgba(15, 23, 42, 0.15);
 }
 
 .topbar-user-name {
@@ -382,25 +347,21 @@ const emit = defineEmits<{
   white-space: nowrap;
 }
 
-@media (max-width: 768px) {
-  .topbar-tabs button span {
-    display: none;
-  }
-  .topbar-tab {
-    padding: 6px 9px;
-  }
-  .topbar-user-name {
-    display: none;
+@media (max-width: 1000px) {
+  .topbar-hamburger {
+    display: grid;
   }
 }
 
 @media (max-width: 640px) {
+  .app-topbar {
+    padding: 0 16px;
+  }
   .dock-btn-label {
-    font-size: 11px;
+    display: none;
   }
   .topbar-dock-btn {
     padding: 0 8px;
-    height: 32px;
   }
 }
 </style>

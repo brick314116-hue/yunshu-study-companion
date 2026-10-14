@@ -215,13 +215,14 @@ const emit = defineEmits<{
 
 .sidebar-brand .brand-mark {
   display: grid;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   place-items: center;
   color: #FFFFFF;
-  background: var(--ink);
+  background: linear-gradient(135deg, #2563EB, #3B82F6);
   border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
 }
 
 .sidebar-brand-text strong {
@@ -287,8 +288,8 @@ const emit = defineEmits<{
   align-items: center;
   gap: 10px;
   height: 36px;
-  padding: 0 10px;
-  border-radius: 9px;
+  padding: 0 12px;
+  border-radius: 12px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--text-muted);
@@ -306,16 +307,16 @@ const emit = defineEmits<{
 }
 
 .workspace-tab-btn:hover {
-  background: var(--hover);
+  background: rgba(15, 23, 42, 0.04);
   color: var(--text);
 }
 
 .workspace-tab-btn.active {
   background: #FFFFFF;
-  color: var(--ink);
-  border-color: rgba(31, 35, 40, 0.12);
+  color: #1E293B;
+  border-color: rgba(15, 23, 42, 0.06);
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.04);
 }
 
 .sidebar-actions {
@@ -335,31 +336,37 @@ const emit = defineEmits<{
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 40px;
-  border: 0;
-  border-radius: 10px;
-  font-size: 14px;
+  height: 38px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
   transition: all 0.18s ease;
 }
 
 .sidebar-primary {
-  color: #FFFFFF;
-  background: var(--ink);
+  color: #2563EB;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.15);
 }
 
 .sidebar-primary:hover {
-  background: var(--ink-hover);
+  background: rgba(37, 99, 235, 0.14);
+  color: #1D4ED8;
+  border-color: rgba(37, 99, 235, 0.25);
 }
 
 .sidebar-menu {
-  color: var(--text);
+  color: #475569;
   background: #FFFFFF;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 
 .sidebar-menu:hover {
-  border-color: var(--accent);
-  color: var(--accent-strong);
+  background: #F8FAFC;
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #1E293B;
 }
 
 .sidebar-history {
@@ -399,25 +406,26 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 8px;
+  padding: 8px 10px;
   color: var(--text-muted);
   background: transparent;
   border: 0;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 13px;
   text-align: left;
+  cursor: pointer;
   transition: all 0.18s ease;
 }
 
 .collapsed .sidebar-foot {
   justify-content: center;
-  padding: 9px 0;
+  padding: 8px 0;
   width: 40px;
 }
 
 .sidebar-foot:hover {
   color: var(--text);
-  background: var(--hover);
+  background: rgba(15, 23, 42, 0.04);
 }
 
 .sidebar-foot.safety:hover {
@@ -449,19 +457,21 @@ const emit = defineEmits<{
 
 .sidebar-logout {
   display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   place-items: center;
   color: var(--text-muted);
   background: transparent;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
 }
 
 .sidebar-logout:hover {
   color: var(--text);
-  background: var(--hover);
+  background: rgba(15, 23, 42, 0.04);
 }
 
 .sidebar-login {
@@ -469,12 +479,15 @@ const emit = defineEmits<{
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 40px;
-  color: #FFFFFF;
-  background: var(--ink);
-  border: 0;
-  border-radius: 10px;
-  font-size: 14px;
+  height: 38px;
+  color: #2563EB;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
 }
 
 .collapsed .sidebar-login {
@@ -482,7 +495,7 @@ const emit = defineEmits<{
 }
 
 .sidebar-login:hover {
-  background: var(--ink-hover);
+  background: rgba(37, 99, 235, 0.14);
 }
 
 .sidebar-login:disabled {

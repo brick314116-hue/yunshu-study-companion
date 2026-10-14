@@ -5,7 +5,12 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   base: './',
   plugins: [vue(), tailwindcss()],
+  server: {
+    host: '0.0.0.0',
+    port: 9618,
+  },
   build: {
+    target: 'esnext',
     // cloudbase SDK（760kB，已独立分包、仅认证时按需加载）无法再拆，放开告警阈值。
     chunkSizeWarningLimit: 800,
     rollupOptions: {
@@ -16,6 +21,20 @@ export default defineConfig({
           cloudbase: ['@cloudbase/js-sdk'],
           ogl: ['ogl'],
         },
+      },
+    },
+  },
+  esbuild: {
+    target: 'esnext',
+    supported: {
+      'top-level-await': true,
+    },
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'esnext',
+      supported: {
+        'top-level-await': true,
       },
     },
   },
