@@ -7,6 +7,7 @@ import {
   Pause,
   Play,
   RotateCcw,
+  SlidersHorizontal,
   Sparkles,
   Volume2,
   VolumeX,
@@ -28,20 +29,34 @@ const emit = defineEmits<{
   action: [value: 'mood-checkin']
 }>()
 
-// ==================== 1. 沉浸番茄钟 ====================
-type TimerPreset = 15 | 25 | 45
-const timerPreset = ref<TimerPreset>(25)
+// ==================== 1. 沉浸番茄钟 (支持快速预设与自定义时间) ====================
+const timerPreset = ref<number>(25)
 const timerRemaining = ref(25 * 60)
 const timerRunning = ref(false)
 const timerFinished = ref(false)
+const isCustomMode = ref(false)
+const showCustomInput = ref(false)
+const customMinutes = ref<number>(30)
 let timerInterval: ReturnType<typeof setInterval> | undefined
 
-const setPreset = (mins: TimerPreset) => {
+const setPreset = (mins: number, isCustom = false) => {
   timerPreset.value = mins
   timerRemaining.value = mins * 60
   timerRunning.value = false
   timerFinished.value = false
+  isCustomMode.value = isCustom
   clearInterval(timerInterval)
+}
+
+const applyCustomMinutes = () => {
+  const mins = Math.max(1, Math.min(180, Math.floor(Number(customMinutes.value)) || 25))
+  customMinutes.value = mins
+  setPreset(mins, true)
+  showCustomInput.value = false
+}
+
+const toggleCustomDrawer = () => {
+  showCustomInput.value = !showCustomInput.value
 }
 
 const formattedTime = computed(() => {
@@ -184,33 +199,83 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
           <span v-if="timerRunning" class="live-dot" title="专注计时中">计时中</span>
         </div>
 
-        <!-- 预设时长切换：温和胶囊 -->
+        <!-- 预设时长切换：温和胶囊 + 自定义时间 -->
         <div class="preset-pills">
           <button
             type="button"
             class="preset-pill"
-            :class="{ active: timerPreset === 15 }"
-            @click="setPreset(15)"
+            :class="{ active: timerPreset === 15 && !isCustomMode }"
+            @click="setPreset(15, false); showCustomInput = false"
           >
             15m 极速
           </button>
           <button
             type="button"
             class="preset-pill"
-            :class="{ active: timerPreset === 25 }"
-            @click="setPreset(25)"
+            :class="{ active: timerPreset === 25 && !isCustomMode }"
+            @click="setPreset(25, false); showCustomInput = false"
           >
             25m 经典
           </button>
           <button
             type="button"
             class="preset-pill"
-            :class="{ active: timerPreset === 45 }"
-            @click="setPreset(45)"
+            :class="{ active: timerPreset === 45 && !isCustomMode }"
+            @click="setPreset(45, false); showCustomInput = false"
           >
             45m 攻坚
           </button>
+          <button
+            type="button"
+            class="preset-pill custom-toggle-pill"
+            :class="{ active: isCustomMode || showCustomInput }"
+            title="自定义专注分钟数"
+            @click="toggleCustomDrawer"
+          >
+            <SlidersHorizontal :size="11" :stroke-width="1.8" />
+            <span>{{ isCustomMode ? `${timerPreset}m` : '自定义' }}</span>
+          </button>
         </div>
+
+        <!-- 自定义时长调节面板 -->
+        <Transition name="shadcn-accordion">
+          <div v-if="showCustomInput" class="custom-timer-drawer">
+            <span class="custom-timer-label">设定分钟 (1~180)：</span>
+            <div class="custom-timer-controls">
+              <button
+                type="button"
+                class="step-adjust-btn"
+                :disabled="customMinutes <= 5"
+                @click="customMinutes = Math.max(1, customMinutes - 5)"
+              >
+                -5
+              </button>
+              <input
+                v-model.number="customMinutes"
+                type="number"
+                min="1"
+                max="180"
+                class="custom-minutes-input"
+                @keydown.enter.prevent="applyCustomMinutes"
+              />
+              <button
+                type="button"
+                class="step-adjust-btn"
+                :disabled="customMinutes >= 175"
+                @click="customMinutes = Math.min(180, customMinutes + 5)"
+              >
+                +5
+              </button>
+              <button
+                type="button"
+                class="apply-custom-btn"
+                @click="applyCustomMinutes"
+              >
+                确定
+              </button>
+            </div>
+          </div>
+        </Transition>
 
         <!-- 悬浮时钟显示：去掉厚重粗边框与进度环，数字极细高级 -->
         <div class="timer-display-box" :class="{ active: timerRunning, finished: timerFinished }">
@@ -231,7 +296,7 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
           <button
             v-if="!timerRunning"
             type="button"
-            class="timer-btn timer-btn-primary"
+            class="timer-btn timer-btn-primary shadcn-shimmer-btn"
             @click="startTimer"
           >
             <Play :size="14" :stroke-width="2" />
@@ -518,7 +583,7 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
 /* 预设切换微胶囊 */
 .preset-pills {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 4px;
   padding: 3px;
   background: rgba(15, 23, 42, 0.04);
@@ -529,14 +594,130 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
   border: 0;
   background: transparent;
   padding: 6px 0;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 500;
   color: #64748B;
   border-radius: 9px;
   cursor: pointer;
   transition: all 0.16s ease;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.preset-pill.active {
+  background: #FFFFFF;
+  color: #0F172A;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.preset-pill.custom-toggle-pill.active {
+  color: var(--accent, #2563EB);
+}
+
+/* 自定义番茄钟展开面板 (shadcn accordion 风格) */
+.custom-timer-drawer {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #FFFFFF;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.04);
+}
+
+.custom-timer-label {
+  font-size: 11px;
+  color: var(--text-muted, #64748B);
+  white-space: nowrap;
+}
+
+.custom-timer-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.step-adjust-btn {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-soft, #F8FAFC);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text, #1E293B);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.step-adjust-btn:hover:not(:disabled) {
+  border-color: var(--accent, #2563EB);
+  color: var(--accent, #2563EB);
+  background: var(--accent-soft, #EFF6FF);
+}
+
+.step-adjust-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.custom-minutes-input {
+  width: 42px;
+  height: 24px;
   text-align: center;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 6px;
+  background: #FFFFFF;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text, #1E293B);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.custom-minutes-input:focus {
+  border-color: var(--accent, #2563EB);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.apply-custom-btn {
+  height: 24px;
+  padding: 0 9px;
+  background: var(--accent, #2563EB);
+  color: #FFFFFF;
+  border: 0;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.apply-custom-btn:hover {
+  background: var(--accent-strong, #1D4ED8);
+}
+
+/* 折叠动效 */
+.shadcn-accordion-enter-active,
+.shadcn-accordion-leave-active {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.shadcn-accordion-enter-from,
+.shadcn-accordion-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
 }
 
 .preset-pill.active {
