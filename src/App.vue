@@ -571,84 +571,95 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
         @logout="logout"
       />
 
-      <LandingPage
-        v-if="activeTab === 'landing'"
-        :user-name="userName || null"
-        :auth-ready="authReady"
-        @start="newChat"
-        @start-with="startWithPrompt"
-        @intro="selectTab('intro')"
-        @login="openLogin"
-        @account="openNickname"
-        @logout="logout"
-      />
+      <Transition name="workspace-transition" mode="out-in">
+        <LandingPage
+          v-if="activeTab === 'landing'"
+          key="landing"
+          :user-name="userName || null"
+          :auth-ready="authReady"
+          @start="newChat"
+          @start-with="startWithPrompt"
+          @intro="selectTab('intro')"
+          @login="openLogin"
+          @account="openNickname"
+          @logout="logout"
+        />
 
-      <IntroPage v-else-if="activeTab === 'intro'" :user-name="userName || null" @start="newChat" @enter="enterModule" />
+        <IntroPage
+          v-else-if="activeTab === 'intro'"
+          key="intro"
+          :user-name="userName || null"
+          @start="newChat"
+          @enter="enterModule"
+        />
 
-      <FocusRoom
-        v-else-if="activeTab === 'focus'"
-        @ask-agent="(prompt) => startWithPrompt({ module: 'study', prompt })"
-      />
+        <FocusRoom
+          v-else-if="activeTab === 'focus'"
+          key="focus"
+          @ask-agent="(prompt) => startWithPrompt({ module: 'study', prompt })"
+        />
 
-      <MindSanctuary
-        v-else-if="activeTab === 'mind'"
-        @ask-agent="(prompt) => startWithPrompt({ module: 'thought', prompt })"
-        @checkin="runToolAction('mood-checkin')"
-      />
-
-      <FootprintView
-        v-else-if="activeTab === 'footprint'"
-        @ask-agent="(prompt) => startWithPrompt({ module: 'records', prompt })"
-        @clear-all="handleFullReset"
-        @navigate="selectTab"
-        @checkin="runToolAction('mood-checkin')"
-      />
-
-      <div v-else class="chat-columns" :class="{ 'dock-open': dockOpen }">
-        <ChatWorkspace
-          v-model="draft"
-          :module="activeModule"
-          :messages="messages"
-          :user-name="userName"
-          :sending="sending"
-          @send="(atts) => sendMessage(undefined, atts)"
-          @starter="sendMessage"
+        <MindSanctuary
+          v-else-if="activeTab === 'mind'"
+          key="mind"
+          @ask-agent="(prompt) => startWithPrompt({ module: 'thought', prompt })"
           @checkin="runToolAction('mood-checkin')"
         />
 
-        <!-- 移动端伴学工具箱遮罩：全屏点击即关 -->
-        <div
-          v-if="dockOpen"
-          class="dock-backdrop"
-          aria-label="关闭工具箱"
-          @click="dockOpen = false"
+        <FootprintView
+          v-else-if="activeTab === 'footprint'"
+          key="footprint"
+          @ask-agent="(prompt) => startWithPrompt({ module: 'records', prompt })"
+          @clear-all="handleFullReset"
+          @navigate="selectTab"
+          @checkin="runToolAction('mood-checkin')"
         />
 
-        <CompanionDock
-          :module="activeModule"
-          :open="dockOpen"
-          @close="dockOpen = false"
-          @prompt="(p) => { draft = p; if (!messages.length) sendMessage(p) }"
-          @action="onMenuPickAction"
-        />
+        <div v-else key="chat" class="chat-columns" :class="{ 'dock-open': dockOpen }">
+          <ChatWorkspace
+            v-model="draft"
+            :module="activeModule"
+            :messages="messages"
+            :user-name="userName"
+            :sending="sending"
+            @send="(atts) => sendMessage(undefined, atts)"
+            @starter="sendMessage"
+            @checkin="runToolAction('mood-checkin')"
+          />
 
-        <!-- 工具箱收起时常驻右侧边缘的极简唤起手柄 -->
-        <button
-          v-if="!dockOpen"
-          type="button"
-          class="dock-floating-handle"
-          title="展开伴学工具箱（专注钟·白噪音·呼吸平复）"
-          aria-label="展开伴学工具箱"
-          @click="dockOpen = true"
-        >
-          <Sparkles :size="14" :stroke-width="2" />
-          <span>伴学工具箱</span>
-        </button>
-      </div>
+          <!-- 移动端伴学工具箱遮罩：全屏点击即关 -->
+          <div
+            v-if="dockOpen"
+            class="dock-backdrop"
+            aria-label="关闭工具箱"
+            @click="dockOpen = false"
+          />
+
+          <CompanionDock
+            :module="activeModule"
+            :open="dockOpen"
+            @close="dockOpen = false"
+            @prompt="(p) => { draft = p; if (!messages.length) sendMessage(p) }"
+            @action="onMenuPickAction"
+          />
+
+          <!-- 工具箱收起时常驻右侧边缘的极简唤起手柄 -->
+          <button
+            v-if="!dockOpen"
+            type="button"
+            class="dock-floating-handle"
+            title="展开伴学工具箱（专注钟·白噪音·呼吸平复）"
+            aria-label="展开伴学工具箱"
+            @click="dockOpen = true"
+          >
+            <Sparkles :size="14" :stroke-width="2" />
+            <span>伴学工具箱</span>
+          </button>
+        </div>
+      </Transition>
 
       <footer v-if="activeTab === 'chat'" class="app-footer">
-        <p>可以按自己的节奏慢慢说，一次只梳理当下最在意的一小部分，云小舒永远在这里。</p>
-        <span class="app-watermark" aria-hidden="true">云舒少年忧，学伴逐光游</span>
+        <p>按你的节奏慢慢说，云小舒始终在侧温润相伴。</p>
       </footer>
     </div>
   </div>

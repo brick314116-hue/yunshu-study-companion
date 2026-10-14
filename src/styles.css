@@ -17,6 +17,7 @@
   -moz-osx-font-smoothing: grayscale;
 
   /* 配色体系 · 60-30-10 极简温润系统 (90% 云雾灰/纸张白，5% 点缀主色) */
+  --chat-max-width: 860px;
   --surface: #FFFFFF;
   --surface-soft: #F8FAFC;
   --surface-muted: #F1F5F9;
@@ -1160,7 +1161,7 @@ a:focus-visible {
 .welcome-state {
   display: flex;
   width: 100%;
-  max-width: 768px;
+  max-width: var(--chat-max-width, 860px);
   min-height: 100%;
   margin: 0 auto;
   padding: 48px 24px 64px;
@@ -1209,13 +1210,13 @@ a:focus-visible {
   display: grid;
   width: 100%;
   max-width: 620px;
-  margin: 32px 0 0;
-  padding: 24px 32px;
+  margin: 28px 0 0;
+  padding: 20px 28px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
+  gap: 18px;
   list-style: none;
   background: #FFFFFF;
-  border: 1px solid rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.05);
   border-radius: 16px;
   box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.03), 0 1px 2px 0 rgba(15, 23, 42, 0.02);
   text-align: left;
@@ -1236,7 +1237,9 @@ a:focus-visible {
 }
 
 .welcome-example-wrap {
-  margin-top: 32px;
+  width: 100%;
+  max-width: var(--chat-max-width, 860px);
+  margin-top: 28px;
 }
 
 .welcome-example-wrap > small {
@@ -1246,55 +1249,93 @@ a:focus-visible {
   font-size: 12px;
 }
 
-/* 示例输入：次级卡片按钮 */
-.welcome-example {
-  display: inline-flex;
-  max-width: 100%;
-  padding: 14px 24px;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  color: var(--text);
+.welcome-starters-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.welcome-starter-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 14px 16px;
   background: #FFFFFF;
-  border: 1px solid rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(15, 23, 42, 0.06);
   border-radius: 14px;
-  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.03), 0 1px 2px 0 rgba(15, 23, 42, 0.02);
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.6;
-  transition: all 0.18s ease;
+  box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.03);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-spring);
 }
 
-.welcome-example svg {
+.welcome-starter-card:hover {
+  background: #FFFFFF;
+  border-color: rgba(37, 99, 235, 0.24);
+  box-shadow: 0 6px 18px -2px rgba(37, 99, 235, 0.08);
+  transform: translateY(-2px);
+}
+
+.welcome-starter-card:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.starter-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.starter-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.starter-badge.mood {
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+.starter-badge.focus {
+  background: #E0E7FF;
+  color: #4338CA;
+}
+
+.starter-arrow {
+  color: var(--text-soft);
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.welcome-starter-card:hover .starter-arrow {
   color: var(--accent);
+  transform: translateY(-1px) translateX(1px);
 }
 
-.welcome-example span {
-  min-width: 0;
+.welcome-starter-card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-muted);
 }
 
-.welcome-example:hover {
-  background: #F8FAFC;
-  border-color: rgba(37, 99, 235, 0.18);
-  box-shadow: 0 6px 16px -2px rgba(15, 23, 42, 0.05);
-  transform: translateY(-1px);
-}
-
-.welcome-example:active {
-  transform: translateY(0);
-}
-
-/* ---------- 消息线程：768px 收拢重心，呼吸感排版 ---------- */
+/* ---------- 消息线程：860px 收拢重心，左右严格视觉对齐 ---------- */
 
 .message-thread {
   display: flex;
   width: 100%;
-  max-width: 768px;
+  max-width: var(--chat-max-width, 860px);
   min-height: 100%;
   margin: 0 auto;
   padding: 32px 24px 32px;
   flex-direction: column;
-  gap: 24px;
+  gap: 22px;
   box-sizing: border-box;
 }
 
@@ -1303,7 +1344,7 @@ a:focus-visible {
   width: 100%;
   min-width: 0;
   align-items: flex-start;
-  gap: 12px;
+  gap: 0;
 }
 
 .message-row.user {
@@ -1314,23 +1355,11 @@ a:focus-visible {
   justify-content: flex-start;
 }
 
-/* AI 头像：对齐与极简轻质感 */
-.assistant-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  color: var(--accent);
-  background: var(--accent-soft);
-  border: 1px solid rgba(37, 99, 235, 0.15);
-  border-radius: 8px;
-  margin-top: 2px;
-}
-
 .message-content {
+  max-width: min(82%, 700px);
   min-width: 0;
+  display: flex;
+  flex-direction: column;
   overflow-wrap: break-word;
   word-break: break-word;
 }
@@ -1340,6 +1369,17 @@ a:focus-visible {
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
+}
+
+.meta-avatar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 5px;
 }
 
 .message-meta strong {
@@ -1355,17 +1395,13 @@ a:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-/* 用户消息：浅色气泡右对齐 (解决黑底刺眼问题，8px 栅格规范) */
+/* 用户消息：气泡右边界贴合输入框右边界 */
 .message-row.user .message-content {
-  max-width: min(85%, 580px);
-  display: flex;
-  flex-direction: column;
   align-items: flex-end;
 }
 
 .message-row.user .message-meta {
   justify-content: flex-end;
-  margin-bottom: 4px;
 }
 
 .message-row.user .message-meta strong {
@@ -1374,13 +1410,12 @@ a:focus-visible {
   font-weight: 500;
 }
 
-.message-row.user .message-content > p {
-  margin: 0;
-  padding: 12px 16px;
+.message-row.user .message-bubble {
+  padding: 12px 18px;
   background: #F1F5F9;
   color: #1E293B;
-  border: 1px solid rgba(15, 23, 42, 0.07);
-  border-radius: 16px 16px 4px 16px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 18px 18px 4px 18px;
   font-size: 15px;
   line-height: 1.7;
   white-space: pre-wrap;
@@ -1389,27 +1424,34 @@ a:focus-visible {
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
 }
 
-/* 小舒消息：去掉气泡背景直接铺开 (解决色块堆积与框中框问题) */
-.message-row.assistant .message-content {
-  flex: 1;
-  max-width: calc(100% - 44px);
-  padding: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
+.message-row.user .message-bubble p {
+  margin: 0;
 }
 
-.message-row.assistant .message-content > p {
-  margin: 0 0 12px 0;
+/* 云小舒消息：同款气泡，气泡左边界贴合输入框左边界 */
+.message-row.assistant .message-content {
+  align-items: flex-start;
+}
+
+.message-row.assistant .message-bubble {
+  padding: 14px 20px;
+  background: #FFFFFF;
   color: #1E293B;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: 18px 18px 18px 4px;
   font-size: 15px;
-  line-height: 1.7;
+  line-height: 1.72;
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: break-word;
+  box-shadow: 0 3px 14px -2px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
 }
 
-.message-row.assistant .message-content > p:last-child {
+.message-row.assistant .message-bubble p {
+  margin: 0 0 10px 0;
+}
+
+.message-row.assistant .message-bubble p:last-child {
   margin-bottom: 0;
 }
 
@@ -1440,7 +1482,7 @@ a:focus-visible {
 }
 
 .message-enter-active {
-  transition: opacity 0.22s var(--ease-spring), transform 0.22s var(--ease-spring);
+  transition: opacity 0.24s var(--ease-spring), transform 0.24s var(--ease-spring);
 }
 
 .message-enter-from {
@@ -1448,12 +1490,12 @@ a:focus-visible {
   transform: translateY(8px);
 }
 
-/* ---------- 输入区：胶囊输入框 + 弥散浅阴影 + 柔和外发光 ---------- */
+/* ---------- 输入区：GPT 风格胶囊输入框 + 弥散浅阴影 ---------- */
  
 .composer-area {
   flex: 0 0 auto;
   width: 100%;
-  padding: 20px 24px 24px;
+  padding: 16px 24px 24px;
   background: rgba(248, 250, 252, 0.95);
   border-top: 1px solid rgba(15, 23, 42, 0.05);
   backdrop-filter: blur(12px);
@@ -1463,29 +1505,29 @@ a:focus-visible {
 
 .composer-box {
   width: 100%;
-  max-width: 768px;
+  max-width: var(--chat-max-width, 860px);
   margin: 0 auto;
-  padding: 16px 20px 12px 20px;
+  padding: 14px 18px 12px 18px;
   background: #FFFFFF;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  border-radius: 16px;
-  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03), 0 1px 2px 0 rgba(15, 23, 42, 0.02);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 26px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 1px 3px 0 rgba(15, 23, 42, 0.02);
+  transition: all 0.22s var(--ease-spring);
   box-sizing: border-box;
 }
 
 .composer-box:focus-within,
 .composer-box.focused {
-  border-color: rgba(37, 99, 235, 0.35);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08), 0 6px 20px -4px rgba(15, 23, 42, 0.05);
+  border-color: rgba(37, 99, 235, 0.38);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08), 0 6px 24px -4px rgba(15, 23, 42, 0.06);
 }
 
 .composer-box textarea {
   display: block;
   width: 100%;
-  min-height: 36px;
+  min-height: 38px;
   max-height: 140px;
-  padding: 4px 0;
+  padding: 4px 6px;
   resize: none;
   overflow-y: auto;
   color: #1E293B;
@@ -1503,7 +1545,7 @@ a:focus-visible {
 
 .composer-actions {
   display: flex;
-  margin-top: 8px;
+  margin-top: 6px;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
@@ -1528,7 +1570,7 @@ a:focus-visible {
   font-weight: 500;
 }
 
-/* 字数计数：接近服务端 500 字上限时出现，满了变警示色 */
+/* 字数计数 */
 .composer-count {
   font-size: 11px;
   color: var(--text-soft);
@@ -1541,30 +1583,91 @@ a:focus-visible {
   font-weight: 600;
 }
 
-/* 发送：对话区主要行动（保留最深主题色） */
-.send-button {
+/* 胶囊内的圆形操作按钮与椭圆打卡胶囊 */
+.attach-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  border: 0;
+  border-radius: 50%;
+  transition: all 0.18s ease;
+  cursor: pointer;
+}
+
+.attach-button:hover:not(:disabled) {
+  color: var(--accent);
+  background: var(--accent-soft);
+  transform: scale(1.05);
+}
+
+.attach-button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.attach-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.checkin-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  color: var(--text-muted);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.checkin-button:hover {
+  color: var(--accent);
+  border-color: rgba(37, 99, 235, 0.25);
+  background: var(--accent-soft);
+  transform: translateY(-0.5px);
+}
+
+.checkin-button:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.checkin-button svg {
+  color: var(--accent);
+}
+
+/* 发送：圆形全焦点主按钮 */
+.send-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
   color: #FFFFFF;
   background: #2563EB;
   border: 0;
-  border-radius: 10px;
+  border-radius: 50%;
   cursor: pointer;
-  transition: all 0.16s ease;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  transition: all 0.18s var(--ease-spring);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28);
 }
 
 .send-button:hover:not(:disabled) {
   background: #1D4ED8;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
 }
 
 .send-button:active:not(:disabled) {
-  transform: translateY(0);
+  transform: scale(0.94);
 }
 
 .send-button:disabled {
@@ -1764,6 +1867,22 @@ a:focus-visible {
   user-select: none;
 }
 
+/* 工作区平滑切换动效 */
+.workspace-transition-enter-active,
+.workspace-transition-leave-active {
+  transition: opacity 0.22s var(--ease-spring), transform 0.22s var(--ease-spring);
+}
+
+.workspace-transition-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.workspace-transition-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
 /* ---------- 弹窗 ---------- */
 
 .app-dialog {
@@ -1782,6 +1901,36 @@ a:focus-visible {
 
 .app-dialog::backdrop {
   background: rgb(26 34 51 / 32%);
+}
+
+.app-dialog[open] .dialog-surface {
+  animation: dialogFadeIn 0.24s var(--ease-spring) both;
+}
+
+.app-dialog[open]::backdrop {
+  animation: backdropFadeIn 0.24s ease both;
+}
+
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(2px);
+  }
 }
 
 .dialog-surface {
