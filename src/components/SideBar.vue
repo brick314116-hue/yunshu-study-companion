@@ -52,7 +52,10 @@ const emit = defineEmits<{
           <Sparkles :size="20" :stroke-width="1.8" />
         </div>
         <div v-if="!collapsed" class="sidebar-brand-text">
-          <strong>心隅学伴</strong>
+          <div class="brand-title-row">
+            <strong>心隅学伴</strong>
+            <span class="brand-tag">温润守护</span>
+          </div>
           <span>心隅有光，学伴同行</span>
         </div>
       </button>

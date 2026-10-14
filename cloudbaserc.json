@@ -1,6 +1,13 @@
 {
   "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
   "envId": "xueou-d7gwem7g2452a7ea3",
+  "app": {
+    "serviceName": "xueyu",
+    "framework": "static",
+    "installCommand": "",
+    "buildCommand": "",
+    "outputDir": "dist"
+  },
   "functionRoot": "cloudbase-functions",
   "functions": [
     {

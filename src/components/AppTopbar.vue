@@ -76,6 +76,10 @@ const currentWorkspaceTitle = computed(() => {
           <span class="breadcrumb-separator" aria-hidden="true">/</span>
           <span class="breadcrumb-item current">{{ currentWorkspaceTitle }}</span>
         </nav>
+        <span class="sanctuary-status-pill" title="心隅空间安全守护中">
+          <span class="status-pulse-dot" aria-hidden="true"></span>
+          <span>心隅在侧</span>
+        </span>
       </div>
 
       <div class="topbar-right">

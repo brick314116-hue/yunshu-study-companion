@@ -7,6 +7,7 @@ import {
   MessageCircleMore,
   MessageSquareText,
   Paperclip,
+  Sparkles,
   X,
 } from '@lucide/vue'
 import { nextTick, ref, watch } from 'vue'
@@ -15,13 +16,19 @@ import type { ChatAttachment, ChatMessage, ModuleDefinition } from '../types'
 import ShinyText from './ShinyText.vue'
 import SplitText from './SplitText.vue'
 
-const props = defineProps<{
-  module: ModuleDefinition
-  messages: ChatMessage[]
-  modelValue: string
-  userName: string
-  sending: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    module: ModuleDefinition
+    messages: ChatMessage[]
+    modelValue: string
+    userName: string
+    sending: boolean
+    assistantName?: string
+  }>(),
+  {
+    assistantName: '心小隅',
+  },
+)
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
@@ -138,16 +145,42 @@ const handleKeydown = (event: KeyboardEvent) => {
           </li>
         </ul>
         <div class="welcome-example-wrap">
-          <small>示例输入</small>
-          <button
-            class="welcome-example"
-            type="button"
-            @click="emit('starter', module.exampleInput)"
-          >
-            <MessageSquareText :size="16" :stroke-width="1.8" aria-hidden="true" />
-            <span>{{ module.exampleInput }}</span>
-            <ArrowUp :size="16" :stroke-width="1.8" aria-hidden="true" />
-          </button>
+          <small>快速开启伴学</small>
+          <div class="welcome-starters-grid">
+            <button
+              class="welcome-starter-card"
+              type="button"
+              @click="emit('starter', module.exampleInput || '我手头的作业有点多不知如何下手，帮我拆成 3 个微步骤吧！')"
+            >
+              <div class="starter-card-top">
+                <span class="starter-badge">任务拆解</span>
+                <ArrowUp :size="14" :stroke-width="2" class="starter-arrow" />
+              </div>
+              <p>{{ module.exampleInput || '我手头的作业有点多不知如何下手，帮我拆成 3 个微步骤吧！' }}</p>
+            </button>
+            <button
+              class="welcome-starter-card"
+              type="button"
+              @click="emit('starter', '今天学着有点心烦、学不进去，能陪我理理思绪吗？')"
+            >
+              <div class="starter-card-top">
+                <span class="starter-badge mood">情绪理顺</span>
+                <ArrowUp :size="14" :stroke-width="2" class="starter-arrow" />
+              </div>
+              <p>今天学着有点心烦、学不进去，能陪我理理思绪吗？</p>
+            </button>
+            <button
+              class="welcome-starter-card"
+              type="button"
+              @click="emit('starter', '我准备开始一轮专注自习，请在侧安静陪伴我。')"
+            >
+              <div class="starter-card-top">
+                <span class="starter-badge focus">专注陪伴</span>
+                <ArrowUp :size="14" :stroke-width="2" class="starter-arrow" />
+              </div>
+              <p>我准备开始一轮专注自习，请在侧安静陪伴我。</p>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -158,24 +191,26 @@ const handleKeydown = (event: KeyboardEvent) => {
           class="message-row"
           :class="message.role"
         >
-          <div v-if="message.role === 'assistant'" class="assistant-avatar" aria-hidden="true">
-            <MessageCircleMore :size="17" :stroke-width="1.8" />
-          </div>
           <div class="message-content">
             <div class="message-meta">
-              <strong>{{ message.role === 'assistant' ? '心小隅' : '你' }}</strong>
+              <span v-if="message.role === 'assistant'" class="meta-avatar-icon" aria-hidden="true">
+                <Sparkles :size="12" :stroke-width="2.2" />
+              </span>
+              <strong>{{ message.role === 'assistant' ? assistantName : '你' }}</strong>
               <time>{{ message.time }}</time>
             </div>
-            <ShinyText
-              v-if="message.role === 'assistant' && message.status === 'streaming' && !message.text"
-              text="正在思考..."
-            />
-            <p v-else>{{ message.text }}</p>
-            <div v-if="message.attachments?.length" class="msg-files">
-              <span v-for="file in message.attachments" :key="file.fileKey || file.fileName" class="msg-file">
-                <Paperclip :size="13" :stroke-width="2" aria-hidden="true" />
-                {{ file.fileName }}
-              </span>
+            <div class="message-bubble">
+              <ShinyText
+                v-if="message.role === 'assistant' && message.status === 'streaming' && !message.text"
+                text="正在思考..."
+              />
+              <p v-else>{{ message.text }}</p>
+              <div v-if="message.attachments?.length" class="msg-files">
+                <span v-for="file in message.attachments" :key="file.fileKey || file.fileName" class="msg-file">
+                  <Paperclip :size="13" :stroke-width="2" aria-hidden="true" />
+                  {{ file.fileName }}
+                </span>
+              </div>
             </div>
             <small v-if="message.status === 'stopped'">已停止生成</small>
             <small v-else-if="message.status === 'error'">回复失败，请稍后重试</small>
@@ -217,16 +252,6 @@ const handleKeydown = (event: KeyboardEvent) => {
           />
           <div class="composer-actions-left">
             <button
-              class="checkin-button"
-              type="button"
-              title="独立情绪打卡（快速记录此刻心情，7天自毁）"
-              aria-label="情绪打卡"
-              @click="emit('checkin')"
-            >
-              <ClipboardList :size="15" :stroke-width="1.8" />
-              <span class="checkin-label">打卡</span>
-            </button>
-            <button
               class="attach-button"
               type="button"
               title="上传图片或文档（最多5个，单个≤6MB）"
@@ -234,8 +259,18 @@ const handleKeydown = (event: KeyboardEvent) => {
               :disabled="uploading || sending"
               @click="fileInput?.click()"
             >
-              <LoaderCircle v-if="uploading" class="send-spinner" :size="16" :stroke-width="1.8" />
-              <Paperclip v-else :size="16" :stroke-width="1.8" />
+              <LoaderCircle v-if="uploading" class="send-spinner" :size="15" :stroke-width="1.8" />
+              <Paperclip v-else :size="15" :stroke-width="1.8" />
+            </button>
+            <button
+              class="checkin-button"
+              type="button"
+              title="独立情绪打卡（快速记录此刻心情，7天自毁）"
+              aria-label="情绪打卡"
+              @click="emit('checkin')"
+            >
+              <ClipboardList :size="14" :stroke-width="1.8" />
+              <span class="checkin-label">打卡</span>
             </button>
           </div>
           <div class="composer-actions-right">
