@@ -9,6 +9,7 @@ import {
   Play,
   Plus,
   RotateCcw,
+  SlidersHorizontal,
   Sparkles,
   Trash2,
   Volume2,
@@ -22,21 +23,35 @@ const emit = defineEmits<{
   askAgent: [prompt: string]
 }>()
 
-// ==================== 1. 番茄时钟系统 ====================
-type TimerPreset = 15 | 25 | 45
-const timerPreset = ref<TimerPreset>(25)
+// ==================== 1. 番茄时钟系统 (预设 + 自定义) ====================
+const timerPreset = ref<number>(25)
 const timerRemaining = ref(25 * 60)
 const timerRunning = ref(false)
 const timerFinished = ref(false)
+const isCustomMode = ref(false)
+const showCustomInput = ref(false)
+const customMinutes = ref<number>(30)
 const isFullscreen = ref(false)
 let timerInterval: ReturnType<typeof setInterval> | undefined
 
-const setPreset = (mins: TimerPreset) => {
+const setPreset = (mins: number, isCustom = false) => {
   timerPreset.value = mins
   timerRemaining.value = mins * 60
   timerRunning.value = false
   timerFinished.value = false
+  isCustomMode.value = isCustom
   clearInterval(timerInterval)
+}
+
+const applyCustomMinutes = () => {
+  const mins = Math.max(1, Math.min(180, Math.floor(Number(customMinutes.value)) || 25))
+  customMinutes.value = mins
+  setPreset(mins, true)
+  showCustomInput.value = false
+}
+
+const toggleCustomDrawer = () => {
+  showCustomInput.value = !showCustomInput.value
 }
 
 const formattedMinutes = computed(() => {
@@ -291,28 +306,72 @@ onBeforeUnmount(() => {
             <button
               type="button"
               class="preset-item"
-              :class="{ active: timerPreset === 15 }"
-              @click="setPreset(15)"
+              :class="{ active: timerPreset === 15 && !isCustomMode }"
+              @click="setPreset(15, false); showCustomInput = false"
             >
               15m 破冰启动
             </button>
             <button
               type="button"
               class="preset-item"
-              :class="{ active: timerPreset === 25 }"
-              @click="setPreset(25)"
+              :class="{ active: timerPreset === 25 && !isCustomMode }"
+              @click="setPreset(25, false); showCustomInput = false"
             >
               25m 标准番茄
             </button>
             <button
               type="button"
               class="preset-item"
-              :class="{ active: timerPreset === 45 }"
-              @click="setPreset(45)"
+              :class="{ active: timerPreset === 45 && !isCustomMode }"
+              @click="setPreset(45, false); showCustomInput = false"
             >
               45m 深度心流
             </button>
+            <button
+              type="button"
+              class="preset-item custom-preset-item"
+              :class="{ active: isCustomMode || showCustomInput }"
+              title="自定义专注分钟数"
+              @click="toggleCustomDrawer"
+            >
+              <SlidersHorizontal :size="13" :stroke-width="1.8" />
+              <span>{{ isCustomMode ? `${timerPreset}m 自定义` : '自定义时长' }}</span>
+            </button>
           </div>
+
+          <!-- 自定义时长调节条 -->
+          <Transition name="shadcn-accordion">
+            <div v-if="showCustomInput" class="custom-focus-drawer">
+              <span class="custom-focus-label">自定义专注分钟 (1~180)：</span>
+              <div class="custom-focus-controls">
+                <button
+                  type="button"
+                  class="step-adjust-btn"
+                  :disabled="customMinutes <= 5"
+                  @click="customMinutes = Math.max(1, customMinutes - 5)"
+                >-5</button>
+                <input
+                  v-model.number="customMinutes"
+                  type="number"
+                  min="1"
+                  max="180"
+                  class="custom-minutes-input"
+                  @keydown.enter.prevent="applyCustomMinutes"
+                />
+                <button
+                  type="button"
+                  class="step-adjust-btn"
+                  :disabled="customMinutes >= 175"
+                  @click="customMinutes = Math.min(180, customMinutes + 5)"
+                >+5</button>
+                <button
+                  type="button"
+                  class="apply-custom-btn"
+                  @click="applyCustomMinutes"
+                >确定</button>
+              </div>
+            </div>
+          </Transition>
 
           <!-- 大号倒计时主表盘 -->
           <div class="big-clock-wrap">
@@ -350,7 +409,7 @@ onBeforeUnmount(() => {
             <button
               v-if="!timerRunning"
               type="button"
-              class="main-action-btn start-btn"
+              class="main-action-btn start-btn shadcn-shimmer-btn"
               @click="startTimer"
             >
               <Play :size="18" :stroke-width="2.2" />

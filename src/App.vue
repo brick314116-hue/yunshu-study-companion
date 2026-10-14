@@ -78,7 +78,7 @@ watch(
   { deep: true },
 )
 
-const dockOpen = ref(true)
+const dockOpen = ref(false)
 const toggleDock = () => {
   dockOpen.value = !dockOpen.value
 }
@@ -642,19 +642,6 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
             @prompt="(p) => { draft = p; if (!messages.length) sendMessage(p) }"
             @action="onMenuPickAction"
           />
-
-          <!-- 工具箱收起时常驻右侧边缘的极简唤起手柄 -->
-          <button
-            v-if="!dockOpen"
-            type="button"
-            class="dock-floating-handle"
-            title="展开伴学工具箱（专注钟·白噪音·呼吸平复）"
-            aria-label="展开伴学工具箱"
-            @click="dockOpen = true"
-          >
-            <Sparkles :size="14" :stroke-width="2" />
-            <span>伴学工具箱</span>
-          </button>
         </div>
       </Transition>
 
