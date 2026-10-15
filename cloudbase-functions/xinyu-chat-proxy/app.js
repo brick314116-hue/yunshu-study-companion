@@ -2,7 +2,7 @@ const { createHmac, randomUUID } = require('node:crypto')
 const http = require('node:http')
 
 const PORT = 9000
-const MAX_BODY_BYTES = 8 * 1024
+const MAX_BODY_BYTES = 32 * 1024
 const MAX_MESSAGE_LENGTH = 500
 const configuredTimeoutMs = Number(process.env.NUWAX_REQUEST_TIMEOUT_MS)
 const REQUEST_TIMEOUT_MS = Number.isFinite(configuredTimeoutMs)
@@ -11,7 +11,7 @@ const REQUEST_TIMEOUT_MS = Number.isFinite(configuredTimeoutMs)
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000
 const RATE_LIMIT_MAX = 30
 const AGENT_KEY = 'main'
-const BUILD_VERSION = '2026-10-14-xinyu-agent-33301620'
+const BUILD_VERSION = '2026-10-15-context-bridge-v1'
 const DEFAULT_DATABASE_INSTANCE = 'tnt-nsoau01qw'
 const DEFAULT_CHECKIN_WORKFLOW_ID = 5257662
 const CHECKIN_TIMEOUT_MS = 30 * 1000
@@ -846,6 +846,28 @@ async function handleChat(req, res) {
       logDb(id, 'CHAT-ATTACHMENTS', `count=${formattedAttachments.length} keys=${formattedAttachments.map((a) => a.key).join(',')}`)
     }
 
+    // 多轮上下文桥接增强：
+    // 女娲 OpenAPI (/api/v1/chat/{conversationId}) 因挂载危机安全门等工作流，
+    // 底层流转时未将该会话的历史消息自动回填给大模型节点，导致大模型上下文轮数为0。
+    // 这里将前端传入的前几轮对话历史结构化附带在消息背景中，确保大模型获得稳定连贯的多轮记忆。
+    const history = Array.isArray(body.history) ? body.history : []
+    let outboundMessage = message
+    if (history.length > 0 && body.newConversation !== true) {
+      const historyText = history
+        .slice(-6)
+        .map((item) => {
+          const role = item.role === 'assistant' || item.role === 'agent' ? '学伴' : '同学'
+          const content = String(item.text || item.content || '').replace(/\s+/g, ' ').trim()
+          return content ? `${role}: ${content}` : ''
+        })
+        .filter(Boolean)
+        .join('\n')
+
+      if (historyText) {
+        outboundMessage = `[前序对话背景]\n${historyText}\n\n[当前同学发言]\n${message}`
+      }
+    }
+
     upstream = await fetch(`${config.baseUrl}/api/v1/chat/${session.conversationId}`, {
       method: 'POST',
       headers: nuwaxHeaders(config, subject, {
@@ -854,7 +876,7 @@ async function handleChat(req, res) {
       }),
       body: JSON.stringify({
         conversationId: session.conversationId,
-        message,
+        message: outboundMessage,
         attachments: formattedAttachments,
         files: formattedAttachments,
         debug: false,

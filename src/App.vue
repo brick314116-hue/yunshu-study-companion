@@ -566,10 +566,21 @@ const sendMessage = async (preset?: string, attachments?: ChatAttachment[]) => {
     status: 'streaming',
     time: now(),
   })
-  sending.value = true
+  // 提取当前会话前几轮历史对话，提供给后端桥接给大模型（解决女娲 OpenAPI 不自动回填历史的问题）
+  const recentHistory = messages.value
+    .slice(0, -2) // 排除掉刚刚 push 的当前用户消息与占位 assistant 消息
+    .filter((m) => m.text && m.status === 'done')
+    .slice(-6) // 取最近 6 条（约 3 轮）
+    .map((m) => ({ role: m.role, text: m.text }))
 
   try {
-    const result = await requestChat(text || '请看一下我发送的附件。', newConversation, localConversationId, files)
+    const result = await requestChat(
+      text || '请看一下我发送的附件。',
+      newConversation,
+      localConversationId,
+      files,
+      recentHistory,
+    )
     const reply = typeof result === 'string' ? result : result.reply
     // 打字机：占位消息逐段补全为完整回复
     await typeOutMessage(assistantMessageId, reply)

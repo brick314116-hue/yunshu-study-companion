@@ -111,11 +111,17 @@ export const uploadAttachment = async (file: File): Promise<ChatAttachment> => {
   }
 }
 
+export interface ChatHistoryItem {
+  role: string
+  text: string
+}
+
 export const requestChat = async (
   message: string,
   newConversation: boolean,
   conversationKey?: string,
   attachments?: ChatAttachment[],
+  history?: ChatHistoryItem[],
 ): Promise<ChatResponse> => {
   if (!endpoint) throw new Error('对话接口尚未配置。')
 
@@ -134,6 +140,7 @@ export const requestChat = async (
       // 本地会话 id：服务端以此把每个本地会话映射到独立女娲会话。
       ...(conversationKey ? { conversationKey } : {}),
       ...(attachments && attachments.length ? { attachments } : {}),
+      ...(history && history.length ? { history } : {}),
     }),
   })
 
