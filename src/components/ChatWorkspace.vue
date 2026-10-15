@@ -15,6 +15,7 @@ import { uploadAttachment } from '../chat-api'
 import type { ChatAttachment, ChatMessage, ModuleDefinition } from '../types'
 import ShinyText from './ShinyText.vue'
 import SplitText from './SplitText.vue'
+import MarkdownView from './MarkdownView.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -204,7 +205,7 @@ const handleKeydown = (event: KeyboardEvent) => {
                 v-if="message.role === 'assistant' && message.status === 'streaming' && !message.text"
                 text="正在思考..."
               />
-              <p v-else>{{ message.text }}</p>
+              <MarkdownView v-else :content="message.text" />
               <div v-if="message.attachments?.length" class="msg-files">
                 <span v-for="file in message.attachments" :key="file.fileKey || file.fileName" class="msg-file">
                   <Paperclip :size="13" :stroke-width="2" aria-hidden="true" />
