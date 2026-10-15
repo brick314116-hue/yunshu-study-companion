@@ -19,13 +19,13 @@ const icons: Record<ModuleId, Component> = {
   records: ClipboardList,
 }
 
-// 学习 / 换个想法 / 聊心情（情绪打卡已作为独立专属功能剥离）
+// 学途助力 / 转念梳理 / 心叙倾诉 / 我的心隅记录（情绪打卡已作为独立专属功能剥离）
 const groups = computed<ModuleDefinition[]>(() => {
-  const order: ModuleId[] = ['study', 'thought', 'emotion']
+  const order: ModuleId[] = ['study', 'thought', 'emotion', 'records']
   const list = order
     .map((id) => modules.find((m) => m.id === id))
     .filter((m): m is ModuleDefinition => Boolean(m))
-  // 不同意情绪/认知功能时：仅显示 学习
+  // 不同意情绪/认知功能时：仅显示 学途助力
   if (props.psychConsent === 'declined') return list.filter((m) => m.id === 'study')
   return list
 })

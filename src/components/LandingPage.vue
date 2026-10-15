@@ -393,7 +393,7 @@ onBeforeUnmount(() => {
           </div>
           <div class="step-card">
             <span class="step-num">02</span>
-            <h4>小舒协同梳理拆解</h4>
+            <h4>心小隅协同梳理拆解</h4>
             <p>分清客观事实与灾难化想法，将大难点拆分为 2~3 个立即可行的一小步。</p>
           </div>
           <div class="step-divider" aria-hidden="true">

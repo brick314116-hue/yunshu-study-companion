@@ -305,7 +305,7 @@ onBeforeUnmount(() => {
 
           <!-- 便签列表：无记录时展示真实空状态 -->
           <div v-if="notes.length === 0" class="cbt-empty-state">
-            <p>沙盒暂无记录。当你感到紧绷、焦虑或自我怀疑时，在上方分别写下客观事实与自动脑补的想法，小舒陪你一起理清思路。</p>
+            <p>沙盒暂无记录。当你感到紧绷、焦虑或自我怀疑时，在上方分别写下客观事实与自动脑补的想法，心小隅陪你一起理清思路。</p>
           </div>
           <div v-else class="cbt-notes-list">
             <div v-for="(note, index) in notes" :key="note.id" class="cbt-note-card">
@@ -328,7 +328,7 @@ onBeforeUnmount(() => {
               <div class="note-footer">
                 <button type="button" class="ask-reframe-btn" @click="askAgentReframe(note)">
                   <Sparkles :size="14" :stroke-width="2" />
-                  <span>让小舒陪我理顺这个想法 ➔</span>
+                  <span>让心小隅陪我理顺这个想法 ➔</span>
                 </button>
                 <button type="button" class="note-del-btn" title="删除便签" @click="removeNote(index)">
                   <Trash2 :size="14" :stroke-width="1.8" />

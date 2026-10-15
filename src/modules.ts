@@ -3,9 +3,9 @@ import type { ModuleDefinition } from './types'
 export const modules: ModuleDefinition[] = [
   {
     id: 'study',
-    label: '学习',
-    shortLabel: '学习',
-    title: '把大任务拆成现在就能做的一小步',
+    label: '学途助力',
+    shortLabel: '学途',
+    title: '学途助力 · 把大任务拆成现在就能做的一小步',
     description: '作业太多、不知道从哪开始？我陪你把任务拆小，先做最容易动手的那一步。',
     accent: '#3f8fd2',
     features: [
@@ -51,9 +51,9 @@ export const modules: ModuleDefinition[] = [
   },
   {
     id: 'thought',
-    label: '换个想法',
-    shortLabel: '想法',
-    title: '把想法理一理，看看另一种可能',
+    label: '转念梳理',
+    shortLabel: '转念',
+    title: '转念梳理 · 把想法理一理，看看另一种可能',
     description: '有时让我们难受的不是事情本身，而是对它的想法。我陪你把事实和感受分开，找找别的解释。',
     accent: '#3f8fd2',
     features: [
@@ -93,9 +93,9 @@ export const modules: ModuleDefinition[] = [
   },
   {
     id: 'emotion',
-    label: '聊心情',
-    shortLabel: '心情',
-    title: '先照顾此刻的心情，再决定下一步',
+    label: '心叙倾诉',
+    shortLabel: '心叙',
+    title: '心叙倾诉 · 先照顾此刻的心情，再决定下一步',
     description: '烦躁、紧张、压力大？我陪你把心情说出来，慢慢放松，再继续。',
     accent: '#3f8fd2',
     features: [
@@ -141,9 +141,9 @@ export const modules: ModuleDefinition[] = [
   },
   {
     id: 'records',
-    label: '我的记录',
-    shortLabel: '记录',
-    title: '你的记录，由你掌控',
+    label: '我的心隅记录',
+    shortLabel: '心隅记录',
+    title: '我的心隅记录 · 你的记录，由你掌控',
     description: '这里能看到你保存过的记录（心情、学习任务、想法练习），最多留7天，也能一次删光。',
     accent: '#3f8fd2',
     features: [

@@ -244,7 +244,7 @@ onBeforeUnmount(() => {
             </div>
             <button class="decompose-agent-btn" type="button" @click="askAgentDecompose">
               <Sparkles :size="13" :stroke-width="2" />
-              <span>让小舒帮我拆解</span>
+              <span>让心小隅帮我拆解</span>
             </button>
           </div>
 
@@ -264,7 +264,7 @@ onBeforeUnmount(() => {
           </div>
 
           <div v-if="tasks.length === 0" class="task-empty-state">
-            <p>暂无待办微任务。在上方输入你当下最容易开始的一个小步骤，或点击右上角让小舒帮你拆解。</p>
+            <p>暂无待办微任务。在上方输入你当下最容易开始的一个小步骤，或点击右上角让心小隅帮你拆解。</p>
           </div>
           <div v-else class="task-list-wrap">
             <div
@@ -295,7 +295,7 @@ onBeforeUnmount(() => {
             </div>
 
             <div v-if="tasks.length === 0" class="empty-task-tip">
-              暂无微任务，在上方输入或点击“让小舒帮我拆解”
+              暂无微任务，在上方输入或点击“让心小隅帮我拆解”
             </div>
           </div>
         </section>
@@ -400,7 +400,7 @@ onBeforeUnmount(() => {
           <div v-if="timerFinished" class="finish-congrats-card">
             <button type="button" class="tell-agent-big-btn" @click="tellAgentFocusDone">
               <Sparkles :size="17" :stroke-width="2" />
-              <span>向小舒汇报总结本次专注 ➔</span>
+              <span>向心小隅汇报总结本次专注 ➔</span>
             </button>
           </div>
 
@@ -437,7 +437,7 @@ onBeforeUnmount(() => {
           </div>
         </section>
 
-        <!-- 右栏：声学白噪音与求助小舒卡 -->
+        <!-- 右栏：声学白噪音与求助心小隅卡 -->
         <section class="focus-card audio-agent-card">
           <div class="card-header-bar">
             <div class="card-title-group">
@@ -1096,7 +1096,7 @@ onBeforeUnmount(() => {
   transform: translateY(-1px);
 }
 
-/* ================== 右栏：声学与小舒卡 ================== */
+/* ================== 右栏：声学与心小隅卡 ================== */
 .sound-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

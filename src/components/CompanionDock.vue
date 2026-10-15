@@ -281,12 +281,12 @@ const onToolClick = (tool: { prompt: string; action?: 'mood-checkin' }) => {
         <div class="timer-display-box" :class="{ active: timerRunning, finished: timerFinished }">
           <div class="timer-digits">{{ formattedTime }}</div>
           <p v-if="!timerFinished" class="timer-subtext">
-            {{ timerRunning ? '保持呼吸，小舒在一旁陪你' : '准备好后，点击开始进入专注' }}
+            {{ timerRunning ? '保持呼吸，心小隅在一旁陪你' : '准备好后，点击开始进入专注' }}
           </p>
           <div v-else class="timer-finish-notice">
             <p>🎉 本轮专注完成！辛苦啦！</p>
             <button class="tell-agent-btn" type="button" @click="tellAgentFocusDone">
-              <span>向小舒汇报总结 ➔</span>
+              <span>向心小隅汇报总结 ➔</span>
             </button>
           </div>
         </div>
