@@ -84,12 +84,12 @@ const currentWorkspaceTitle = computed(() => {
           type="button"
           class="topbar-dock-btn"
           :class="{ active: dockOpen }"
-          title="展开/收起伴学锦囊（专注钟·白噪音·呼吸平复）"
-          aria-label="展开/收起伴学锦囊"
+          title="展开/收起伴学工具箱（专注钟·白噪音·呼吸平复）"
+          aria-label="展开/收起伴学工具箱"
           @click="emit('toggleDock')"
         >
           <Sparkles :size="14" :stroke-width="1.8" />
-          <span class="dock-btn-label">伴学锦囊</span>
+          <span class="dock-btn-label">伴学工具箱</span>
         </button>
 
         <button

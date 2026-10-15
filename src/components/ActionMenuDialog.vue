@@ -19,9 +19,9 @@ const icons: Record<ModuleId, Component> = {
   records: ClipboardList,
 }
 
-// 学习 / 换个想法 / 聊心情（情绪打卡已作为独立专属功能剥离）
+// 学习 / 换个想法 / 聊心情 / 我的记录（情绪打卡已作为独立专属功能剥离）
 const groups = computed<ModuleDefinition[]>(() => {
-  const order: ModuleId[] = ['study', 'thought', 'emotion']
+  const order: ModuleId[] = ['study', 'thought', 'emotion', 'records']
   const list = order
     .map((id) => modules.find((m) => m.id === id))
     .filter((m): m is ModuleDefinition => Boolean(m))

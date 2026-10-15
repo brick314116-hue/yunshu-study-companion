@@ -33,8 +33,17 @@ const chatModule = ref<ModuleId>('study')
 const pendingTab = ref<AppTab>('chat')
 const messages = ref<ChatMessage[]>([])
 const draft = ref('')
+const CONSENT_STORAGE_KEY = 'yunshu_consent_choice'
 const consentOpen = ref(false)
-const psychConsent = ref<PsychConsent>('unknown')
+const initialConsent: PsychConsent = (() => {
+  try {
+    const v = localStorage.getItem(CONSENT_STORAGE_KEY)
+    if (v === 'accepted' || v === 'declined') return v
+  } catch {}
+  return 'unknown'
+})()
+const psychConsent = ref<PsychConsent>(initialConsent)
+const pendingAction = ref<(() => void) | null>(null)
 const safetyOpen = ref(false)
 const conversations = ref<Conversation[]>([])
 const activeConversationId = ref<string | null>(null)
@@ -142,14 +151,16 @@ const registerDialogOpen = ref(false)
 const moodCheckinOpen = ref(false)
 
 // 进入四大工作区（chat / focus / mind / footprint）的准入门禁：登录 + 同意。返回 false 表示已弹出登录/同意框。
-const requireAccess = (targetTab: AppTab = 'chat'): boolean => {
+const requireAccess = (targetTab: AppTab = 'chat', onAllowed?: () => void): boolean => {
   if (!authUser.value) {
     pendingTab.value = targetTab
+    if (onAllowed) pendingAction.value = onAllowed
     void openLogin()
     return false
   }
   if (psychConsent.value === 'unknown') {
     pendingTab.value = targetTab
+    if (onAllowed) pendingAction.value = onAllowed
     consentOpen.value = true
     return false
   }
@@ -186,6 +197,12 @@ const onAuthSuccess = async () => {
     if (user) {
       authUser.value = user
       await refreshProfile(user.id)
+      // 若已有暂存动作且准入已就绪，立即放行
+      if (pendingAction.value && psychConsent.value !== 'unknown') {
+        const action = pendingAction.value
+        pendingAction.value = null
+        action()
+      }
     }
   } catch (error) {
     console.warn('恢复登录状态失败：', error)
@@ -197,6 +214,15 @@ const onRegisterSuccess = async () => {
 }
 
 const refreshProfile = async (uid: string) => {
+  // 1. 优先读取本地专属缓存，消除云端冷启动与网络延迟
+  try {
+    const cached = localStorage.getItem(`${CONSENT_STORAGE_KEY}_${uid}`) || localStorage.getItem(CONSENT_STORAGE_KEY)
+    if (cached === 'accepted' || cached === 'declined') {
+      psychConsent.value = cached
+    }
+  } catch {}
+
+  // 2. 异步从云端同步权威数据
   try {
     const profile = await loadUserProfile(uid)
     if (profile?.displayName && authUser.value) {
@@ -205,6 +231,9 @@ const refreshProfile = async (uid: string) => {
     const restored = restoreConsent(profile)
     if (restored !== 'unknown') {
       psychConsent.value = restored
+      try {
+        localStorage.setItem(`${CONSENT_STORAGE_KEY}_${uid}`, restored)
+      } catch {}
     }
   } catch (error) {
     console.warn('读取用户资料失败：', error)
@@ -246,6 +275,10 @@ const handleFullReset = async () => {
     // 忽略登出错误
   }
   clearTimeout(conversationSyncTimer)
+  try {
+    localStorage.removeItem(CONSENT_STORAGE_KEY)
+    if (authUser.value?.id) localStorage.removeItem(`${CONSENT_STORAGE_KEY}_${authUser.value.id}`)
+  } catch {}
   authUser.value = null
   psychConsent.value = 'unknown'
   consentOpen.value = false
@@ -261,10 +294,13 @@ const handleFullReset = async () => {
 // 顶栏/侧栏切换：chat / focus / mind / footprint 需准入；intro/landing 免准入。
 const selectTab = (tab: AppTab) => {
   sidebarOpen.value = false
-  if (!isFreeTab(tab) && !requireAccess(tab)) return
-  if (tab === 'chat' && psychConsent.value === 'declined') chatModule.value = 'study'
-  syncActiveConversation()
-  activeTab.value = tab
+  const proceed = () => {
+    if (tab === 'chat' && psychConsent.value === 'declined') chatModule.value = 'study'
+    syncActiveConversation()
+    activeTab.value = tab
+  }
+  if (!isFreeTab(tab) && !requireAccess(tab, proceed)) return
+  proceed()
 }
 
 const goHome = () => {
@@ -275,25 +311,31 @@ const goHome = () => {
 
 // 从首页/认识页"进入xx"或侧栏菜单进入某模块（合并到 chat 视图）。
 const enterModule = (moduleId: ModuleId) => {
-  if (!requireAccess()) return
-  chatModule.value = safeModule(moduleId)
-  syncActiveConversation()
-  activeTab.value = 'chat'
-  sidebarOpen.value = false
-  if (messages.value.length === 0 && !draft.value.trim()) {
-    const prefill = getModule(chatModule.value).prefill
-    if (prefill) draft.value = prefill
+  const proceed = () => {
+    chatModule.value = safeModule(moduleId)
+    syncActiveConversation()
+    activeTab.value = 'chat'
+    sidebarOpen.value = false
+    if (messages.value.length === 0 && !draft.value.trim()) {
+      const prefill = getModule(chatModule.value).prefill
+      if (prefill) draft.value = prefill
+    }
   }
+  if (!requireAccess('chat', proceed)) return
+  proceed()
 }
 
 // 侧栏"想做点什么"：预填提示词并进入对话。
 const onMenuPick = (moduleId: ModuleId, prompt: string) => {
-  if (!requireAccess()) return
-  chatModule.value = safeModule(moduleId)
-  syncActiveConversation()
-  activeTab.value = 'chat'
-  draft.value = prompt
-  sidebarOpen.value = false
+  const proceed = () => {
+    chatModule.value = safeModule(moduleId)
+    syncActiveConversation()
+    activeTab.value = 'chat'
+    draft.value = prompt
+    sidebarOpen.value = false
+  }
+  if (!requireAccess('chat', proceed)) return
+  proceed()
 }
 
 const onMenuPickAction = (action: 'mood-checkin') => {
@@ -318,22 +360,28 @@ const toggleSidebarCollapse = () => {
 }
 
 const newChat = () => {
-  if (!requireAccess()) return
-  if (psychConsent.value === 'declined') chatModule.value = 'study'
-  resetConversation()
-  activeTab.value = 'chat'
-  sidebarOpen.value = false
+  const proceed = () => {
+    if (psychConsent.value === 'declined') chatModule.value = 'study'
+    resetConversation()
+    activeTab.value = 'chat'
+    sidebarOpen.value = false
+  }
+  if (!requireAccess('chat', proceed)) return
+  proceed()
 }
 
 const startWithPrompt = (payload: { module: ModuleId; prompt?: string }) => {
-  if (!requireAccess()) return
-  chatModule.value = safeModule(payload.module)
-  resetConversation()
-  activeTab.value = 'chat'
-  sidebarOpen.value = false
-  if (payload.prompt) {
-    draft.value = payload.prompt
+  const proceed = () => {
+    chatModule.value = safeModule(payload.module)
+    resetConversation()
+    activeTab.value = 'chat'
+    sidebarOpen.value = false
+    if (payload.prompt) {
+      draft.value = payload.prompt
+    }
   }
+  if (!requireAccess('chat', proceed)) return
+  proceed()
 }
 
 const logout = async () => {
@@ -341,6 +389,10 @@ const logout = async () => {
     if (authConfigured && authUser.value) await signOut()
   } finally {
     clearTimeout(conversationSyncTimer)
+    try {
+      localStorage.removeItem(CONSENT_STORAGE_KEY)
+      if (authUser.value?.id) localStorage.removeItem(`${CONSENT_STORAGE_KEY}_${authUser.value.id}`)
+    } catch {}
     authUser.value = null
     psychConsent.value = 'unknown'
     consentOpen.value = false
@@ -353,21 +405,44 @@ const logout = async () => {
   }
 }
 
-const chooseConsent = async (consent: Exclude<PsychConsent, 'unknown'>) => {
+const chooseConsent = (consent: Exclude<PsychConsent, 'unknown'>) => {
+  // 1. 0 毫秒立即关闭弹窗
   consentOpen.value = false
-  if (authUser.value) {
-    try {
-      await saveConsent(authUser.value.id, consent)
-    } catch (error) {
-      console.warn('保存使用边界确认失败（不影响使用）：', error)
+
+  // 2. 0 毫秒立即更新本地状态
+  psychConsent.value = consent
+  try {
+    localStorage.setItem(CONSENT_STORAGE_KEY, consent)
+    if (authUser.value?.id) {
+      localStorage.setItem(`${CONSENT_STORAGE_KEY}_${authUser.value.id}`, consent)
+    }
+  } catch {}
+
+  // 3. 立即切换目标工作区，兜底绝不留在 landing
+  const rawTarget = pendingTab.value
+  const target = rawTarget === 'landing' || !rawTarget ? 'chat' : rawTarget
+  activeTab.value = consent === 'declined' && target !== 'chat' && target !== 'intro'
+    ? 'chat'
+    : target
+  if (consent === 'declined') chatModule.value = 'study'
+
+  // 4. 立即恢复执行此前被准入拦截的操作
+  if (pendingAction.value) {
+    const act = pendingAction.value
+    pendingAction.value = null
+    act()
+  } else if (activeTab.value === 'chat') {
+    if (conversations.value.length === 0 && messages.value.length === 0) {
+      resetConversation()
     }
   }
-  psychConsent.value = consent
-  const requested = pendingTab.value
-  activeTab.value = consent === 'declined' && requested !== 'chat' && requested !== 'intro'
-    ? 'chat'
-    : requested
-  if (consent === 'declined') chatModule.value = 'study'
+
+  // 5. 后台静默将选择持久化至云端（不阻塞 UI）
+  if (authUser.value?.id) {
+    saveConsent(authUser.value.id, consent).catch((error) => {
+      console.warn('后台异步保存使用边界选择失败（本地已生效）：', error)
+    })
+  }
 }
 
 const selectConversation = (id: string) => {

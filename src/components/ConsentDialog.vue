@@ -33,10 +33,19 @@ watch(
 onMounted(() => {
   if (props.open && !dialog.value?.open) dialog.value?.showModal()
 })
+
+const handleChoose = (choice: Exclude<PsychConsent, 'unknown'>) => {
+  try {
+    if (dialog.value?.open) {
+      dialog.value.close()
+    }
+  } catch {}
+  emit('choose', choice)
+}
 </script>
 
 <template>
-  <dialog ref="dialog" class="app-dialog consent-dialog" aria-labelledby="consent-title">
+  <dialog ref="dialog" class="app-dialog consent-dialog" aria-labelledby="consent-title" @cancel.prevent>
     <div class="dialog-surface">
       <Stepper
         ref="stepperRef"
@@ -96,10 +105,10 @@ onMounted(() => {
             返回上一步
           </button>
           <div class="dialog-actions">
-            <button class="secondary" type="button" @click="emit('choose', 'declined')">
+            <button class="secondary" type="button" @click="handleChoose('declined')">
               仅使用学业功能
             </button>
-            <button class="primary" type="button" @click="emit('choose', 'accepted')">
+            <button class="primary" type="button" @click="handleChoose('accepted')">
               同意使用
             </button>
           </div>
