@@ -1,6 +1,13 @@
 {
   "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
   "envId": "xueou-d7gwem7g2452a7ea3",
+  "app": {
+    "serviceName": "xueyu",
+    "framework": "static",
+    "installCommand": "",
+    "buildCommand": "",
+    "outputDir": "dist"
+  },
   "functionRoot": "cloudbase-functions",
   "functions": [
     {
@@ -9,7 +16,41 @@
       "type": "HTTP",
       "runtime": "Nodejs20.19",
       "timeout": 240,
-      "installDependency": true
+      "installDependency": true,
+      "envVariables": {
+        "ALLOWED_ORIGIN": "http://localhost:5173,https://xueou-d7gwem7g2452a7ea3-1462770697.tcloudbaseapp.com,https://xueyu-xueou-d7gwem7g2452a7ea3.webapps.tcloudbase.com,https://yunshu-study-companion.vercel.app,https://yunshu.bond,https://www.yunshu.bond,https://75cswj9vku-dev-uapp.nuwao.com",
+        "ALLOWED_ORIGINS": "http://localhost:5173,https://xueou-d7gwem7g2452a7ea3-1462770697.tcloudbaseapp.com,https://xueyu-xueou-d7gwem7g2452a7ea3.webapps.tcloudbase.com,https://yunshu-study-companion.vercel.app,https://yunshu.bond,https://www.yunshu.bond,https://75cswj9vku-dev-uapp.nuwao.com",
+        "CLOUDBASE_DATABASE_INSTANCE": "tnt-nsoau01qw",
+        "CLOUDBASE_ENV_ID": "xueou-d7gwem7g2452a7ea3",
+        "DEPLOYTS": "20261016-nuwao-origin",
+        "NUWAX_AGENT_ID": "33301620",
+        "NUWAX_MAIN_AGENT_ID": "33301620",
+        "NUWAX_API_KEY": "ak-8d698e87ce8b404391cf2a91f571cd6a",
+        "NUWAX_BASE_URL": "https://agent.nuwax.com",
+        "NUWAX_CHECKIN_WORKFLOW_ID": "5257662",
+        "USER_ID_SECRET": "6c9365fab5bfd4cce0703786fdd1297dec6d6909a17961984349ff5f8a71a01040c72dd9b59d82959ca5c7da14ab1fa5"
+      }
+    },
+    {
+      "name": "xinyu-chat-proxy",
+      "dir": "cloudbase-functions/xinyu-chat-proxy",
+      "type": "HTTP",
+      "runtime": "Nodejs20.19",
+      "timeout": 240,
+      "installDependency": true,
+      "envVariables": {
+        "ALLOWED_ORIGIN": "http://localhost:5173,https://xueou-d7gwem7g2452a7ea3-1462770697.tcloudbaseapp.com,https://xueyu-xueou-d7gwem7g2452a7ea3.webapps.tcloudbase.com,https://yunshu-study-companion.vercel.app,https://yunshu.bond,https://www.yunshu.bond,https://75cswj9vku-dev-uapp.nuwao.com",
+        "ALLOWED_ORIGINS": "http://localhost:5173,https://xueou-d7gwem7g2452a7ea3-1462770697.tcloudbaseapp.com,https://xueyu-xueou-d7gwem7g2452a7ea3.webapps.tcloudbase.com,https://yunshu-study-companion.vercel.app,https://yunshu.bond,https://www.yunshu.bond,https://75cswj9vku-dev-uapp.nuwao.com",
+        "CLOUDBASE_DATABASE_INSTANCE": "tnt-nsoau01qw",
+        "CLOUDBASE_ENV_ID": "xueou-d7gwem7g2452a7ea3",
+        "DEPLOYTS": "20261016-nuwao-origin",
+        "NUWAX_AGENT_ID": "33301620",
+        "NUWAX_MAIN_AGENT_ID": "33301620",
+        "NUWAX_API_KEY": "ak-8d698e87ce8b404391cf2a91f571cd6a",
+        "NUWAX_BASE_URL": "https://agent.nuwax.com",
+        "NUWAX_CHECKIN_WORKFLOW_ID": "5257662",
+        "USER_ID_SECRET": "6c9365fab5bfd4cce0703786fdd1297dec6d6909a17961984349ff5f8a71a01040c72dd9b59d82959ca5c7da14ab1fa5"
+      }
     }
   ]
 }
