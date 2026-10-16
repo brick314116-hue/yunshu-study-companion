@@ -46,6 +46,9 @@ function requestOrigin(req) {
       url.hostname.endsWith('.vercel.app') ||
       url.hostname.endsWith('.tcloudbaseapp.com') ||
       url.hostname.endsWith('.tcloudbase.com') ||
+      url.hostname === '75cswj9vku-dev-uapp.nuwao.com' ||
+      url.hostname.endsWith('.nuwao.com') ||
+      url.hostname.endsWith('.nuwax.com') ||
       url.hostname === 'localhost' ||
       url.hostname === '127.0.0.1'
     ) {
