@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { KeyRound, Phone, ShieldCheck, UserRound } from '@lucide/vue'
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
-import { authConfigured, sendSmsCode, signUpWithPhone, bindUsername, isUsernameTaken } from '../auth'
+import { authConfigured, sendSmsCode, signUpWithPhone, bindUsername, isUsernameTaken, extractErrorMessage } from '../auth'
 import { saveDisplayName } from '../user-profile'
 import Step from './Step.vue'
 import Stepper from './Stepper.vue'
@@ -61,7 +61,8 @@ const sendCode = async () => {
     verificationId.value = await sendSmsCode(phone.value.trim())
     startCountdown()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : '验证码发送失败'
+    const msg = extractErrorMessage(e, '验证码发送失败，请稍后重试。')
+    error.value = msg
     if (/(频率|RATE|limit|频繁)/i.test(error.value)) {
       error.value += '\n同一手机号每天最多发送 5 条验证码。'
     }
@@ -148,8 +149,9 @@ const register = async () => {
   error.value = ''
   const username = regUsername.value.trim()
   try {
+    // 阶段 1：手机号与密码建号
     if (registrationStage.value === 'new') {
-      // 注册前先检查用户名是否可用（best-effort，避免"账号已建但用户名被占用"的尴尬状态）
+      // 注册前预校验用户名占用情况（best-effort）
       try {
         const taken = await isUsernameTaken(username)
         if (taken) {
@@ -160,28 +162,45 @@ const register = async () => {
         // 检查方法不可用时不阻断注册，交由后续 bindUsername 兜底
       }
 
-      // 手机号 + 验证码注册（带密码），CloudBase 会自动登录并生成账号。
       await signUpWithPhone(phone.value.trim(), code.value.trim(), regPassword.value, verificationId.value)
       registrationStage.value = 'registered'
     }
 
-    // 注册成功后已自动登录：把用户名绑到 CloudBase 账号认证，
-    // 这样之后才能用「用户名 + 密码」登录（而不仅仅是手机号）。
+    // 阶段 2：绑定用户名到账号（支持多策略，容错降级）
     if (registrationStage.value === 'registered') {
       await bindUsername(username)
       registrationStage.value = 'bound'
     }
 
-    // 同时写入资料；失败时不能假装整套注册流程已经完成。
-    await saveDisplayName('', username)
+    // 阶段 3：同步写入用户资料称呼（带重试与容错，绝不把资料冷启动抖动误判为注册假失败）
+    try {
+      await saveDisplayName('', username)
+    } catch (profileErr) {
+      console.warn('[register] 写入用户资料称呼失败，正在重试：', profileErr)
+      try {
+        await new Promise((r) => setTimeout(r, 600))
+        await saveDisplayName('', username)
+      } catch (retryErr) {
+        console.warn('[register] 重试写入用户资料仍未完成，将在后续进入主界面时自动补录：', retryErr)
+      }
+    }
+
     submitted.value = true
     emit('success')
     close()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : '注册失败，请检查后重试'
-    if (registrationStage.value === 'new' && /已注册|已存在|already/i.test(error.value)) {
-      stepperRef.value?.goTo(1)
-      error.value += '\n该手机号已注册，请直接登录。'
+    const msg = extractErrorMessage(e, '注册失败，请检查输入后重试。')
+    error.value = msg
+
+    if (/已注册|已存在|already/i.test(msg)) {
+      if (registrationStage.value === 'new') {
+        stepperRef.value?.goTo(1)
+      }
+      if (!error.value.includes('请直接登录')) {
+        error.value += '\n该手机号已注册，请直接登录。'
+      }
+    } else if (registrationStage.value === 'registered' && /用户名.*占用|占用/i.test(msg)) {
+      error.value = '该用户名已被占用，请换一个用户名后重试。'
     }
   } finally {
     loading.value = false

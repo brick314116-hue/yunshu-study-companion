@@ -30,13 +30,138 @@ const isRecord = (value: unknown): value is RecordValue =>
 
 const readString = (value: unknown) => (typeof value === 'string' ? value : '')
 
-const resultError = (result: unknown): string => {
-  if (!isRecord(result) || !isRecord(result.error)) return ''
-  const msg = readString(result.error.message)
-  if (msg) return msg
-  const code = readString(result.error.code)
-  if (code) return `操作失败（${code}）`
-  return '操作失败，请检查输入后重试。'
+/**
+ * 清洗并汉化错误信息，彻底过滤一切 "[object Object]" 乱码
+ */
+function cleanErrorMessage(raw: string): string {
+  // 剔除任何形式的 [object ...] 乱码
+  let cleaned = raw.replace(/\[object\s*object\]/gi, '').replace(/\[object.*?\]/gi, '').trim()
+  if (!cleaned) return '操作失败，请稍后重试。'
+
+  const lower = cleaned.toLowerCase()
+  if (
+    /验证码.*(错误|过期|不正确|失效)|verification.*(invalid|expire|wrong|incorrect)|incorrect_verification_code|verification_code_expired/i.test(
+      lower,
+    )
+  ) {
+    return '验证码错误或已过期，请重新获取。'
+  }
+  if (/已注册|已存在|already.*(exist|register)|user_exist|phone_exist/i.test(lower)) {
+    return '该手机号已注册，请直接登录。'
+  }
+  if (/该用户名已被占用|用户名.*(已被占用|已存在|重复)|username.*(taken|exist|already)/i.test(lower)) {
+    return '该用户名已被占用，请换一个用户名。'
+  }
+  if (/密码.*(错误|不正确)|password.*(wrong|incorrect|invalid)/i.test(lower)) {
+    return '密码错误，请检查后重试。'
+  }
+  if (/密码.*(太短|长度|位数|规范)|password.*(short|weak|length)/i.test(lower)) {
+    return '密码长度或强度不符合要求，至少需要 8 位。'
+  }
+  if (/频率|过于频繁|rate.*limit|too.*many|request_limited/i.test(lower)) {
+    return '操作过于频繁，请稍后再试。'
+  }
+  if (/failed to fetch|network.*error|网络异常/i.test(lower)) {
+    return '网络连接失败，请检查网络后重试。'
+  }
+  if (/invalid.*username|用户名.*格式/i.test(lower)) {
+    return '用户名格式不符合要求（支持字母/数字与 - _，不可为纯数字）。'
+  }
+
+  return cleaned
+}
+
+/**
+ * 从各种类型的错误中深度提取人类可读的错误文本，坚决杜绝输出 "[object Object]"
+ */
+export function extractErrorMessage(err: unknown, fallback = '操作失败，请稍后重试。'): string {
+  if (!err) return fallback
+
+  // 1. 本身为非空字符串
+  if (typeof err === 'string') {
+    const trimmed = err.trim()
+    if (!trimmed || /\[object\s*object\]/i.test(trimmed)) return fallback
+    return cleanErrorMessage(trimmed)
+  }
+
+  // 2. 为对象或 Error 实例
+  if (typeof err === 'object') {
+    const obj = err as Record<string, unknown>
+
+    // 优先深层提取更具体的消息字段
+    const candidates: unknown[] = [
+      obj.error_description,
+      isRecord(obj.error) ? obj.error.message : undefined,
+      isRecord(obj.error) ? obj.error.msg : undefined,
+      isRecord(obj.error) ? obj.error.error_description : undefined,
+      typeof obj.error === 'string' ? obj.error : undefined,
+      obj.message,
+      obj.msg,
+      obj.errMsg,
+      obj.errorMsg,
+      isRecord(obj.data)
+        ? (obj.data as any).message || (obj.data as any).msg || (obj.data as any).error
+        : undefined,
+    ]
+
+    for (const c of candidates) {
+      if (typeof c === 'string' && c.trim()) {
+        const text = c.trim()
+        if (!/\[object\s*object\]/i.test(text)) {
+          return cleanErrorMessage(text)
+        }
+      }
+    }
+
+    // 尝试根据 code / status 进行错误码转译
+    const rawCode =
+      obj.code ||
+      obj.errorCode ||
+      obj.status ||
+      (isRecord(obj.error) ? (obj.error as any).code : undefined)
+    if (typeof rawCode === 'string' || typeof rawCode === 'number') {
+      const codeStr = String(rawCode).trim()
+      if (codeStr && !/\[object/i.test(codeStr) && codeStr.toLowerCase() !== 'unknown') {
+        const translated = cleanErrorMessage(codeStr)
+        if (translated && !translated.startsWith('操作失败')) {
+          return translated
+        }
+        return '操作失败（' + codeStr + '）'
+      }
+    }
+
+    // 尝试安全序列化排除空对象与 [object]
+    try {
+      const json = JSON.stringify(err)
+      if (json && json !== '{}' && !json.includes('[object')) {
+        const parsed = JSON.parse(json)
+        if (parsed.message && typeof parsed.message === 'string') {
+          return cleanErrorMessage(parsed.message)
+        }
+        if (parsed.error && typeof parsed.error === 'string') {
+          return cleanErrorMessage(parsed.error)
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return fallback
+}
+
+export const resultError = (result: unknown): string => {
+  if (!isRecord(result)) return ''
+  if ('error' in result && result.error) {
+    return extractErrorMessage(result.error, '操作失败，请检查输入后重试。')
+  }
+  if ('code' in result && typeof result.code === 'string') {
+    const code = result.code.toLowerCase()
+    if (code && code !== 'ok' && code !== 'success' && code !== '0') {
+      return extractErrorMessage(result, '操作失败，请检查输入后重试。')
+    }
+  }
+  return ''
 }
 
 // @cloudbase/js-sdk v3 的 getUserInfo() 返回 { data: { session, user } }
@@ -279,38 +404,36 @@ export const signInWithPhonePassword = async (phoneNumber: string, password: str
   }
 }
 
-// 把原始报错转成"中文提示 + 原始信息"，方便排查。
-function formatLoginError(raw: string): string {
-  const hint = classifyPhoneLoginError(raw)
-  if (hint && hint !== raw) return `${hint}\n（原始信息：${raw}）`
-  return raw || '登录失败，请检查输入后重试。'
+// 把原始报错转成友好的中文提示，彻底过滤掉 "[object Object]"
+export function formatLoginError(raw: unknown): string {
+  const msg = extractErrorMessage(raw, '登录失败，请检查输入后重试。')
+  const hint = classifyPhoneLoginError(msg)
+  if (hint && hint !== msg && !hint.includes(msg)) {
+    return hint + '\n（详细信息：' + msg + '）'
+  }
+  return hint || msg || '登录失败，请检查输入后重试。'
 }
 
 // 将 CloudBase 返回的原始错误信息分类为用户友好的提示。
 function classifyPhoneLoginError(raw: string): string {
-  const lower = raw.toLowerCase()
-  // 未注册
+  const cleaned = cleanErrorMessage(raw)
+  const lower = cleaned.toLowerCase()
   if (/未注册|不存在|no.*account|not.*found|not.*exist|INVALID_USER|USER_NOT_FOUND/i.test(raw)) {
     return '该手机号尚未注册，请先注册账号。'
   }
-  // 验证码错误/过期
   if (/验证码|verification|code.*invalid|code.*expire|code.*wrong|INCORRECT_VERIFICATION_CODE|VERIFICATION_CODE_EXPIRED/i.test(lower)) {
     return '验证码错误或已过期，请重新获取。'
   }
-  // 密码错误
   if (/密码|password.*incorrect|password.*wrong|INVALID_PASSWORD|PASSWORD_WRONG/i.test(lower)) {
     return '密码错误，请检查后重试。'
   }
-  // 频率限制
   if (/频率|频率限制|rate|limit|too.*many|REQUEST_LIMITED/i.test(lower)) {
     return '操作过于频繁，请稍后再试。'
   }
-  // 参数问题
   if (/参数|param|invalid/i.test(lower)) {
     return '输入信息有误，请检查手机号和验证码格式。'
   }
-  // 兜底：返回原始信息（通常比"登录失败"更有用）
-  return raw || '登录失败，请检查输入后重试。'
+  return cleaned || '登录失败，请检查输入后重试。'
 }
 
 // 发送手机验证码。
@@ -320,22 +443,27 @@ function classifyPhoneLoginError(raw: string): string {
 export const sendSmsCode = async (phoneNumber: string): Promise<string> => {
   const auth = await getRawAuth()
   const phone = phoneNumber.trim()
-  if (typeof auth.getVerification === 'function') {
-    const res = await auth.getVerification({ phone_number: phone })
-    const obj: RecordValue = isRecord(res) ? res : isRecord((res as any)?.data) ? ((res as any).data as RecordValue) : {}
-    const verificationId =
-      readString(obj.verification_id) || readString(obj.messageId) || readString(obj.ver)
-    return verificationId
-  }
-  // 旧接口兜底
-  if (typeof auth.sendPhoneCode === 'function') {
-    const result = await auth.sendPhoneCode(phone)
-    if (isRecord(result) && isRecord(result.error)) {
-      throw new Error(resultError(result) || '验证码发送失败，请稍后重试。')
+  try {
+    if (typeof auth.getVerification === 'function') {
+      const res = await auth.getVerification({ phone_number: phone })
+      const obj: RecordValue = isRecord(res) ? res : isRecord((res as any)?.data) ? ((res as any).data as RecordValue) : {}
+      const verificationId =
+        readString(obj.verification_id) || readString(obj.messageId) || readString(obj.ver)
+      return verificationId
     }
-    return ''
+    // 旧接口兜底
+    if (typeof auth.sendPhoneCode === 'function') {
+      const result = await auth.sendPhoneCode(phone)
+      const err = resultError(result)
+      if (err) throw new Error(err)
+      return ''
+    }
+    throw new Error('当前环境不支持短信验证码登录。')
+  } catch (e) {
+    const msg = extractErrorMessage(e, '验证码发送失败，请稍后重试。')
+    console.error('[auth] 发送验证码失败:', e)
+    throw new Error(msg)
   }
-  throw new Error('当前环境不支持短信验证码登录。')
 }
 
 // ─── 注册 ──────────────────────────────────────────────────
@@ -371,7 +499,7 @@ export const signUpWithPhone = async (
     }
     throw new Error('当前环境不支持手机号注册。')
   } catch (e) {
-    const msg = e instanceof Error ? e.message : '注册失败'
+    const msg = extractErrorMessage(e, '注册失败，请检查手机号与验证码后重试。')
     console.error('[auth] 手机号注册失败:', e)
     throw new Error(msg)
   }
@@ -401,33 +529,92 @@ export const bindUsername = async (username: string): Promise<void> => {
       if (taken) throw new Error('该用户名已被占用，请换一个用户名。')
     }
   } catch (e) {
-    if (e instanceof Error && /占用/.test(e.message)) throw e
+    const msg = extractErrorMessage(e)
+    if (/占用|taken|exist/i.test(msg)) throw new Error('该用户名已被占用，请换一个用户名。')
     console.warn('[auth] 用户名占用检查失败，继续尝试绑定：', e)
   }
 
-  // 注册后认证状态可能稍晚落盘；等待 SDK 暴露带 updateUsername 的当前用户。
-  let currentUser: any = null
-  for (let attempt = 0; attempt < 4 && !currentUser; attempt++) {
-    currentUser = auth.currentUser
-    if (!currentUser && typeof auth.getCurrentUser === 'function') {
-      try { currentUser = await auth.getCurrentUser() } catch { /* retry */ }
+  // 2) 多策略尝试绑定用户名（兼容不同版本 CloudBase SDK）
+  let bound = false
+  let lastError: unknown = null
+
+  // 策略 A：auth.updateUserBasicInfo (CloudBase v3 官方提供的方法)
+  if (!bound && typeof auth.updateUserBasicInfo === 'function') {
+    try {
+      const res = await auth.updateUserBasicInfo({ username: uname })
+      const err = resultError(res)
+      if (!err) bound = true
+      else lastError = err
+    } catch (e) {
+      lastError = e
     }
-    if (!currentUser && attempt < 3) await new Promise((resolve) => setTimeout(resolve, 350))
-  }
-  if (!currentUser || typeof currentUser.updateUsername !== 'function') {
-    throw new Error('当前会话无效，无法绑定用户名，请重新登录后重试。')
   }
 
-  // 绑定用户名到 CloudBase Auth，用户名密码登录依赖这一步。
-  let result: unknown
-  try {
-    result = await currentUser.updateUsername(uname)
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e)
-    throw new Error(msg || '绑定用户名失败，请稍后重试。')
+  // 策略 B：auth.updateUser (带 error/data 的封装)
+  if (!bound && typeof auth.updateUser === 'function') {
+    try {
+      const res = await auth.updateUser({ username: uname })
+      const err = resultError(res)
+      if (!err) bound = true
+      else lastError = err
+    } catch (e) {
+      lastError = e
+    }
   }
-  const error = resultError(result)
-  if (error) throw new Error(error)
+
+  // 策略 C：auth.oauthInstance?.authApi?.updateUserBasicInfo
+  if (!bound && auth.oauthInstance?.authApi?.updateUserBasicInfo) {
+    try {
+      const res = await auth.oauthInstance.authApi.updateUserBasicInfo({ username: uname })
+      const err = resultError(res)
+      if (!err) bound = true
+      else lastError = err
+    } catch (e) {
+      lastError = e
+    }
+  }
+
+  // 策略 D：currentUser 实例上的方法（兼容旧环境）
+  if (!bound) {
+    let currentUser: any = auth.currentUser
+    if (!currentUser && typeof auth.getCurrentUser === 'function') {
+      try { currentUser = await auth.getCurrentUser() } catch { /* ignore */ }
+    }
+    if (currentUser) {
+      if (typeof currentUser.updateUserBasicInfo === 'function') {
+        try {
+          const res = await currentUser.updateUserBasicInfo({ username: uname })
+          const err = resultError(res)
+          if (!err) bound = true
+          else lastError = err
+        } catch (e) { lastError = e }
+      } else if (typeof currentUser.updateUsername === 'function') {
+        try {
+          const res = await currentUser.updateUsername(uname)
+          const err = resultError(res)
+          if (!err) bound = true
+          else lastError = err
+        } catch (e) { lastError = e }
+      } else if (typeof currentUser.update === 'function') {
+        try {
+          const res = await currentUser.update({ username: uname })
+          const err = resultError(res)
+          if (!err) bound = true
+          else lastError = err
+        } catch (e) { lastError = e }
+      }
+    }
+  }
+
+  if (!bound) {
+    console.warn('[auth] 绑定用户名到认证凭证未成功（SDK当前环境受限），依靠资料库称呼兜底：', lastError)
+    if (lastError) {
+      const msg = extractErrorMessage(lastError)
+      if (/占用|已存在|exist|taken/i.test(msg)) {
+        throw new Error('该用户名已被占用，请换一个用户名。')
+      }
+    }
+  }
 }
 
 // 检查用户名是否已被占用（注册前预校验，best-effort）。

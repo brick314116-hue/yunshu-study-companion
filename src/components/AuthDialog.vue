@@ -13,6 +13,7 @@ import {
   sendSmsCode,
   signInWithPhoneCode,
   signInWithUsernamePassword,
+  extractErrorMessage,
 } from '../auth'
 
 const props = defineProps<{ open: boolean }>()
@@ -96,8 +97,8 @@ const sendCode = async () => {
     verificationId.value = await sendSmsCode(phone.value.trim())
     startCountdown()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : '验证码发送失败，请稍后重试。'
-    // 如果是频率限制，提示每日上限
+    const msg = extractErrorMessage(e, '验证码发送失败，请稍后重试。')
+    error.value = msg
     if (error.value.includes('频率') || error.value.includes('RATE') || error.value.includes('limit')) {
       error.value += '\n' + MAX_DAILY_HINT
     }
@@ -133,7 +134,7 @@ const submit = async () => {
     emit('success')
     close()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : '登录失败，请检查输入后重试。'
+    error.value = extractErrorMessage(e, '登录失败，请检查输入后重试。')
   } finally {
     loading.value = false
   }
