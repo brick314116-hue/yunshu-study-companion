@@ -1,5 +1,5 @@
 import type { PsychConsent } from './types'
-import { getAccessToken } from './auth'
+import { getAccessToken, extractErrorMessage } from './auth'
 
 export type GuardianConsent = 'not_required' | 'pending' | 'confirmed' | 'rejected'
 
@@ -50,7 +50,7 @@ async function callProfile(method: 'GET' | 'POST', body?: Record<string, unknown
     let message = ''
     try {
       const data = (await response.json()) as Record<string, unknown>
-      message = typeof data.error === 'string' ? data.error : ''
+      message = extractErrorMessage(data.error || data, '')
     } catch {
       /* ignore */
     }
